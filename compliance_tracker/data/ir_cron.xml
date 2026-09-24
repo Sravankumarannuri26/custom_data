@@ -1,0 +1,12 @@
+<odoo>
+    <record id="ir_cron_compliance_reminders" model="ir.cron">
+        <field name="name">Compliance Task Reminder Cron</field>
+        <field name="model_id" ref="model_compliance_task"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_send_consolidated_task_reminders()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="user_id" ref="base.user_root"/>
+    </record>
+</odoo>

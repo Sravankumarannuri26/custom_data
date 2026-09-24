@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <record id="hr_contract_view_form_inherit_multi_currency" model="ir.ui.view">
+            <field name="name">hr.contract.form.inherit.multi.currency</field>
+            <field name="model">hr.contract</field>
+            <field name="priority">15</field>
+            <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='job_id']" position="after">
+                    <field name="currency_id"/>
+                </xpath>
+                <xpath expr="//field[@name='wage']" position="replace">
+                    <field name="wage" class="oe_inline o_hr_narrow_field" nolabel="1" widget="monetary"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

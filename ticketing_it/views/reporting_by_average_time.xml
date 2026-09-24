@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Kanban View -->
+    <record id="view_ticket_avg_processing_kanban" model="ir.ui.view">
+        <field name="name">it.ticket.avg.processing.kanban</field>
+        <field name="model">it.ticket.report.processing</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_small_column" default_group_by="ticket_type_id">
+                <field name="name"/>
+                <field name="manager_processing_days"/>
+                <field name="it_processing_days"/>
+                <field name="it_team_processing_days"/>
+                <field name="assigned_to_id"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click">
+                            <div>
+                                <strong>
+                                    <field name="name"/>
+                                </strong>
+                            </div>
+                            <div>Manager Processing Days:
+                                <field name="manager_processing_days"/>
+                            </div>
+                            <div>IT Manager Processing Days:
+                                <field name="it_processing_days"/>
+                            </div>
+                            <div>Team Processing Days:
+                                <field name="it_team_processing_days"/>
+                            </div>
+                            <div>Assigned To:
+                                <field name="assigned_to_id"/>
+                            </div>
+                            <div>Priority:
+                                <field name="priority" widget="priority"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    <!-- Graph View -->
+    <record id="view_ticket_avg_processing_graph" model="ir.ui.view">
+        <field name="name">it.ticket.avg.processing.graph</field>
+        <field name="model">it.ticket.report.processing</field>
+        <field name="arch" type="xml">
+            <graph string="Average Processing Time (Days)" type="bar">
+                <field name="manager_processing_days" type="measure" operator="avg"/>
+                <field name="it_processing_days" type="measure" operator="avg"/>
+                <field name="it_team_processing_days" type="measure" operator="avg"/>
+            </graph>
+        </field>
+    </record>
+</odoo>

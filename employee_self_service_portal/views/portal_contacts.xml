@@ -1,0 +1,268 @@
+<odoo>
+    <template id="portal_contacts_list" name="My Contacts">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal container-fluid my-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="mb-0">All Leads</h2>
+                    <a href="/my/contacts/create" class="btn btn-success btn-sm">
+                        <i class="fa fa-plus"></i> Create Lead
+                    </a>
+                </div>
+
+                <t t-if="success == 'created'">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fa fa-check-circle"></i> Lead created successfully.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </t>
+                <t t-if="success == 'updated'">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fa fa-check-circle"></i> Changes saved successfully.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </t>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <input type="text" id="contactsSearchInput" class="form-control"
+                               placeholder="Search by name, email, department, or customer code..."
+                               t-att-value="search"/>
+                    </div>
+                </div>
+
+                <div id="contactsResults">
+                    <t t-call="employee_self_service_portal.portal_contacts_results_block"/>
+                </div>
+
+                <script type="text/javascript">
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var input = document.getElementById('contactsSearchInput');
+                        var resultsContainer = document.getElementById('contactsResults');
+                        var debounceTimer = null;
+
+                        input.addEventListener('input', function () {
+                            clearTimeout(debounceTimer);
+                            var query = input.value;
+                            debounceTimer = setTimeout(function () {
+                                fetch('/my/contacts/live_search?search=' + encodeURIComponent(query))
+                                    .then(function (r) { return r.text(); })
+                                    .then(function (html) {
+                                        resultsContainer.innerHTML = html;
+                                    })
+                                    .catch(function (err) {
+                                        console.error('Live search failed:', err);
+                                    });
+                            }, 300);
+                        });
+                    });
+                </script>
+
+                <style>
+                    .contacts-scroll-wrapper {
+                    max-height: 55vh;
+                    overflow-y: auto;
+                    overflow-x: auto;
+                    }
+                    .contacts-sticky-header th {
+                    position: sticky;
+                    top: 0;
+                    z-index: 2;
+                    background-color: #f8f9fa;
+                    }
+                    .contacts-table td:first-child,
+                    .contacts-table th:first-child {
+                    position: sticky;
+                    left: 0;
+                    z-index: 1;
+                    background-color: #ffffff;
+                    }
+                    .contacts-sticky-header th:first-child {
+                    z-index: 3;
+                    }
+                </style>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_contacts_results_block" name="Contacts Results Block (shared)">
+        <t t-if="not contacts">
+            <div class="alert alert-info">No contacts found.</div>
+        </t>
+        <t t-if="contacts">
+            <p class="text-muted">
+                <t t-esc="len(contacts)"/>
+                contact<t t-if="len(contacts) != 1">s</t> found
+            </p>
+
+            <div class="table-responsive contacts-scroll-wrapper">
+                <table class="table table-striped contacts-table">
+                    <thead class="contacts-sticky-header">
+                        <tr>
+                            <th>Display Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Job Position</th>
+                            <th>Phone</th>
+                            <th>Company</th>
+                            <th>Customer Code</th>
+                            <th>Recent Note</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="contacts" t-as="contact">
+                            <tr>
+                                <td><t t-esc="contact.display_name"/></td>
+                                <td><t t-esc="contact.email or '-'"/></td>
+                                <td><t t-esc="contact.department or '-'"/></td>
+                                <td><t t-esc="contact.function or '-'"/></td>
+                                <td><t t-esc="contact.phone or '-'"/></td>
+                                <td><t t-esc="contact.parent_id.name or '-'"/></td>
+                                <td><t t-esc="contact.customer_code or '-'"/></td>
+                                <td><t t-esc="contact_notes.get(contact.id, '-') if contact_notes else '-'"/></td>
+                                <td>
+                                    <a t-attf-href="/my/contacts/#{contact.id}/edit"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-pencil"></i> Edit
+                                    </a>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_contacts_create_form" name="Create Contact">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal container my-4">
+                <h2>Create New Lead</h2>
+                <t t-if="error">
+                    <div class="alert alert-danger" t-esc="error"/>
+                </t>
+                <form action="/my/contacts/create" method="post" class="card p-3">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <div class="mb-2">
+                        <label>Name</label>
+                        <input type="text" name="name" id="contactNameInput" class="form-control" required="required"
+                               style="text-transform: uppercase;"
+                               t-att-value="post.get('name') if post else ''"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>Email</label>
+                        <input type="email" name="email" class="form-control"
+                               t-att-value="post.get('email') if post else ''"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>Phone</label>
+                        <input type="text" name="phone" class="form-control"
+                               t-att-value="post.get('phone') if post else ''"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>Job Position</label>
+                        <input type="text" name="function" class="form-control"
+                               t-att-value="post.get('function') if post else ''"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>Company Name</label>
+                        <input type="text" name="parent_id" id="contactCompanyInput" class="form-control"
+                               placeholder="Type existing or new company name"
+                               style="text-transform: uppercase;"
+                               t-att-value="post.get('parent_id') if post else ''"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>Department</label>
+                        <input type="text" name="department" class="form-control"
+                               t-att-value="post.get('department') if post else ''"/>
+                    </div>
+                    <div class="mb-2">
+                        <button type="submit" class="btn btn-primary">Create lead</button>
+                        <a href="/my/contacts" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+
+                <script type="text/javascript">
+                    document.addEventListener('DOMContentLoaded', function () {
+                        function uppercaseOnInput(input) {
+                            if (!input) return;
+                            input.addEventListener('input', function () {
+                                var cursorPos = input.selectionStart;
+                                input.value = input.value.toUpperCase();
+                                input.setSelectionRange(cursorPos, cursorPos);
+                            });
+                        }
+                        uppercaseOnInput(document.getElementById('contactNameInput'));
+                        uppercaseOnInput(document.getElementById('contactCompanyInput'));
+                    });
+                </script>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_contacts_edit_form" name="Edit Contact">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal container my-4">
+                <h2>Edit Lead</h2>
+                <t t-if="error">
+                    <div class="alert alert-danger" t-esc="error"/>
+                </t>
+                <form t-attf-action="/my/contacts/#{contact.id}/edit" method="post" class="card p-3">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <div class="mb-2">
+                        <label>Name</label>
+                        <input type="text" name="name" id="contactEditNameInput" class="form-control" required="required"
+                               style="text-transform: uppercase;"
+                               t-att-value="post.get('name') if post else contact.name"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>Email</label>
+                        <input type="email" name="email" class="form-control"
+                               t-att-value="post.get('email') if post else contact.email"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>Phone</label>
+                        <input type="text" name="phone" class="form-control"
+                               t-att-value="post.get('phone') if post else contact.phone"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>Job Position</label>
+                        <input type="text" name="function" class="form-control"
+                               t-att-value="post.get('function') if post else contact.function"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>Company Name</label>
+                        <input type="text" name="parent_id" id="contactEditCompanyInput" class="form-control"
+                               placeholder="Type existing or new company name"
+                               style="text-transform: uppercase;"
+                               t-att-value="post.get('parent_id') if post else contact.parent_id.name"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>Department</label>
+                        <input type="text" name="department" class="form-control"
+                               t-att-value="post.get('department') if post else contact.department"/>
+                    </div>
+                    <div class="mb-2">
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <a href="/my/contacts" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+
+                <script type="text/javascript">
+                    document.addEventListener('DOMContentLoaded', function () {
+                        function uppercaseOnInput(input) {
+                            if (!input) return;
+                            input.addEventListener('input', function () {
+                                var cursorPos = input.selectionStart;
+                                input.value = input.value.toUpperCase();
+                                input.setSelectionRange(cursorPos, cursorPos);
+                            });
+                        }
+                        uppercaseOnInput(document.getElementById('contactEditNameInput'));
+                        uppercaseOnInput(document.getElementById('contactEditCompanyInput'));
+                    });
+                </script>
+            </div>
+        </t>
+    </template>
+</odoo>

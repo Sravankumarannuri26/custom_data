@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_deal_type,deal.type,model_deal_type,base.group_user,1,1,1,1
+access_crm_industry,crm.industry,model_crm_industry,base.group_user,1,1,1,1
+access_ist_member,ist.member,model_ist_member,base.group_user,1,1,1,1
+access_lead_status,lead.status,model_lead_status,base.group_user,1,1,1,1

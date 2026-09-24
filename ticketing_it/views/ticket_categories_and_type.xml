@@ -1,0 +1,924 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        noupdate="1": Categories and sub-categories are only loaded on first install.
+        On upgrade Odoo skips these records, preventing FK constraint errors
+        from trying to delete ticket types that existing tickets reference.
+    -->
+    <data noupdate="1">
+
+<record id="cat_hardware" model="it.ticket.category">
+        <field name="name">Hardware</field>
+        <field name="code">hardware</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="cat_software" model="it.ticket.category">
+        <field name="name">Software</field>
+        <field name="code">software</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="cat_onboarding" model="it.ticket.category">
+        <field name="name">Onboarding/Offboarding</field>
+        <field name="code">onboarding</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="cat_email" model="it.ticket.category">
+        <field name="name">Email</field>
+        <field name="code">email</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="cat_license" model="it.ticket.category">
+        <field name="name">License/Subscription</field>
+        <field name="code">license</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="cat_access" model="it.ticket.category">
+        <field name="name">Access/Permission</field>
+        <field name="code">access</field>
+        <field name="sequence">60</field>
+    </record>
+    <record id="cat_application" model="it.ticket.category">
+        <field name="name">Application</field>
+        <field name="code">application</field>
+        <field name="sequence">70</field>
+    </record>
+    <record id="cat_network" model="it.ticket.category">
+        <field name="name">Network</field>
+        <field name="code">network</field>
+        <field name="sequence">80</field>
+    </record>
+    <record id="cat_social_media" model="it.ticket.category">
+        <field name="name">Social Media</field>
+        <field name="code">social_media</field>
+        <field name="sequence">90</field>
+    </record>
+    <record id="cat_security" model="it.ticket.category">
+        <field name="name">Security</field>
+        <field name="code">security</field>
+        <field name="sequence">100</field>
+    </record>
+    <record id="cat_generic" model="it.ticket.category">
+        <field name="name">Generic Request</field>
+        <field name="code">generic</field>
+        <field name="sequence">110</field>
+    </record>
+
+    <!-- ============================================================
+         STEP 2: SUB-CATEGORIES (it.ticket.type)
+         it_support_id is looked up by login email — set by admin in
+         Settings → Users after install.
+         ============================================================ -->
+
+    <!-- ── HARDWARE ─────────────────────────────────────────────── -->
+    <!-- level 0: IT Support only — Sameer Gupta (SSG) -->
+    <record id="type_hardware" model="it.ticket.type">
+        <field name="name">Hardware Issue</field>
+        <field name="code">hardware_issue</field>
+        <field name="category_id" ref="cat_hardware"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_hardware_ram" model="it.ticket.type">
+        <field name="name">RAM Upgrade</field>
+        <field name="code">hardware_ram</field>
+        <field name="category_id" ref="cat_hardware"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_hardware_laptop" model="it.ticket.type">
+        <field name="name">Laptop Upgrade/Replacement Request</field>
+        <field name="code">hardware_laptop</field>
+        <field name="category_id" ref="cat_hardware"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- ── SOFTWARE ─────────────────────────────────────────────── -->
+    <!-- level 0: IT Support only — Dinesh Rampal -->
+    <record id="type_software" model="it.ticket.type">
+        <field name="name">Software Issue</field>
+        <field name="code">software_issue</field>
+        <field name="category_id" ref="cat_software"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support — Tapish Agarwal -->
+    <record id="type_software_request" model="it.ticket.type">
+        <field name="name">Software Request</field>
+        <field name="code">software_request</field>
+        <field name="category_id" ref="cat_software"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support — Imtiaz Shaikh -->
+    <record id="type_software_upgrade" model="it.ticket.type">
+        <field name="name">Software Upgrade</field>
+        <field name="code">software_upgrade</field>
+        <field name="category_id" ref="cat_software"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- ── ONBOARDING / OFFBOARDING ─────────────────────────────── -->
+    <!-- level 0 — Puneet Badola -->
+    <record id="type_device_onboarding" model="it.ticket.type">
+        <field name="name">Device Onboarding (Windows/Mac)</field>
+        <field name="code">device_onboarding</field>
+        <field name="category_id" ref="cat_onboarding"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 0 — Vikas Singh -->
+    <record id="type_hotdesk_onboarding" model="it.ticket.type">
+        <field name="name">Hotdesk Onboarding</field>
+        <field name="code">hotdesk_onboarding</field>
+        <field name="category_id" ref="cat_onboarding"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 0 — Vanitas Lokhande -->
+    <record id="type_device_offboarding" model="it.ticket.type">
+        <field name="name">Device Offboarding (Windows/Mac)</field>
+        <field name="code">device_offboarding</field>
+        <field name="category_id" ref="cat_onboarding"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- ── EMAIL ────────────────────────────────────────────────── -->
+    <!-- level 0 — Shyamji Mehrotra -->
+    <record id="type_email_revoke" model="it.ticket.type">
+        <field name="name">Revoke/Deactivation</field>
+        <field name="code">email_revoke</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 3: Line Manager → HR → IT Support — Amol Jaiswal -->
+    <record id="type_email_creation" model="it.ticket.type">
+        <field name="name">Email Account Creation</field>
+        <field name="code">email_creation</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support — Maneesh Bakhru -->
+    <record id="type_service_account" model="it.ticket.type">
+        <field name="name">Service Account Creation</field>
+        <field name="code">service_account</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">30</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support — Sushmita Paul -->
+    <record id="type_mailbox_access" model="it.ticket.type">
+        <field name="name">Mailbox Access</field>
+        <field name="code">mailbox_access</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">40</field>
+    </record>
+    <!-- level 0 — Sridhar Sharma -->
+    <record id="type_quarantine_email" model="it.ticket.type">
+        <field name="name">Quarantined Email Release Request</field>
+        <field name="code">quarantine_email</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">50</field>
+    </record>
+    <!-- level 0 — Rajeev Yadav -->
+    <record id="type_calendar_issue" model="it.ticket.type">
+        <field name="name">Calender/Meeting Issue</field>
+        <field name="code">calendar_issue</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">60</field>
+    </record>
+
+    <!-- ── LICENSE / SUBSCRIPTION ───────────────────────────────── -->
+    <!-- level 1: Line Manager → IT Support — Zeeshan -->
+    <record id="type_license_procurement" model="it.ticket.type">
+        <field name="name">License/Subscription Procurement Request</field>
+        <field name="code">license_procurement</field>
+        <field name="category_id" ref="cat_license"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_license_issue" model="it.ticket.type">
+        <field name="name">License Issue</field>
+        <field name="code">license_issue</field>
+        <field name="category_id" ref="cat_license"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- ── ACCESS / PERMISSION ──────────────────────────────────── -->
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_user_dl" model="it.ticket.type">
+        <field name="name">User addition in DL</field>
+        <field name="code">user_dl</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_shared_mailbox" model="it.ticket.type">
+        <field name="name">Shared mailbox Access</field>
+        <field name="code">shared_mailbox</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_dl_group_creation" model="it.ticket.type">
+        <field name="name">DL/Group Creation</field>
+        <field name="code">dl_group_creation</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">30</field>
+    </record>
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_entra_permission" model="it.ticket.type">
+        <field name="name">Permission Role on Entra ID App</field>
+        <field name="code">entra_permission</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">40</field>
+    </record>
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_remote_access" model="it.ticket.type">
+        <field name="name">Remote Access (Any desk or Teamviewer) or Issue</field>
+        <field name="code">remote_access</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">50</field>
+    </record>
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_laptop_access" model="it.ticket.type">
+        <field name="name">Access to laptop (Employee Left)</field>
+        <field name="code">laptop_access_left</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">60</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_dms_access" model="it.ticket.type">
+        <field name="name">DMS Access/Permission Issue</field>
+        <field name="code">dms_access</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">70</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_server_website_access" model="it.ticket.type">
+        <field name="name">Server hosting techcarrot/internal website access</field>
+        <field name="code">server_website_access</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">80</field>
+    </record>
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_privilege_access" model="it.ticket.type">
+        <field name="name">Privilege Access Request</field>
+        <field name="code">privilege_access</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">90</field>
+    </record>
+
+    <!-- ── APPLICATION ──────────────────────────────────────────── -->
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_app_registration" model="it.ticket.type">
+        <field name="name">App Registration in Entra ID</field>
+        <field name="code">app_registration</field>
+        <field name="category_id" ref="cat_application"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_powerapps_access" model="it.ticket.type">
+        <field name="name">Power Apps/Timesheet Access</field>
+        <field name="code">powerapps_access</field>
+        <field name="category_id" ref="cat_application"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 0: IT Support only -->
+    <record id="type_sharepoint_support" model="it.ticket.type">
+        <field name="name">SharePoint Support/Issue</field>
+        <field name="code">sharepoint_support</field>
+        <field name="category_id" ref="cat_application"/>
+        <field name="sequence">30</field>
+    </record>
+    <!-- level 0: IT Support only -->
+    <record id="type_internal_apps" model="it.ticket.type">
+        <field name="name">Internal Applications (Website, Odoo, Intranet, Sharepoint)</field>
+        <field name="code">internal_apps</field>
+        <field name="category_id" ref="cat_application"/>
+        <field name="sequence">40</field>
+    </record>
+    <!-- level 0: IT Support only -->
+    <record id="type_m365_app_issue" model="it.ticket.type">
+        <field name="name">M365 App Issue (Outlook, Teams, Onedrive etc)</field>
+        <field name="code">m365_app_issue</field>
+        <field name="category_id" ref="cat_application"/>
+        <field name="sequence">50</field>
+    </record>
+
+    <!-- ── NETWORK ──────────────────────────────────────────────── -->
+    <!-- level 0: IT Support only -->
+    <record id="type_internet_access" model="it.ticket.type">
+        <field name="name">Internet Access</field>
+        <field name="code">internet_access</field>
+        <field name="category_id" ref="cat_network"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 0: IT Support only -->
+    <record id="type_wifi_issue" model="it.ticket.type">
+        <field name="name">Wifi Issue</field>
+        <field name="code">wifi_issue</field>
+        <field name="category_id" ref="cat_network"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 0: IT Support only -->
+    <record id="type_lan_issue" model="it.ticket.type">
+        <field name="name">LAN issue</field>
+        <field name="code">lan_issue</field>
+        <field name="category_id" ref="cat_network"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- ── SOCIAL MEDIA ─────────────────────────────────────────── -->
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_social" model="it.ticket.type">
+        <field name="name">Youtube/Instagram/Facebook/X/WhatsApp</field>
+        <field name="code">social_media</field>
+        <field name="category_id" ref="cat_social_media"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_email_personal_exception" model="it.ticket.type">
+        <field name="name">Exception to send email to personal domain</field>
+        <field name="code">email_personal_exception</field>
+        <field name="category_id" ref="cat_social_media"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- ── SECURITY ─────────────────────────────────────────────── -->
+    <!-- All Security sub-categories: level 0 (IT Support direct) -->
+    <record id="type_phishing" model="it.ticket.type">
+        <field name="name">Suspicious/Phishing</field>
+        <field name="code">phishing</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="type_malware" model="it.ticket.type">
+        <field name="name">Malware/Virus Alert</field>
+        <field name="code">malware</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="type_unauth_access" model="it.ticket.type">
+        <field name="name">Unauthorized Access Attempt</field>
+        <field name="code">unauth_access</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">30</field>
+    </record>
+    <record id="type_data_loss" model="it.ticket.type">
+        <field name="name">Data Loss/Leak</field>
+        <field name="code">data_loss</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">40</field>
+    </record>
+    <record id="type_password_reset" model="it.ticket.type">
+        <field name="name">Password Reset or support</field>
+        <field name="code">password_reset</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">50</field>
+    </record>
+    <record id="type_mfa_issue" model="it.ticket.type">
+        <field name="name">MFA Issue</field>
+        <field name="code">mfa_issue</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">60</field>
+    </record>
+    <record id="type_certificate_issue" model="it.ticket.type">
+        <field name="name">Certificate Issue</field>
+        <field name="code">certificate_issue</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">70</field>
+    </record>
+    <record id="type_account_lockout" model="it.ticket.type">
+        <field name="name">Account Lockout/Bitlocker Issue</field>
+        <field name="code">account_lockout</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">80</field>
+    </record>
+
+    <!-- ── GENERIC REQUEST ──────────────────────────────────────── -->
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_server_poc" model="it.ticket.type">
+        <field name="name">Server Request for POC</field>
+        <field name="code">server_poc</field>
+        <field name="category_id" ref="cat_generic"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="type_backup_request" model="it.ticket.type">
+        <field name="name">Backup Request</field>
+        <field name="code">backup_request</field>
+        <field name="category_id" ref="cat_generic"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="type_cloud_storage" model="it.ticket.type">
+        <field name="name">Cloud Storage Request</field>
+        <field name="code">cloud_storage</field>
+        <field name="category_id" ref="cat_generic"/>
+        <field name="sequence">30</field>
+    </record>
+    <!-- level 0 -->
+    <record id="type_signature_config" model="it.ticket.type">
+        <field name="name">Signature Configuration Issue</field>
+        <field name="code">signature_config</field>
+        <field name="category_id" ref="cat_generic"/>
+        <field name="sequence">40</field>
+    </record>
+
+    </data>
+
+    <!--
+        noupdate="0": Workflow configs are always refreshed on upgrade.
+        Safe to delete+recreate because no it.ticket records reference workflow configs.
+    -->
+    <data noupdate="0">
+
+        <!-- Delete old workflow configs so they get cleanly recreated -->
+        <delete model="it.ticket.workflow.config" search="[]"/>
+
+    <!-- ============================================================
+         STEP 1: TOP-LEVEL CATEGORIES
+         ============================================================ -->
+    <record id="cat_hardware" model="it.ticket.category">
+        <field name="name">Hardware</field>
+        <field name="code">hardware</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="cat_software" model="it.ticket.category">
+        <field name="name">Software</field>
+        <field name="code">software</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="cat_onboarding" model="it.ticket.category">
+        <field name="name">Onboarding/Offboarding</field>
+        <field name="code">onboarding</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="cat_email" model="it.ticket.category">
+        <field name="name">Email</field>
+        <field name="code">email</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="cat_license" model="it.ticket.category">
+        <field name="name">License/Subscription</field>
+        <field name="code">license</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="cat_access" model="it.ticket.category">
+        <field name="name">Access/Permission</field>
+        <field name="code">access</field>
+        <field name="sequence">60</field>
+    </record>
+    <record id="cat_application" model="it.ticket.category">
+        <field name="name">Application</field>
+        <field name="code">application</field>
+        <field name="sequence">70</field>
+    </record>
+    <record id="cat_network" model="it.ticket.category">
+        <field name="name">Network</field>
+        <field name="code">network</field>
+        <field name="sequence">80</field>
+    </record>
+    <record id="cat_social_media" model="it.ticket.category">
+        <field name="name">Social Media</field>
+        <field name="code">social_media</field>
+        <field name="sequence">90</field>
+    </record>
+    <record id="cat_security" model="it.ticket.category">
+        <field name="name">Security</field>
+        <field name="code">security</field>
+        <field name="sequence">100</field>
+    </record>
+    <record id="cat_generic" model="it.ticket.category">
+        <field name="name">Generic Request</field>
+        <field name="code">generic</field>
+        <field name="sequence">110</field>
+    </record>
+
+    <!-- ============================================================
+         STEP 2: SUB-CATEGORIES (it.ticket.type)
+         it_support_id is looked up by login email — set by admin in
+         Settings → Users after install.
+         ============================================================ -->
+
+    <!-- ── HARDWARE ─────────────────────────────────────────────── -->
+    <!-- level 0: IT Support only — Sameer Gupta (SSG) -->
+    <record id="type_hardware" model="it.ticket.type">
+        <field name="name">Hardware Issue</field>
+        <field name="code">hardware_issue</field>
+        <field name="category_id" ref="cat_hardware"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_hardware_ram" model="it.ticket.type">
+        <field name="name">RAM Upgrade</field>
+        <field name="code">hardware_ram</field>
+        <field name="category_id" ref="cat_hardware"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_hardware_laptop" model="it.ticket.type">
+        <field name="name">Laptop Upgrade/Replacement Request</field>
+        <field name="code">hardware_laptop</field>
+        <field name="category_id" ref="cat_hardware"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- ── SOFTWARE ─────────────────────────────────────────────── -->
+    <!-- level 0: IT Support only — Dinesh Rampal -->
+    <record id="type_software" model="it.ticket.type">
+        <field name="name">Software Issue</field>
+        <field name="code">software_issue</field>
+        <field name="category_id" ref="cat_software"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support — Tapish Agarwal -->
+    <record id="type_software_request" model="it.ticket.type">
+        <field name="name">Software Request</field>
+        <field name="code">software_request</field>
+        <field name="category_id" ref="cat_software"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support — Imtiaz Shaikh -->
+    <record id="type_software_upgrade" model="it.ticket.type">
+        <field name="name">Software Upgrade</field>
+        <field name="code">software_upgrade</field>
+        <field name="category_id" ref="cat_software"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- ── ONBOARDING / OFFBOARDING ─────────────────────────────── -->
+    <!-- level 0 — Puneet Badola -->
+    <record id="type_device_onboarding" model="it.ticket.type">
+        <field name="name">Device Onboarding (Windows/Mac)</field>
+        <field name="code">device_onboarding</field>
+        <field name="category_id" ref="cat_onboarding"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 0 — Vikas Singh -->
+    <record id="type_hotdesk_onboarding" model="it.ticket.type">
+        <field name="name">Hotdesk Onboarding</field>
+        <field name="code">hotdesk_onboarding</field>
+        <field name="category_id" ref="cat_onboarding"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 0 — Vanitas Lokhande -->
+    <record id="type_device_offboarding" model="it.ticket.type">
+        <field name="name">Device Offboarding (Windows/Mac)</field>
+        <field name="code">device_offboarding</field>
+        <field name="category_id" ref="cat_onboarding"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- ── EMAIL ────────────────────────────────────────────────── -->
+    <!-- level 0 — Shyamji Mehrotra -->
+    <record id="type_email_revoke" model="it.ticket.type">
+        <field name="name">Revoke/Deactivation</field>
+        <field name="code">email_revoke</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 3: Line Manager → HR → IT Support — Amol Jaiswal -->
+    <record id="type_email_creation" model="it.ticket.type">
+        <field name="name">Email Account Creation</field>
+        <field name="code">email_creation</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support — Maneesh Bakhru -->
+    <record id="type_service_account" model="it.ticket.type">
+        <field name="name">Service Account Creation</field>
+        <field name="code">service_account</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">30</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support — Sushmita Paul -->
+    <record id="type_mailbox_access" model="it.ticket.type">
+        <field name="name">Mailbox Access</field>
+        <field name="code">mailbox_access</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">40</field>
+    </record>
+    <!-- level 0 — Sridhar Sharma -->
+    <record id="type_quarantine_email" model="it.ticket.type">
+        <field name="name">Quarantined Email Release Request</field>
+        <field name="code">quarantine_email</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">50</field>
+    </record>
+    <!-- level 0 — Rajeev Yadav -->
+    <record id="type_calendar_issue" model="it.ticket.type">
+        <field name="name">Calender/Meeting Issue</field>
+        <field name="code">calendar_issue</field>
+        <field name="category_id" ref="cat_email"/>
+        <field name="sequence">60</field>
+    </record>
+
+    <!-- ── LICENSE / SUBSCRIPTION ───────────────────────────────── -->
+    <!-- level 1: Line Manager → IT Support — Zeeshan -->
+    <record id="type_license_procurement" model="it.ticket.type">
+        <field name="name">License/Subscription Procurement Request</field>
+        <field name="code">license_procurement</field>
+        <field name="category_id" ref="cat_license"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_license_issue" model="it.ticket.type">
+        <field name="name">License Issue</field>
+        <field name="code">license_issue</field>
+        <field name="category_id" ref="cat_license"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- ── ACCESS / PERMISSION ──────────────────────────────────── -->
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_user_dl" model="it.ticket.type">
+        <field name="name">User addition in DL</field>
+        <field name="code">user_dl</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_shared_mailbox" model="it.ticket.type">
+        <field name="name">Shared mailbox Access</field>
+        <field name="code">shared_mailbox</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_dl_group_creation" model="it.ticket.type">
+        <field name="name">DL/Group Creation</field>
+        <field name="code">dl_group_creation</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">30</field>
+    </record>
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_entra_permission" model="it.ticket.type">
+        <field name="name">Permission Role on Entra ID App</field>
+        <field name="code">entra_permission</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">40</field>
+    </record>
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_remote_access" model="it.ticket.type">
+        <field name="name">Remote Access (Any desk or Teamviewer) or Issue</field>
+        <field name="code">remote_access</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">50</field>
+    </record>
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_laptop_access" model="it.ticket.type">
+        <field name="name">Access to laptop (Employee Left)</field>
+        <field name="code">laptop_access_left</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">60</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_dms_access" model="it.ticket.type">
+        <field name="name">DMS Access/Permission Issue</field>
+        <field name="code">dms_access</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">70</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_server_website_access" model="it.ticket.type">
+        <field name="name">Server hosting techcarrot/internal website access</field>
+        <field name="code">server_website_access</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">80</field>
+    </record>
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_privilege_access" model="it.ticket.type">
+        <field name="name">Privilege Access Request</field>
+        <field name="code">privilege_access</field>
+        <field name="category_id" ref="cat_access"/>
+        <field name="sequence">90</field>
+    </record>
+
+    <!-- ── APPLICATION ──────────────────────────────────────────── -->
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_app_registration" model="it.ticket.type">
+        <field name="name">App Registration in Entra ID</field>
+        <field name="code">app_registration</field>
+        <field name="category_id" ref="cat_application"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 1: Line Manager → IT Support -->
+    <record id="type_powerapps_access" model="it.ticket.type">
+        <field name="name">Power Apps/Timesheet Access</field>
+        <field name="code">powerapps_access</field>
+        <field name="category_id" ref="cat_application"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 0: IT Support only -->
+    <record id="type_sharepoint_support" model="it.ticket.type">
+        <field name="name">SharePoint Support/Issue</field>
+        <field name="code">sharepoint_support</field>
+        <field name="category_id" ref="cat_application"/>
+        <field name="sequence">30</field>
+    </record>
+    <!-- level 0: IT Support only -->
+    <record id="type_internal_apps" model="it.ticket.type">
+        <field name="name">Internal Applications (Website, Odoo, Intranet, Sharepoint)</field>
+        <field name="code">internal_apps</field>
+        <field name="category_id" ref="cat_application"/>
+        <field name="sequence">40</field>
+    </record>
+    <!-- level 0: IT Support only -->
+    <record id="type_m365_app_issue" model="it.ticket.type">
+        <field name="name">M365 App Issue (Outlook, Teams, Onedrive etc)</field>
+        <field name="code">m365_app_issue</field>
+        <field name="category_id" ref="cat_application"/>
+        <field name="sequence">50</field>
+    </record>
+
+    <!-- ── NETWORK ──────────────────────────────────────────────── -->
+    <!-- level 0: IT Support only -->
+    <record id="type_internet_access" model="it.ticket.type">
+        <field name="name">Internet Access</field>
+        <field name="code">internet_access</field>
+        <field name="category_id" ref="cat_network"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 0: IT Support only -->
+    <record id="type_wifi_issue" model="it.ticket.type">
+        <field name="name">Wifi Issue</field>
+        <field name="code">wifi_issue</field>
+        <field name="category_id" ref="cat_network"/>
+        <field name="sequence">20</field>
+    </record>
+    <!-- level 0: IT Support only -->
+    <record id="type_lan_issue" model="it.ticket.type">
+        <field name="name">LAN issue</field>
+        <field name="code">lan_issue</field>
+        <field name="category_id" ref="cat_network"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- ── SOCIAL MEDIA ─────────────────────────────────────────── -->
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_social" model="it.ticket.type">
+        <field name="name">Youtube/Instagram/Facebook/X/WhatsApp</field>
+        <field name="code">social_media</field>
+        <field name="category_id" ref="cat_social_media"/>
+        <field name="sequence">10</field>
+    </record>
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_email_personal_exception" model="it.ticket.type">
+        <field name="name">Exception to send email to personal domain</field>
+        <field name="code">email_personal_exception</field>
+        <field name="category_id" ref="cat_social_media"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- ── SECURITY ─────────────────────────────────────────────── -->
+    <!-- All Security sub-categories: level 0 (IT Support direct) -->
+    <record id="type_phishing" model="it.ticket.type">
+        <field name="name">Suspicious/Phishing</field>
+        <field name="code">phishing</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="type_malware" model="it.ticket.type">
+        <field name="name">Malware/Virus Alert</field>
+        <field name="code">malware</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="type_unauth_access" model="it.ticket.type">
+        <field name="name">Unauthorized Access Attempt</field>
+        <field name="code">unauth_access</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">30</field>
+    </record>
+    <record id="type_data_loss" model="it.ticket.type">
+        <field name="name">Data Loss/Leak</field>
+        <field name="code">data_loss</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">40</field>
+    </record>
+    <record id="type_password_reset" model="it.ticket.type">
+        <field name="name">Password Reset or support</field>
+        <field name="code">password_reset</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">50</field>
+    </record>
+    <record id="type_mfa_issue" model="it.ticket.type">
+        <field name="name">MFA Issue</field>
+        <field name="code">mfa_issue</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">60</field>
+    </record>
+    <record id="type_certificate_issue" model="it.ticket.type">
+        <field name="name">Certificate Issue</field>
+        <field name="code">certificate_issue</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">70</field>
+    </record>
+    <record id="type_account_lockout" model="it.ticket.type">
+        <field name="name">Account Lockout/Bitlocker Issue</field>
+        <field name="code">account_lockout</field>
+        <field name="category_id" ref="cat_security"/>
+        <field name="sequence">80</field>
+    </record>
+
+    <!-- ── GENERIC REQUEST ──────────────────────────────────────── -->
+    <!-- level 2: Line Manager → IT Manager → IT Support -->
+    <record id="type_server_poc" model="it.ticket.type">
+        <field name="name">Server Request for POC</field>
+        <field name="code">server_poc</field>
+        <field name="category_id" ref="cat_generic"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="type_backup_request" model="it.ticket.type">
+        <field name="name">Backup Request</field>
+        <field name="code">backup_request</field>
+        <field name="category_id" ref="cat_generic"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="type_cloud_storage" model="it.ticket.type">
+        <field name="name">Cloud Storage Request</field>
+        <field name="code">cloud_storage</field>
+        <field name="category_id" ref="cat_generic"/>
+        <field name="sequence">30</field>
+    </record>
+    <!-- level 0 -->
+    <record id="type_signature_config" model="it.ticket.type">
+        <field name="name">Signature Configuration Issue</field>
+        <field name="code">signature_config</field>
+        <field name="category_id" ref="cat_generic"/>
+        <field name="sequence">40</field>
+    </record>
+
+    <!-- ============================================================
+         STEP 3: WORKFLOW CONFIGURATIONS
+         Excel sheet defines exact levels per sub-category.
+         ============================================================ -->
+
+    <!-- HARDWARE -->
+    <record id="wf_hardware_issue"       model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_hardware"/><field name="workflow_level">0</field></record>
+    <record id="wf_hardware_ram"         model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_hardware_ram"/><field name="workflow_level">1</field></record>
+    <record id="wf_hardware_laptop"      model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_hardware_laptop"/><field name="workflow_level">1</field></record>
+
+    <!-- SOFTWARE -->
+    <record id="wf_software_issue"       model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_software"/><field name="workflow_level">0</field></record>
+    <record id="wf_software_request"     model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_software_request"/><field name="workflow_level">1</field></record>
+    <record id="wf_software_upgrade"     model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_software_upgrade"/><field name="workflow_level">1</field></record>
+
+    <!-- ONBOARDING/OFFBOARDING -->
+    <record id="wf_device_onboarding"    model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_device_onboarding"/><field name="workflow_level">0</field></record>
+    <record id="wf_hotdesk_onboarding"   model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_hotdesk_onboarding"/><field name="workflow_level">0</field></record>
+    <record id="wf_device_offboarding"   model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_device_offboarding"/><field name="workflow_level">0</field></record>
+
+    <!-- EMAIL -->
+    <record id="wf_email_revoke"         model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_email_revoke"/><field name="workflow_level">0</field></record>
+    <record id="wf_email_creation"       model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_email_creation"/><field name="workflow_level">3</field></record>
+    <record id="wf_service_account"      model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_service_account"/><field name="workflow_level">1</field></record>
+    <record id="wf_mailbox_access"       model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_mailbox_access"/><field name="workflow_level">1</field></record>
+    <record id="wf_quarantine_email"     model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_quarantine_email"/><field name="workflow_level">0</field></record>
+    <record id="wf_calendar_issue"       model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_calendar_issue"/><field name="workflow_level">0</field></record>
+
+    <!-- LICENSE -->
+    <record id="wf_license_procurement"  model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_license_procurement"/><field name="workflow_level">1</field></record>
+    <record id="wf_license_issue"        model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_license_issue"/><field name="workflow_level">1</field></record>
+
+    <!-- ACCESS/PERMISSION -->
+    <record id="wf_user_dl"              model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_user_dl"/><field name="workflow_level">1</field></record>
+    <record id="wf_shared_mailbox"       model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_shared_mailbox"/><field name="workflow_level">1</field></record>
+    <record id="wf_dl_group_creation"    model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_dl_group_creation"/><field name="workflow_level">1</field></record>
+    <record id="wf_entra_permission"     model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_entra_permission"/><field name="workflow_level">2</field></record>
+    <record id="wf_remote_access"        model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_remote_access"/><field name="workflow_level">2</field></record>
+    <record id="wf_laptop_access"        model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_laptop_access"/><field name="workflow_level">2</field></record>
+    <record id="wf_dms_access"           model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_dms_access"/><field name="workflow_level">1</field></record>
+    <record id="wf_server_website_access" model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_server_website_access"/><field name="workflow_level">1</field></record>
+    <record id="wf_privilege_access"     model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_privilege_access"/><field name="workflow_level">2</field></record>
+
+    <!-- APPLICATION -->
+    <record id="wf_app_registration"     model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_app_registration"/><field name="workflow_level">2</field></record>
+    <record id="wf_powerapps_access"     model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_powerapps_access"/><field name="workflow_level">1</field></record>
+    <record id="wf_sharepoint_support"   model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_sharepoint_support"/><field name="workflow_level">0</field></record>
+    <record id="wf_internal_apps"        model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_internal_apps"/><field name="workflow_level">0</field></record>
+    <record id="wf_m365_app_issue"       model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_m365_app_issue"/><field name="workflow_level">0</field></record>
+
+    <!-- NETWORK -->
+    <record id="wf_internet_access"      model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_internet_access"/><field name="workflow_level">0</field></record>
+    <record id="wf_wifi_issue"           model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_wifi_issue"/><field name="workflow_level">0</field></record>
+    <record id="wf_lan_issue"            model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_lan_issue"/><field name="workflow_level">0</field></record>
+
+    <!-- SOCIAL MEDIA -->
+    <record id="wf_social"               model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_social"/><field name="workflow_level">2</field></record>
+    <record id="wf_email_personal_exception" model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_email_personal_exception"/><field name="workflow_level">2</field></record>
+
+    <!-- SECURITY (all direct to IT Support) -->
+    <record id="wf_phishing"             model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_phishing"/><field name="workflow_level">0</field></record>
+    <record id="wf_malware"              model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_malware"/><field name="workflow_level">0</field></record>
+    <record id="wf_unauth_access"        model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_unauth_access"/><field name="workflow_level">0</field></record>
+    <record id="wf_data_loss"            model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_data_loss"/><field name="workflow_level">0</field></record>
+    <record id="wf_password_reset"       model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_password_reset"/><field name="workflow_level">0</field></record>
+    <record id="wf_mfa_issue"            model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_mfa_issue"/><field name="workflow_level">0</field></record>
+    <record id="wf_certificate_issue"    model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_certificate_issue"/><field name="workflow_level">0</field></record>
+    <record id="wf_account_lockout"      model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_account_lockout"/><field name="workflow_level">0</field></record>
+
+    <!-- GENERIC REQUEST -->
+    <record id="wf_server_poc"           model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_server_poc"/><field name="workflow_level">2</field></record>
+    <record id="wf_backup_request"       model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_backup_request"/><field name="workflow_level">2</field></record>
+    <record id="wf_cloud_storage"        model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_cloud_storage"/><field name="workflow_level">2</field></record>
+    <record id="wf_signature_config"     model="it.ticket.workflow.config"><field name="ticket_type_id" ref="type_signature_config"/><field name="workflow_level">0</field></record>
+
+    </data>
+
+</odoo>

@@ -1,0 +1,21 @@
+<odoo>
+    <record id="view_employee_form_form16_inherit" model="ir.ui.view">
+        <field name="name">hr.employee.form.form16.inherit</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Form 16" name="form16_page"
+                      invisible="not is_inr_currency">
+                    <field name="form16_ids">
+                        <list editable="bottom">
+                            <field name="financial_year"/>
+                            <field name="form16_pdf" filename="form16_filename"/>
+                            <field name="form16_filename" column_invisible="1"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

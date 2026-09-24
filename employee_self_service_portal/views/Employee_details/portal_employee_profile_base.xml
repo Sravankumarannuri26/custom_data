@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_employee_profile_base">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal container my-4">
+
+                <!-- Header -->
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center" style="background:#2C5832;">
+                        <div>
+                            <h4 class="mb-1" style="color:#ffffff;">Employee Profile</h4>
+                            <small style="color:rgba(255,255,255,0.8);">Manage your personal information and settings</small>
+                        </div>
+                    </div>
+                    <div class="card-body p-4" style="background:#ffffff;">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box rounded-circle p-2 me-3" style="background:rgba(43,43,107,0.1);color:#2B2B6B;"><i class="fa fa-user"></i></div>
+                                            <div><small class="text-muted d-block">Full Name</small><strong><t t-esc="employee.name"/></strong></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box rounded-circle p-2 me-3" style="background:rgba(44,88,50,0.12);color:#2C5832;"><i class="fa fa-id-badge"></i></div>
+                                            <div><small class="text-muted d-block">Employee ID</small><strong><t t-esc="employee.emp_code or 'Not Set'"/></strong></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box rounded-circle p-2 me-3" style="background:rgba(231,76,45,0.1);color:#E74C2D;"><i class="fa fa-building"></i></div>
+                                            <div><small class="text-muted d-block">Department</small><strong><t t-esc="employee.department_id.name or 'Not Assigned'"/></strong></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box rounded-circle p-2 me-3" style="background:rgba(43,43,107,0.1);color:#2B2B6B;"><i class="fa fa-briefcase"></i></div>
+                                            <div><small class="text-muted d-block">Designation</small><strong><t t-esc="employee.job_id.name or employee.job_title or 'Not Set'"/></strong></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+<!--                                <div class="position-relative mb-3" style="display:inline-block;">-->
+<!--                                    <img t-if="employee.image_1920"-->
+<!--                                         t-attf-src="/web/image/hr.employee/{{employee.id}}/image_1920/150x150"-->
+<!--                                         id="employeePhotoImg" class="rounded-circle shadow"-->
+<!--                                         style="width:120px;height:120px;object-fit:cover;border:3px solid #2C5832;" alt="Employee Photo"/>-->
+<!--                                    <img t-else="" src="/web/static/src/img/avatar.png"-->
+<!--                                         id="employeePhotoImg" class="rounded-circle shadow opacity-50"-->
+<!--                                         style="width:120px;height:120px;object-fit:cover;border:3px solid #2C5832;" alt="Default Avatar"/>-->
+<!--                                    <label for="photoUploadInput"-->
+<!--                                           style="position:absolute;bottom:4px;right:4px;background:#E74C2D;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.35);border:2px solid #fff;"-->
+<!--                                           title="Upload Photo">-->
+<!--                                        <i class="fa fa-camera text-white" style="font-size:13px;"></i>-->
+<!--                                    </label>-->
+<!--                                    <input type="file" id="photoUploadInput" accept="image/jpeg,image/png,image/gif" style="display:none;" />-->
+<!--                                </div>-->
+<!--                                <div id="photoUploadStatus" class="small mt-1" style="min-height:18px;"></div>-->
+<!--                                <div class="text-center mt-1"><small class="text-muted"><i class="fa fa-info-circle me-1"></i>Max photo size: 5MB (JPG, PNG, GIF)</small></div>-->
+                                <div class="position-relative mb-3" style="display:inline-block;">
+                                    <img t-if="employee.image_1920"
+                                         t-attf-src="/web/image/hr.employee/{{employee.id}}/image_1920/150x150"
+                                         id="employeePhotoImg" class="rounded-circle shadow"
+                                         style="width:120px;height:120px;object-fit:cover;border:3px solid #2C5832;" alt="Employee Photo"/>
+                                    <img t-else="" src="/web/static/src/img/avatar.png"
+                                         id="employeePhotoImg" class="rounded-circle shadow opacity-50"
+                                         style="width:120px;height:120px;object-fit:cover;border:3px solid #2C5832;" alt="Default Avatar"/>
+                                </div>
+                                <div class="text-center">
+                                    <h6 class="mb-1"><t t-esc="employee.name"/></h6>
+                                    <small style="color:#2C5832;font-weight:600;"><i class="fa fa-circle me-1" style="font-size:8px;"></i>Active Employee</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="mb-4">
+                    <ul class="nav nav-pills nav-fill p-2 rounded shadow-sm" style="background:#f4f4f4;">
+                        <li class="nav-item">
+                            <a t-attf-class="nav-link rounded ess-portal-nav ess-tab-personal {{'active fw-bold' if section == 'personal' else ''}}"
+                               href="/my/employee/personal">
+                                <i class="fa fa-user me-2"></i>
+                                <span class="d-none d-md-inline">Personal Details</span>
+                                <span class="d-md-none">Personal</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a t-attf-class="nav-link rounded ess-portal-nav ess-tab-experience {{'active fw-bold' if section == 'experience' else ''}}"
+                               href="/my/employee/experience">
+                                <i class="fa fa-briefcase me-2"></i>
+                                <span class="d-none d-md-inline">Experience and Skills</span>
+                                <span class="d-md-none">Experience</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a t-attf-class="nav-link rounded ess-portal-nav ess-tab-certification {{'active fw-bold' if section == 'certification' else ''}}"
+                               href="/my/employee/certification">
+                                <i class="fa fa-certificate me-2"></i>
+                                <span class="d-none d-md-inline">Certifications</span>
+                                <span class="d-md-none">Certs</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a t-attf-class="nav-link rounded ess-portal-nav ess-tab-bank {{'active fw-bold' if section == 'bank' else ''}}"
+                               href="/my/employee/bank">
+                                <i class="fa fa-university me-2"></i>
+                                <span class="d-none d-md-inline">Bank Details</span>
+                                <span class="d-md-none">Banking</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a t-attf-class="nav-link rounded ess-portal-nav ess-tab-orgchart {{'active fw-bold' if section == 'orgchart' else ''}}"
+                               href="/my/employee/orgchart">
+                                <i class="fa fa-sitemap me-2"></i>
+                                <span class="d-none d-md-inline">Org Chart</span>
+                                <span class="d-md-none">Org</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Section Content -->
+                <div class="section-content">
+                    <t t-out="section_content"/>
+                </div>
+
+
+
+                <style>
+                    .icon-box{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+                    .nav-pills .nav-link{transition:all 0.3s ease;border:2px solid transparent;font-weight:700;font-size:15px;padding:10px 16px;}
+
+                    /* Personal tab — #ef520c */
+                    .ess-tab-personal{color:#ef520c !important;}
+                    .ess-tab-personal:hover{background:rgba(239,82,12,0.1) !important;border-color:rgba(239,82,12,0.3) !important;}
+                    .ess-tab-personal.active{background:#ef520c !important;border-color:#d4450a !important;color:#fff !important;box-shadow:0 2px 8px rgba(239,82,12,0.45);}
+
+                    /* Experience and Skills — light indigo */
+                    .ess-tab-experience{color:#4f46e5 !important;}
+                    .ess-tab-experience:hover{background:rgba(79,70,229,0.1) !important;border-color:rgba(79,70,229,0.3) !important;}
+                    .ess-tab-experience.active{background:#4f46e5 !important;border-color:#3730a3 !important;color:#fff !important;box-shadow:0 2px 8px rgba(79,70,229,0.45);}
+
+                    /* Certifications — teal */
+                    .ess-tab-certification{color:#0891b2 !important;}
+                    .ess-tab-certification:hover{background:rgba(8,145,178,0.1) !important;border-color:rgba(8,145,178,0.3) !important;}
+                    .ess-tab-certification.active{background:#0891b2 !important;border-color:#0e7490 !important;color:#fff !important;box-shadow:0 2px 8px rgba(8,145,178,0.45);}
+
+                    /* Bank Details — grey */
+                    .ess-tab-bank{color:#6b7280 !important;}
+                    .ess-tab-bank:hover{background:rgba(107,114,128,0.1) !important;border-color:rgba(107,114,128,0.3) !important;}
+                    .ess-tab-bank.active{background:#6b7280 !important;border-color:#4b5563 !important;color:#fff !important;box-shadow:0 2px 8px rgba(107,114,128,0.4);}
+
+                    /* Org Chart — grey */
+                    .ess-tab-orgchart{color:#6b7280 !important;}
+                    .ess-tab-orgchart:hover{background:rgba(107,114,128,0.1) !important;border-color:rgba(107,114,128,0.3) !important;}
+                    .ess-tab-orgchart.active{background:#6b7280 !important;border-color:#4b5563 !important;color:#fff !important;box-shadow:0 2px 8px rgba(107,114,128,0.4);}
+                    .card{transition:box-shadow 0.3s ease;border:1px solid rgba(43,43,107,0.1);}
+                    .card:hover{box-shadow:0 4px 15px rgba(43,43,107,0.15) !important;}
+                    .card-header.bg-light{background:#f8f8fb !important;border-bottom:2px solid rgba(43,43,107,0.1);}
+                    .card-header.bg-light h5{color:#2B2B6B;}
+                    .card-header.bg-light .text-primary{color:#E74C2D !important;}
+                    .btn-outline-primary{border-color:#2B2B6B !important;color:#2B2B6B !important;}
+                    .btn-outline-primary:hover{background:#2B2B6B !important;color:#fff !important;}
+                    .btn-primary{background:#2C5832 !important;border-color:#2C5832 !important;color:#fff !important;}
+                    .btn-primary:hover{background:#1e3d22 !important;border-color:#1e3d22 !important;}
+                    .btn-info{background:#2B2B6B !important;border-color:#2B2B6B !important;color:#fff !important;}
+                    .btn-info:hover{background:#1e1e4f !important;border-color:#1e1e4f !important;}
+                    .btn-outline-success{border-color:#2C5832 !important;color:#2C5832 !important;}
+                    .btn-outline-success:hover{background:#2C5832 !important;color:#fff !important;}
+                    .badge.bg-primary{background:#2B2B6B !important;}
+                    .badge.bg-success{background:#2C5832 !important;}
+                    .badge.bg-info{background:#E74C2D !important;}
+                    .form-switch .form-check-input:checked{background-color:#E74C2D;border-color:#E74C2D;}
+                    .nav-tabs .profile-tab-button{color:#555;font-weight:600;border-radius:0.5rem 0.5rem 0 0;font-size:14px;}
+                    .nav-tabs .profile-tab-button.active{color:#06cef2 !important;border-bottom-color:#06cef2 !important;border-bottom-width:3px;}
+                    .profile-tab-navigation .nav-link.active{color:#06cef2 !important;}
+                    .profile-tab-navigation .nav-link:hover{color:#06cef2 !important;background:rgba(6,206,242,0.08);}
+                    .org-node{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #dee2e6;border-radius:10px;padding:10px 16px;min-width:180px;box-shadow:0 2px 6px rgba(0,0,0,0.07);}
+                    .org-node.org-self{border-color:#2B2B6B;background:rgba(43,43,107,0.06);}
+                    .org-node.org-manager{border-color:#E74C2D;background:rgba(231,76,45,0.06);}
+                    .org-node.org-child{border-color:#2C5832;background:rgba(44,88,50,0.06);}
+                    .org-name{font-weight:600;font-size:14px;}
+                    .org-role{font-size:12px;color:#6c757d;}
+                    @media(max-width:768px){.icon-box{width:35px;height:35px;font-size:14px;}.org-node{min-width:140px;padding:8px 10px;}}
+                </style>
+
+                <script type="text/javascript">
+//<![CDATA[
+/* ═══════════════════════════════════════════════════════════════════
+   ESS UNIFIED TAB MANAGER
+   personal / experience / certification all live on ONE page.
+   Tab switching = JS show/hide only. No page navigation. No data loss.
+   Bank Details and Org Chart are still separate pages (links).
+   ═══════════════════════════════════════════════════════════════════ */
+(function() {
+'use strict';
+
+var EXP_KEY  = 'ess_exp_staging';
+var CERT_KEY = 'ess_cert_pending';
+
+/* ── Switch visible tab ── */
+function essShowTab(tabName) {
+    /* Show/hide content panels */
+    document.querySelectorAll('.ess-tab-panel').forEach(function(panel) {
+        panel.style.display = panel.getAttribute('data-ess-panel') === tabName ? '' : 'none';
+    });
+    /* Update nav button active state */
+    document.querySelectorAll('.ess-tab-btn').forEach(function(btn) {
+        var active = btn.getAttribute('data-ess-tab') === tabName;
+        btn.classList.toggle('active', active);
+        btn.classList.toggle('fw-bold', active);
+    });
+    /* Store active tab in URL hash without reload */
+    try { history.replaceState(null, '', '#' + tabName); } catch(e) {}
+    /* Notify tab-specific JS */
+    document.dispatchEvent(new CustomEvent('ess-tab-activated', {detail: {tab: tabName}}));
+}
+
+/* ── Pending state detection ── */
+document.addEventListener('DOMContentLoaded', function() {
+
+    /* Intercept portal nav clicks — save staged data before navigating */
+    document.querySelectorAll('.ess-portal-nav').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var dest = this.getAttribute('href');
+
+            /* Check if there are unsaved changes */
+            var hasUnsaved = false;
+            try {
+                if (typeof window.essHasUnsavedChanges === 'function') {
+                    hasUnsaved = window.essHasUnsavedChanges();
+                } else {
+                    hasUnsaved = !!(
+                        localStorage.getItem('ess_exp_staging') ||
+                        localStorage.getItem('ess_cert_pending') ||
+                        localStorage.getItem('profileEditActive') === '1'
+                    );
+                }
+            } catch(err) {}
+
+            if (hasUnsaved) {
+                /* Show styled modal instead of browser confirm */
+                var modal = document.createElement('div');
+                modal.id = 'ess-nav-modal';
+                modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
+                modal.innerHTML =
+                    '<div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.2);text-align:center;">' +
+                    '<div style="font-size:48px;margin-bottom:12px;">⚠️</div>' +
+                    '<h5 style="font-weight:700;margin-bottom:8px;color:#1a1a2e;">Unsaved Changes</h5>' +
+                    '<p style="color:#555;margin-bottom:24px;font-size:14px;">You have unsaved changes on this tab. What would you like to do?</p>' +
+                    '<div style="display:flex;gap:12px;justify-content:center;">' +
+                    '<button id="ess-nav-discard" class="btn btn-outline-danger" style="font-weight:600;min-width:120px;">Discard &amp; Leave</button>' +
+                    '<button id="ess-nav-stay" class="btn btn-primary" style="font-weight:600;min-width:120px;">Stay &amp; Save</button>' +
+                    '</div></div>';
+                document.body.appendChild(modal);
+
+                document.getElementById('ess-nav-stay').addEventListener('click', function() {
+                    modal.remove();
+                });
+
+                document.getElementById('ess-nav-discard').addEventListener('click', function() {
+                    modal.remove();
+                    /* Clear all staged data on discard */
+                    try {
+                        localStorage.removeItem('ess_exp_staging');
+                        localStorage.removeItem('ess_cert_pending');
+                        localStorage.removeItem('profileEditActive');
+                        localStorage.removeItem('profileDraft');
+                        /* Flag to prevent beforeunload from re-setting profileEditActive */
+                        sessionStorage.setItem('ess_discarded', '1');
+                    } catch(ex) {}
+                    /* Reset edit mode so essHasUnsavedChanges returns false */
+                    try {
+                        if (typeof window.essHasUnsavedChanges === 'function') {
+                            window.essHasUnsavedChanges = function() { return false; };
+                        }
+                        if (typeof disableEditMode === 'function') disableEditMode();
+                        if (typeof window.essClearLocalStage === 'function') window.essClearLocalStage();
+                    } catch(ex) {}
+                    window.location.href = dest;
+                });
+            } else {
+                try { if (typeof window.essSaveBeforeNav === 'function') window.essSaveBeforeNav(); } catch(err) {}
+                window.location.href = dest;
+            }
+        });
+    });
+
+    /* Photo upload */
+    var photoInput = document.getElementById('photoUploadInput');
+    if (photoInput) {
+        photoInput.addEventListener('change', function() {
+            if (!this.files || !this.files[0]) return;
+            var file = this.files[0];
+            var statusEl = document.getElementById('photoUploadStatus');
+            var imgEl    = document.getElementById('employeePhotoImg');
+            if (file.size > 5*1024*1024) {
+                statusEl.innerHTML = '<span class="text-danger">File too large. Max 5MB.</span>'; return;
+            }
+            statusEl.innerHTML = '<span class="text-muted"><i class="fa fa-spinner fa-spin me-1"></i>Uploading...</span>';
+            var fd = new FormData(); fd.append('photo', file);
+            fetch('/my/employee/upload-photo', {method:'POST', body:fd})
+                .then(function(r){ return r.json(); })
+                .then(function(data){
+                    if (data.success) {
+                        imgEl.src = data.image_url + '?t=' + Date.now();
+                        imgEl.classList.remove('opacity-50');
+                        statusEl.innerHTML = '<span style="color:#2C5832;"><i class="fa fa-check me-1"></i>Photo updated!</span>';
+                        setTimeout(function(){ statusEl.innerHTML=''; }, 3000);
+                    } else {
+                        statusEl.innerHTML = '<span class="text-danger">'+(data.error||'Upload failed')+'</span>';
+                    }
+                }).catch(function(){ statusEl.innerHTML='<span class="text-danger">Upload failed.</span>'; });
+        });
+    }
+
+});
+
+window.essShowTab    = essShowTab;
+
+})();
+//]]>
+                </script>
+
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_employee_profile_orgchart">
+        <t t-call="employee_self_service_portal.portal_employee_profile_base">
+            <t t-set="section" t-value="'orgchart'"/>
+            <t t-set="section_content">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0" style="color:#2B2B6B;"><i class="fa fa-sitemap me-2" style="color:#E74C2D;"></i>Organization Chart</h5>
+                    </div>
+                    <div class="card-body p-4" style="background:#ffffff;">
+                        <div style="overflow-x:auto;">
+                            <div class="d-flex flex-column align-items-center" style="min-width:300px;">
+                                <t t-if="employee.parent_id">
+                                    <div class="d-flex justify-content-center">
+                                        <div class="org-node org-manager">
+                                            <div>
+                                                <img t-if="employee.parent_id.image_1920"
+                                                     t-attf-src="/web/image/hr.employee/{{employee.parent_id.id}}/image_1920/50x50"
+                                                     class="rounded-circle" style="width:48px;height:48px;object-fit:cover;" alt="Manager"/>
+                                                <div t-else="" class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                     style="width:48px;height:48px;background:#E74C2D;color:#fff;font-size:18px;font-weight:700;">
+                                                    <t t-esc="(employee.parent_id.name or 'M')[0]"/>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="org-name" style="color:#E74C2D;"><t t-esc="employee.parent_id.name"/></div>
+                                                <div class="org-role"><t t-esc="employee.parent_id.job_title or employee.parent_id.job_id.name or 'Manager'"/></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="width:2px;height:28px;background:#ced4da;margin:0 auto;"></div>
+                                </t>
+                                <div class="d-flex justify-content-center">
+                                    <div class="org-node org-self">
+                                        <div>
+                                            <img t-if="employee.image_1920"
+                                                 t-attf-src="/web/image/hr.employee/{{employee.id}}/image_1920/50x50"
+                                                 class="rounded-circle" style="width:48px;height:48px;object-fit:cover;" alt="You"/>
+                                            <div t-else="" class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                 style="width:48px;height:48px;background:#2B2B6B;color:#fff;font-size:18px;font-weight:700;">
+                                                <t t-esc="(employee.name or 'E')[0]"/>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="org-name" style="color:#2B2B6B;"><t t-esc="employee.name"/></div>
+                                            <div class="org-role"><t t-esc="employee.job_title or employee.job_id.name or ''"/></div>
+                                            <span style="display:inline-block;background:#2B2B6B;color:#fff;border-radius:4px;font-size:10px;padding:1px 6px;margin-top:2px;">You</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <t t-if="employee.child_ids">
+                                    <div style="width:2px;height:28px;background:#ced4da;margin:0 auto;"></div>
+                                    <div class="d-flex flex-wrap justify-content-center" style="gap:16px;">
+                                        <t t-foreach="employee.child_ids" t-as="child">
+                                            <div class="d-flex flex-column align-items-center">
+                                                <div style="width:2px;height:20px;background:#ced4da;"></div>
+                                                <div class="org-node org-child">
+                                                    <div>
+                                                        <img t-if="child.image_1920"
+                                                             t-attf-src="/web/image/hr.employee/{{child.id}}/image_1920/50x50"
+                                                             class="rounded-circle" style="width:42px;height:42px;object-fit:cover;" alt="Report"/>
+                                                        <div t-else="" class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                             style="width:42px;height:42px;background:#2C5832;color:#fff;font-size:16px;font-weight:700;">
+                                                            <t t-esc="(child.name or 'S')[0]"/>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="org-name" style="color:#2C5832;"><t t-esc="child.name"/></div>
+                                                        <div class="org-role"><t t-esc="child.job_title or child.job_id.name or ''"/></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </t>
+                                <t t-if="not employee.parent_id and not employee.child_ids">
+                                    <p class="text-muted text-center mt-3"><i class="fa fa-info-circle me-1"></i>No organizational hierarchy configured.</p>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

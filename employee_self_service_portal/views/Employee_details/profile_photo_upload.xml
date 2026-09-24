@@ -1,0 +1,65 @@
+<odoo>
+    <template id="portal_employee_profile_base_photo_upload"
+              inherit_id="employee_self_service_portal.portal_employee_profile_base">
+        <!--  Replace the avatar div  -->
+        <xpath expr="//div[contains(@class,'col-md-4') and contains(@class,'text-center')]/div[contains(@class,'position-relative')]"
+               position="replace">
+            <div class="position-relative mb-3" style="display:inline-block;">
+                <img t-if="employee.image_1920" t-attf-src="/web/image/hr.employee/{{employee.id}}/image_1920/150x150"
+                     id="employeePhotoImg" class="rounded-circle shadow"
+                     style="width:120px;height:120px;object-fit:cover;" alt="Employee Photo"/>
+                <img t-else="" src="/web/static/src/img/avatar.png" id="employeePhotoImg"
+                     class="rounded-circle shadow opacity-50" style="width:120px;height:120px;object-fit:cover;"
+                     alt="Default Avatar"/>
+                <!--  Camera upload button  -->
+                <label for="photoUploadInput"
+                       style="position:absolute;bottom:4px;right:4px; background:#6f42c1;border-radius:50%; width:34px;height:34px; display:flex;align-items:center;justify-content:center; cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.35); border:2px solid #fff;"
+                       title="Upload Photo">
+                    <i class="fa fa-camera text-white" style="font-size:13px;"/>
+                </label>
+                <input type="file" id="photoUploadInput" accept="image/jpeg,image/png,image/gif" style="display:none;"/>
+            </div>
+            <!--  Status message  -->
+            <div id="photoUploadStatus" class="small mt-1" style="min-height:18px;"/>
+        </xpath>
+        <!--  Inject JS before closing style tag  -->
+        <xpath expr="//style" position="after">
+            <script type="text/javascript">
+                document.addEventListener('DOMContentLoaded', function () { const input =
+                document.getElementById('photoUploadInput'); if (!input) return; input.addEventListener('change',
+                function () { if (!this.files || !this.files[0]) return; const file = this.files[0]; const statusEl =
+                document.getElementById('photoUploadStatus'); const imgEl = document.getElementById('employeePhotoImg');
+                // Client-side size check (5MB) if (file.size > 5 * 1024 * 1024) { statusEl.innerHTML = '
+                <span class="text-danger">
+                    <i class="fa fa-times-circle me-1"/>
+                    File too large. Max 5MB.
+                </span>
+                '; return; } statusEl.innerHTML = '
+                <span class="text-muted">
+                    <i class="fa fa-spinner fa-spin me-1"/>
+                    Uploading...
+                </span>
+                '; const formData = new FormData(); formData.append('photo', file); fetch('/my/employee/upload-photo', {
+                method: 'POST', body: formData, }) .then(function(res) { return res.json(); }) .then(function(data) { if
+                (data.success) { statusEl.innerHTML = '
+                <span class="text-success">
+                    <i class="fa fa-check-circle me-1"/>
+                    Photo updated!
+                </span>
+                '; // Update image src without page reload imgEl.src = data.image_url + '?t=' + Date.now(); imgEl.alt =
+                'Employee Photo'; imgEl.classList.remove('opacity-50'); // Clear status after 3s setTimeout(function() {
+                statusEl.innerHTML = ''; }, 3000); } else { statusEl.innerHTML = '
+                <span class="text-danger">
+                    <i class="fa fa-times-circle me-1"/>
+                    ' + data.error + '
+                </span>
+                '; } }) .catch(function() { statusEl.innerHTML = '
+                <span class="text-danger">
+                    <i class="fa fa-times-circle me-1"/>
+                    Upload failed. Try again.
+                </span>
+                '; }); }); });
+            </script>
+        </xpath>
+    </template>
+</odoo>

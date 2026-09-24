@@ -1,0 +1,30 @@
+<odoo>
+  <template id="portal_employee_profile_bank">
+    <t t-call="employee_self_service_portal.portal_employee_profile_base">
+      <t t-set="section" t-value="'bank'"/>
+      <t t-set="section_content">
+        <form action="/my/employee/bank" method="post" class="card p-3">
+          <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+          <div class="row mb-2">
+            <div class="col-md-4">
+              <label>Bank Name</label>
+              <input type="text" name="bank_name" class="form-control" t-att-value="employee.bank_name" data-always-readonly="1"
+       readonly="readonly"/>
+            </div>
+            <div class="col-md-4">
+              <label>Account Number</label>
+              <input type="text" name="bank_account_no" class="form-control" t-att-value="employee.bank_account_no" data-always-readonly="1"
+       readonly="readonly"/>
+            </div>
+            <div class="col-md-4">
+              <label>IFSC</label>
+              <input type="text" name="ifsc_code" class="form-control" t-att-value="employee.ifsc_code" data-always-readonly="1"
+       readonly="readonly"/>
+            </div>
+          </div>
+<!--          <button type="submit" class="btn btn-primary mt-3">Save</button>-->
+        </form>
+      </t>
+    </t>
+  </template>
+</odoo>

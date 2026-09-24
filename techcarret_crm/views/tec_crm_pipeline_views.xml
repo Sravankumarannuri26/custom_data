@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!--Tree view for adding deal and forecast category fields-->
+    <record id="techcarrot_crm_pipeline_inherit_tree_view" model="ir.ui.view">
+        <field name="name">crm.pipeline.list</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='stage_id']" position="after">
+                <field name="deal_category"/>
+                <field name="forecast_category"/>
+            </xpath>
+        </field>
+    </record>
+    <!--Pipeline form view to add fields after tag_ids field-->
+    <record id="techcarrot_crm_pipeline_inherit_form_view" model="ir.ui.view">
+        <field name="name">crm.pipeline.form</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='tag_ids']" position="after">
+                <field name="industry_id"/>
+                <field name="ist_member_id"/>
+                <field name="lead_status_id" options="{'no_open': True, 'no_create': True}"/>
+                <field name="referrer" widget="url"/>
+                <field name="type_id"/>
+                <field name="tec_title" invisible="1"/>
+            </xpath>
+            <!--Added only in xml as we are going hide the contact info group from extra info tab-->
+            <xpath expr="//group[@name='opportunity_partner']" position="inside">
+                <field name="partner_name"/>
+                <label for="street" string="Address"/>
+                <div class="o_address_format">
+                    <field name="street" placeholder="Street..." class="o_address_street"/>
+                    <field name="street2" placeholder="Street 2..." class="o_address_street"/>
+                    <field name="city" placeholder="City" class="o_address_city"/>
+                    <field name="state_id" class="o_address_state" placeholder="State"
+                           options="{&quot;no_open&quot;: True}"/>
+                    <field name="zip" placeholder="ZIP" class="o_address_zip"/>
+                    <field name="country_id" placeholder="Country" class="o_address_country"
+                           options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}"/>
+                </div>
+                <field name="website" widget="url" placeholder="e.g. https://www.odoo.com"/>
+                <field name="lang_active_count" invisible="1"/>
+                <field name="lang_code" invisible="1"/>
+                <field name="lang_id" invisible="lang_active_count &lt;= 1"
+                       options="{'no_quick_create': True, 'no_create_edit': True, 'no_open': True}"/>
+                <field name="converted_acc_id"/>
+                <field name="converted_deal_id"/>
+                <field name="currency_id"/>
+                <field name="annual_revenue"/>
+                <field name="description"/>
+                <field name="brief_about_lead"/>
+            </xpath>
+            <!--Pipeline adding a fields before user id field-->
+            <xpath expr="//field[@name='user_id']" position="before">
+                <label for="contact_name"/>
+                <div class="o_row">
+                    <field name="contact_name"/>
+                    <field name="title" placeholder="Title" domain="[]" options='{"no_open": True}'/>
+                </div>
+                <field name="first_name"/>
+                <field name="last_name"/>
+                <field name="email_from"/>
+                <field name="function"/>
+                <field name="phone"/>
+                <field name="mobile" widget="phone" string="Mobile"/>
+            </xpath>
+        </field>
+    </record>
+    <!--Removing Contact info group from extra info tab in pipeline-->
+    <record id="techcarret_crm_group_view_inherit" model="ir.ui.view">
+        <field name="name">techcarret.crm.group.view.inherit</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='lead']" position="replace">
+                <page name="lead" string="Extra Information" invisible="type == 'lead'">
+                    <group>
+                        <group string="Marketing">
+                            <field name="campaign_id" options="{'create_name_field': 'title'}"/>
+                            <field name="medium_id"/>
+                            <field name="source_id"/>
+                            <field name="referred"/>
+                        </group>
+                        <group string="Tracking" name="Misc">
+                            <field name="company_id"
+                                   groups="base.group_multi_company"
+                                   options="{'no_create': True}"/>
+                            <field name="day_open"/>
+                            <field name="day_close"/>
+                            <field name="type" invisible="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+    <!--Hide email and phone field from pipeline left side-->
+    <record id="view_opportunity_partner_inherit" model="ir.ui.view">
+        <field name="name">opportunity.partner.inherit</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//label[@for='email_from']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='email_from']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//label[@for='phone']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='phone']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='description']" position="before">
+                <field name="team_id" options="{'no_open': True, 'no_create': True}"
+                       context="{'kanban_view_ref': 'sales_team.crm_team_view_kanban'}"/>
+            </xpath>
+            <xpath expr="//field[@name='user_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='team_id']" position="before">
+                <field name="user_id"
+                       context="{'default_sales_team_id': team_id}" widget="many2one_avatar_user"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!--Lead-->
+    <record id="techcarrot_crm_lead_inherit_form_view" model="ir.ui.view">
+        <field name="name">crm.lead.form</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='website']" position="after">
+                <field name="converted_acc_id"/>
+                <field name="converted_deal_id"/>
+                <field name="currency_id"/>
+                <field name="annual_revenue"/>
+            </xpath>
+            <!--<xpath expr="//field[@name='team_id']" position="after">
+                <field name="description"/>
+                <field name="brief_about_lead"/>
+            </xpath>-->
+            <xpath expr="//form/sheet/group/group[3]/div" position="after">
+                <field name="first_name"/>
+                <field name="last_name"/>
+            </xpath>
+            <xpath expr="//group[@name='lead_priority']" position="inside">
+                <field name="industry_id" options="{'no_open': True, 'no_create': True}"/>
+                <field name="ist_member_id" options="{'no_open': True, 'no_create': True}"/>
+                <field name="lead_status_id" options="{'no_open': True, 'no_create': True}"/>
+                <field name="referrer" widget="url"/>
+                <field name="description"/>
+                <field name="brief_about_lead"/>
+                <field name="tec_title" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

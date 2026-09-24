@@ -1,0 +1,207 @@
+
+{
+  "timeZone": "Asia/Kolkata",
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "dataStudio": {
+    "name": "Learning Odoo Connector",
+    "company": "Your Company Name",
+    "companyUrl": "http://techcarrotstaging.odoo.com",
+    "addonUrl": "http://techcarrotstaging.odoo.com",
+    "supportUrl": "http://techcarrotstaging.odoo.com/support",
+    "description": "Learning Odoo",
+    "logoUrl": "https://techcarrotstaging.odoo.com/web/binary/company_logo"
+  },
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "DOMAIN"
+  }
+}
+
+var cc = DataStudioApp.createCommunityConnector();
+
+function getAuthType() {
+  return cc.newAuthTypeResponse()
+           .setAuthType(cc.AuthType.NONE)
+           .build();
+}
+
+function isAuthValid() {
+  return true;
+}
+
+function getConfig() {
+  var config = cc.getConfig();
+
+  config.newTextInput()
+    .setId('apiUrl')
+    .setName('API URL')
+    .setHelpText('Enter your API endpoint');
+
+  config.newTextInput()
+    .setId('apiKey')
+    .setName('API Key or Bearer Token')
+    .setHelpText('Enter your API key or token (will be used in the Authorization header)');
+
+  config.newTextInput()
+    .setId('query')
+    .setName('SQL')
+    .setHelpText('Get data from Odoo RPC or your custom query');
+
+  return config.build();
+}
+
+// Auto-detect and assign correct Looker Studio field type
+function detectFieldType(value) {
+  var types = cc.FieldType;
+
+  if (typeof value === 'number') {
+    return types.NUMBER;
+  } else if (typeof value === 'boolean') {
+    return types.BOOLEAN;
+  } else if (typeof value === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+      return types.YEAR_MONTH_DAY_HOUR;
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return types.YEAR_MONTH_DAY;
+    } else {
+      return types.TEXT;
+    }
+  } else {
+    return types.TEXT;
+  }
+}
+
+function getSchema(request) {
+  var apiUrl = request.configParams.apiUrl;
+  var apiKey = request.configParams.apiKey;
+  var query = request.configParams.query;
+
+  if (!apiUrl || !apiKey || !query) {
+    throw new Error("API URL, Key, and Query are required.");
+  }
+
+  var headers = {
+    'Authorization': apiKey,
+    'ApiQuery': query
+  };
+
+  var response = UrlFetchApp.fetch(apiUrl, {
+    headers: headers,
+    muteHttpExceptions: true
+  });
+
+  if (response.getResponseCode() !== 200) {
+    throw new Error("API error: " + response.getResponseCode() + " - " + response.getContentText());
+  }
+
+  var data = JSON.parse(response.getContentText());
+
+  if (!Array.isArray(data)) {
+    throw new Error("Expected JSON array in response.");
+  }
+
+  var types = cc.FieldType;
+  var fields = cc.getFields();
+  var firstRow = data[0] || {};
+
+  for (var key in firstRow) {
+    if (!firstRow.hasOwnProperty(key)) continue;
+
+    var value = firstRow[key];
+    var type = detectFieldType(value);
+
+    if (type === types.NUMBER) {
+      fields.newMetric().setId(key).setName(key).setType(type);
+    } else {
+      fields.newDimension().setId(key).setName(key).setType(type);
+    }
+  }
+
+  return { schema: fields.build() };
+}
+
+function getData(request) {
+  var apiUrl = request.configParams.apiUrl;
+  var apiKey = request.configParams.apiKey;
+  var query = request.configParams.query;
+
+  if (!apiUrl || !apiKey || !query) {
+    throw new Error("API URL, Key, and Query are required.");
+  }
+
+  var headers = {
+    'Authorization': apiKey,
+    'ApiQuery': query
+  };
+
+  var response = UrlFetchApp.fetch(apiUrl, {
+    headers: headers,
+    muteHttpExceptions: true
+  });
+
+  if (response.getResponseCode() !== 200) {
+    throw new Error("API error: " + response.getResponseCode() + " - " + response.getContentText());
+  }
+
+  var data = JSON.parse(response.getContentText());
+
+  if (!Array.isArray(data)) {
+    throw new Error("Expected JSON array in response.");
+  }
+
+  var types = cc.FieldType;
+  var fields = cc.getFields();
+  var firstRow = data[0] || {};
+
+  request.fields.forEach(function(field) {
+    var value = firstRow[field.name];
+    var type = detectFieldType(value);
+
+    if (type === types.NUMBER) {
+      fields.newMetric().setId(field.name).setName(field.name).setType(type);
+    } else {
+      fields.newDimension().setId(field.name).setName(field.name).setType(type);
+    }
+  });
+
+  var schema = fields.build();
+
+  var rows = data.map(function(item) {
+    var rowValues = request.fields.map(function(field) {
+      var v = item[field.name];
+
+      if (typeof v === 'boolean') {
+        return v ? 'true' : 'false';
+      }
+
+      // Reformat ISO 8601 datetime (e.g., "2025-01-14T06:23:59") to "2025011406"
+      if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(v)) {
+        var match = v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2})/);
+        if (match) {
+          return match[1] + match[2] + match[3] + match[4]; // YYYYMMDDHH
+        }
+      }
+
+      return (v === null || v === undefined) ? '' : v;
+    });
+
+    return { values: rowValues };
+  });
+
+  return {
+    schema: schema,
+    rows: rows
+  };
+}
+
+function isAdminUser() {
+  return true;
+}
+
+function doGet(request) {
+  return cc.handleRequest(request);
+}

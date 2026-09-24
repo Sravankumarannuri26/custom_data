@@ -1,0 +1,21 @@
+{
+    'name': 'Compliance Tracker',
+    'version': '1.0',
+    'category': 'Operations',
+    'depends': ['base', 'mail'],
+    "images": "/static/description/icon.png",
+    'data': [
+        'security/security_groups.xml',
+        'security/ir.model.access.csv',
+        'security/ir_rule.xml',
+        'data/email_templates.xml',
+        'data/ir_cron.xml',
+        'views/compliance_task_views.xml',
+        'views/compliance_project_views.xml',
+        'views/company_configuration_views.xml',
+        'views/compliance_menus.xml',
+    ],
+    'application': True,
+    "installable": True,
+    "license": "LGPL-3",
+}

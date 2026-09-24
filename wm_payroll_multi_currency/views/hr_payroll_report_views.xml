@@ -1,0 +1,31 @@
+<!-- Copyright 2020 CorTex IT Solutions Ltd. (<https://cortexsolutions.net/>)-->
+<!-- License OPL-1-->
+
+<odoo>
+    <data>
+
+        <record id="hr_payroll_report_view_tree_inherit_multi_currency" model="ir.ui.view">
+            <field name="name">payroll.report.tree.inherit.multi.currency</field>
+            <field name="model">hr.payroll.report</field>
+            <field name="inherit_id" ref="hr_payroll.hr_payroll_report_view_tree"/>
+            <field name="arch" type="xml">
+                <field name='net_wage' position="after">
+                    <field name="currency_id" optional="show"/>
+                </field>
+            </field>
+        </record>
+
+        <record id="hr_payroll_report_view_search_inherit_multi_currency" model="ir.ui.view">
+            <field name="name">payroll.report.search.inherit.multi.currency</field>
+            <field name="model">hr.payroll.report</field>
+            <field name="inherit_id" ref="hr_payroll.payroll_report_view_search"/>
+            <field name="arch" type="xml">
+                <filter name='company' position="after">
+                    <filter name="group_by_currency" string="Currency" domain="[]"
+                            context="{'group_by':'currency_id'}"/>
+                </filter>
+            </field>
+        </record>
+
+    </data>
+</odoo>

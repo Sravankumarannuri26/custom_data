@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_azure_license_config_all,azure.license.config.all,model_azure_license_config,base.group_user,1,0,0,0
+access_azure_license_config_manager,azure.license.config.manager,model_azure_license_config,hr.group_hr_manager,1,1,1,1
+access_azure_license_config_officer,azure.license.config.officer,model_azure_license_config,hr.group_hr_user,1,1,1,0
+access_employee_code_wizard_user,access_employee_code_wizard_user,model_employee_code_generation_wizard,hr.group_hr_user,1,1,1,1
+access_employee_code_wizard_manager,access_employee_code_wizard_manager,model_employee_code_generation_wizard,hr.group_hr_manager,1,1,1,1

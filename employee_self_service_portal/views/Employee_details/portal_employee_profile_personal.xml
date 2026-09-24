@@ -1,0 +1,2406 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_employee_profile_personal">
+        <t t-call="employee_self_service_portal.portal_employee_profile_base">
+            <t t-set="section" t-value="'personal'"/>
+            <t t-set="section_content">
+
+                <!-- ══ HR Notification Banner ══ -->
+                <t t-if="notification">
+                    <div t-attf-class="alert alert-{{notification['type']}} alert-dismissible fade show shadow-sm mb-4"
+                         role="alert" style="border-left: 5px solid; border-radius: 8px;">
+                        <t t-if="notification['type'] == 'success'">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3" style="font-size:28px;">✅</div>
+                                <div class="flex-grow-1">
+                                    <h5 class="alert-heading mb-1">Profile Update Approved</h5>
+                                    <p class="mb-1">
+                                        <t t-out="notification['message']"/>
+                                    </p>
+                                    <hr class="my-2"/>
+                                    <small class="text-muted">
+                                        <i class="fa fa-info-circle me-1"></i>Reference:
+                                        <strong t-esc="notification['request_name']"/>
+                                        — Your profile is now up to date.
+                                    </small>
+                                </div>
+                            </div>
+                        </t>
+                        <t t-if="notification['type'] == 'danger'">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3" style="font-size:28px;">❌</div>
+                                <div class="flex-grow-1">
+                                    <h5 class="alert-heading mb-1">Profile Update Rejected</h5>
+                                    <p class="mb-1">
+                                        <t t-out="notification['message']"/>
+                                    </p>
+                                    <div class="p-2 mt-2 rounded"
+                                         style="background:rgba(220,53,69,0.1);border-left:3px solid #dc3545;">
+                                        <strong>Rejection Reason:</strong>
+                                        <span t-esc="notification['reason']"/>
+                                    </div>
+                                    <hr class="my-2"/>
+                                    <small class="text-muted">
+                                        <i class="fa fa-info-circle me-1"></i>Reference:
+                                        <strong t-esc="notification['request_name']"/>
+                                        — Please correct and resubmit.
+                                    </small>
+                                </div>
+                            </div>
+                        </t>
+                        <t t-if="notification['type'] == 'warning'">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3" style="font-size:28px;">⏳</div>
+                                <div class="flex-grow-1">
+                                    <h5 class="alert-heading mb-1">Profile Update Pending Review</h5>
+                                    <p class="mb-1">
+                                        <t t-out="notification['message']"/>
+                                    </p>
+                                    <hr class="my-2"/>
+                                    <small class="text-muted">
+                                        <i class="fa fa-info-circle me-1"></i>Reference:
+                                        <strong t-esc="notification['request_name']"/>
+                                        — HR will notify you once reviewed.
+                                    </small>
+                                </div>
+                            </div>
+                        </t>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+                    </div>
+                </t>
+
+                <t t-if="portal_overlay and notification">
+                    <div class="alert alert-info alert-dismissible fade show mb-3"
+                         style="border-left:4px solid #2B2B6B;border-radius:6px;">
+                        <i class="fa fa-info-circle me-2"></i>
+                        <t t-if="notification.get('type') == 'danger'">
+                            <strong>Note:</strong>
+                            The values shown below are from your
+                            <span style="color:#E74C2D;font-weight:bold;">rejected submission</span>.
+                            Your actual employee record has <strong>not been changed</strong>. Please correct and
+                            resubmit.
+                        </t>
+                        <t t-if="notification.get('type') == 'warning'">
+                            <strong>Note:</strong>
+                            The values shown below are from your
+                            <span style="color:#2B2B6B;font-weight:bold;">pending submission</span>
+                            currently awaiting HR review.
+                        </t>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"/>
+                    </div>
+                </t>
+
+                <t t-if="notification and notification.get('type') == 'warning'">
+                    <div id="pendingLockBanner" class="alert alert-warning mb-3"
+                         style="border-left:4px solid #ffc107;border-radius:6px;">
+                        <i class="fa fa-lock me-2"></i>
+                        <strong>Editing Locked:</strong>
+                        You have a profile update currently pending HR review.
+                        Editing is disabled until HR approves or rejects your request.
+                    </div>
+                </t>
+
+                <t t-set="all_countries" t-value="request.env['res.country'].sudo().search([], order='name')"/>
+
+                <!-- ===== MAIN FORM ===== -->
+                <form id="personalDetailsForm" action="/my/employee/personal" method="post"
+                      enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                    <!-- ===== TAB NAVIGATION ===== -->
+                    <ul class="nav nav-tabs mb-4 profile-tab-navigation" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link profile-tab-button active" data-tab-target="basic"
+                                    aria-selected="true">
+                                <i class="fa fa-user me-1"></i>Basic Info
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link profile-tab-button" data-tab-target="professional"
+                                    aria-selected="false">
+                                <i class="fa fa-briefcase me-1"></i>Professional
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link profile-tab-button" data-tab-target="family"
+                                    aria-selected="false">
+                                <i class="fa fa-users me-1"></i>Family
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link profile-tab-button" data-tab-target="education"
+                                    aria-selected="false">
+                                <i class="fa fa-graduation-cap me-1"></i>Education
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link profile-tab-button" data-tab-target="documents"
+                                    aria-selected="false">
+                                <i class="fa fa-folder-open me-1"></i>Documents
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- ============================================================ -->
+                    <!--  TAB: BASIC INFO                                              -->
+                    <!-- ============================================================ -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="basic">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fa fa-user text-primary me-2"></i>Basic Information
+                            </h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input edit-mode-toggle" type="checkbox"
+                                       id="editModeBasic" onchange="syncAndToggleEditMode(this)"/>
+                                <label class="form-check-label" for="editModeBasic">Edit Mode</label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Employee First Name</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.employee_first_name or ''" data-always-readonly="1"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Employee Middle Name</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.employee_middle_name or ''" data-always-readonly="1"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Employee Last Name</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.employee_last_name or ''" data-always-readonly="1"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Employee Name (English)</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.employee_name_english or ''" data-always-readonly="1"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Employment Type</label>
+                                    <input type="text" class="form-control" t-att-value="employee.employment_type or ''"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Engagement Location</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.engagement_location or ''" data-always-readonly="1"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Payroll</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.payroll_location or ''" data-always-readonly="1"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Currency</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.currency_id.name or ''" data-always-readonly="1"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="fa fa-envelope text-muted me-1"></i>Work
+                                        Email
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="email" class="form-control" t-att-value="employee.work_email"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="fa fa-phone text-muted me-1"></i>Work
+                                        Phone
+                                    </label>
+                                    <input type="tel" name="work_phone" class="form-control"
+                                           t-att-value="portal_overlay.get('work_phone') or employee.work_phone or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Nationality</label>
+                                    <select name="country_id" class="form-select" disabled="disabled">
+                                        <option value="">-- Select Country --</option>
+                                        <t t-foreach="countries" t-as="country">
+                                            <option t-att-value="country.id"
+                                                    t-att-selected="'selected' if country.id == employee.country_id.id else None">
+                                                <t t-esc="country.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="basic">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-info-circle text-primary me-2"></i>Personal Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Legal Name</label>
+                                    <input name="legal_name" class="form-control"
+                                           t-att-value="portal_overlay.get('legal_name') or employee.legal_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Place of Birth</label>
+                                    <input name="place_of_birth" class="form-control"
+                                           t-att-value="portal_overlay.get('place_of_birth') or employee.place_of_birth or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Marital Status</label>
+                                    <t t-set="marital_val"
+                                       t-value="portal_overlay.get('marital') or employee.marital or ''"/>
+                                    <select name="marital" class="form-select" disabled="disabled">
+                                        <option value="">Select Status</option>
+                                        <option value="single"
+                                                t-att-selected="'selected' if marital_val == 'single' else None">
+                                            Single
+                                        </option>
+                                        <option value="married"
+                                                t-att-selected="'selected' if marital_val == 'married' else None">
+                                            Married
+                                        </option>
+                                        <option value="cohabitant"
+                                                t-att-selected="'selected' if marital_val == 'cohabitant' else None">
+                                            Legal Cohabitant
+                                        </option>
+                                        <option value="widower"
+                                                t-att-selected="'selected' if marital_val == 'widower' else None">
+                                            Widower
+                                        </option>
+                                        <option value="divorced"
+                                                t-att-selected="'selected' if marital_val == 'divorced' else None">
+                                            Divorced
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Nationality At Birth</label>
+                                    <select name="nationality_at_birth_id" class="form-select" disabled="disabled">
+                                        <option value="">-- Select Country --</option>
+                                        <t t-foreach="countries" t-as="country">
+                                            <option t-att-value="country.id"
+                                                    t-att-selected="'selected' if country.id == employee.nationality_at_birth_id.id else None">
+                                                <t t-esc="country.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-venus-mars text-muted me-1"></i>
+                                        Gender
+                                    </label>
+                                    <select name="sex" class="form-select" data-always-readonly="1" disabled="disabled">
+                                        <option value="">Select Gender</option>
+                                        <option value="male"
+                                                t-att-selected="'selected' if employee.sex == 'male' else None">Male
+                                        </option>
+                                        <option value="female"
+                                                t-att-selected="'selected' if employee.sex == 'female' else None">Female
+                                        </option>
+                                        <option value="other"
+                                                t-att-selected="'selected' if employee.sex == 'other' else None">Other
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-calendar text-muted me-1"></i>Date of Birth
+                                    </label>
+                                    <t t-set="dob_val"
+                                       t-value="portal_overlay.get('birthday') or (str(employee.birthday) if employee.birthday else '')"/>
+                                    <input type="date" name="birthday" class="form-control"
+                                           t-att-value="dob_val"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-envelope text-muted me-1"></i>
+                                        Personal Email
+                                    </label>
+                                    <input type="email" name="private_email" class="form-control"
+                                           t-att-value="portal_overlay.get('private_email') or employee.private_email or ''"
+                                           readonly="readonly" data-validation="email"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-phone text-muted me-1"></i>
+                                        Personal Phone
+                                    </label>
+                                    <input type="tel" name="private_phone" class="form-control"
+                                           t-att-value="portal_overlay.get('private_phone') or employee.private_phone or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">WhatsApp</label>
+                                    <input type="text" name="whatsapp" class="form-control"
+                                           t-att-value="portal_overlay.get('whatsapp') or employee.whatsapp or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Blood Group</label>
+                                    <t t-set="bg_val"
+                                       t-value="portal_overlay.get('blood_group') or employee.blood_group or ''"/>
+                                    <select name="blood_group" class="form-select" disabled="disabled">
+                                        <option value="">-- Select Blood Group --</option>
+                                        <option value="a+" t-att-selected="'selected' if bg_val == 'a+' else None">A+
+                                        </option>
+                                        <option value="a-" t-att-selected="'selected' if bg_val == 'a-' else None">A-
+                                        </option>
+                                        <option value="b+" t-att-selected="'selected' if bg_val == 'b+' else None">B+
+                                        </option>
+                                        <option value="b-" t-att-selected="'selected' if bg_val == 'b-' else None">B-
+                                        </option>
+                                        <option value="ab+" t-att-selected="'selected' if bg_val == 'ab+' else None">
+                                            AB+
+                                        </option>
+                                        <option value="ab-" t-att-selected="'selected' if bg_val == 'ab-' else None">
+                                            AB-
+                                        </option>
+                                        <option value="o+" t-att-selected="'selected' if bg_val == 'o+' else None">O+
+                                        </option>
+                                        <option value="o-" t-att-selected="'selected' if bg_val == 'o-' else None">O-
+                                        </option>
+                                        <option value="unknown"
+                                                t-att-selected="'selected' if bg_val == 'unknown' else None">Unknown
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Religion</label>
+                                    <t t-set="rel_id"
+                                       t-value="int(portal_overlay.get('religion', 0) or 0) or employee.religion.id or 0"/>
+                                    <select name="religion" class="form-select" disabled="disabled">
+                                        <option value="">-- Select Religion --</option>
+                                        <t t-foreach="religions" t-as="rel">
+                                            <option t-att-value="rel.id"
+                                                    t-att-selected="'selected' if rel.id == rel_id else None">
+                                                <t t-esc="rel.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Identity Documents -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="basic"
+                         id="identityDocsSection">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-id-card text-primary me-2"></i>Identity Documents
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-passport text-muted me-1"></i>
+                                        Passport Number
+                                    </label>
+                                    <input type="text" name="passport_id" class="form-control"
+                                           t-att-value="portal_overlay.get('passport_id') or employee.passport_id or ''"
+                                           readonly="readonly" data-validation="alphanumeric"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-globe text-muted me-1"></i>
+                                        Passport Issuing Country
+                                    </label>
+                                    <t t-set="pic_id"
+                                       t-value="int(portal_overlay.get('issue_countries_id', 0) or 0) or employee.issue_countries_id.id or 0"/>
+                                    <select name="issue_countries_id" class="form-select" disabled="disabled">
+                                        <option value="">-- Select Country --</option>
+                                        <t t-foreach="countries" t-as="country">
+                                            <option t-att-value="country.id"
+                                                    t-att-selected="'selected' if country.id == pic_id else None">
+                                                <t t-esc="country.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-calendar text-muted me-1"></i>
+                                        Passport Issue Date
+                                    </label>
+                                    <input type="date" name="issue_date" class="form-control"
+                                           t-att-value="portal_overlay.get('issue_date') or employee.issue_date or ''"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i
+                                            class="fa fa-calendar-times text-muted me-1"></i>Passport Expiry Date
+                                    </label>
+                                    <input type="date" name="expiry_date" class="form-control"
+                                           t-att-value="portal_overlay.get('expiry_date') or (employee.expiry_date.strftime('%Y-%m-%d') if employee.expiry_date else '')"
+                                           readonly="readonly" data-validation="future-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Identification No</label>
+                                    <input name="identification_id" class="form-control"
+                                           t-att-value="portal_overlay.get('identification_id') or employee.identification_id or ''"
+                                           readonly="readonly" data-validation="alphanumeric"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Letters and digits only</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Aadhar Number</label>
+                                    <input type="text" name="aadhar_no" class="form-control"
+                                           t-att-value="portal_overlay.get('aadhar_no') or employee.aadhar_no or ''"
+                                           readonly="readonly" data-validation="aadhar"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">12 digits only</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">PAN</label>
+                                    <input type="text" name="pan" class="form-control"
+                                           t-att-value="portal_overlay.get('pan') or employee.pan or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">UAN</label>
+                                    <input type="text" class="form-control" t-att-value="employee.uan or ''"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">PF Number</label>
+                                    <input type="text" class="form-control" t-att-value="employee.pf_number or ''"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visa and Work Permit -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="basic"
+                         id="visaWorkPermitSection">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-file-text text-primary me-2"></i>Visa &amp; Work Permit
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-id-badge text-muted me-1"></i>
+                                        Emirates ID
+                                    </label>
+                                    <input type="text" name="emirates_id_number" class="form-control"
+                                           t-att-value="portal_overlay.get('emirates_id_number') or employee.emirates_id_number or ''"
+                                           readonly="readonly" data-validation="emirates-id"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Enter your unique 15-digit UAE Emirates ID number</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i
+                                            class="fa fa-calendar-times text-muted me-1"></i>Emirates ID Expiry
+                                    </label>
+                                    <input type="date" name="emirates_expiry_date" class="form-control"
+                                           t-att-value="portal_overlay.get('emirates_expiry_date') or employee.emirates_expiry_date or ''"
+                                           readonly="readonly" data-validation="future-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Visa No</label>
+                                    <input name="visa_no" class="form-control"
+                                           t-att-value="portal_overlay.get('visa_no') or employee.visa_no or ''"
+                                           readonly="readonly" data-validation="alphanumeric"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Letters and digits only</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Work Permit No</label>
+                                    <input name="permit_no" class="form-control"
+                                           t-att-value="portal_overlay.get('permit_no') or employee.permit_no or ''"
+                                           readonly="readonly" data-validation="alphanumeric"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Letters and digits only</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Permanent Address -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="basic">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-address-book text-primary me-2"></i>Permanent Address
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-map-marker text-muted me-1"></i>
+                                        Address Line 1
+                                    </label>
+                                    <input type="text" name="private_street" class="form-control"
+                                           t-att-value="portal_overlay.get('private_street') or employee.private_street or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-map-marker text-muted me-1"></i>
+                                        Address Line 2
+                                    </label>
+                                    <input type="text" name="private_street2" class="form-control"
+                                           t-att-value="portal_overlay.get('private_street2') or employee.private_street2 or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">City</label>
+                                    <input type="text" name="private_city" class="form-control"
+                                           t-att-value="portal_overlay.get('private_city') or employee.private_city or ''"
+                                           readonly="readonly"/>
+                                </div>
+
+                                <!--
+                                    FIX CHANGE 1: Permanent Address Country
+                                    OLD BUG: t-att-selected used employee.countries_id.id (work location country — WRONG field)
+                                    FIX: Uses employee.private_country_id.id (correct permanent address country field)
+                                    Also supports portal_overlay pre-selection for pending/rejected state display.
+                                -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Country</label>
+                                    <t t-set="perm_country_id"
+                                       t-value="int(portal_overlay.get('private_country_id') or 0) if portal_overlay.get('private_country_id') else (employee.private_country_id.id if employee.private_country_id else 0)"/>
+                                    <select name="private_country_id" id="permanentCountryDropdown"
+                                            class="form-select" disabled="disabled"
+                                            onchange="loadStatesByCountry(this.value, 'permanentStateDropdown')">
+                                        <option value="">-- Select Country --</option>
+                                        <t t-foreach="countries" t-as="country">
+                                            <option t-att-value="country.id"
+                                                    t-att-selected="'selected' if country.id == perm_country_id else None">
+                                                <t t-esc="country.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+
+                                <!--
+                                    FIX CHANGE 2: Permanent Address State
+                                    OLD BUG: data-saved-country used employee.countries_id.id (wrong — work location country)
+                                             data-saved-value always used employee.private_state_id.id (ignored portal_overlay)
+                                    FIX: data-saved-country now uses employee.private_country_id.id (correct field)
+                                         data-saved-value prefers portal_overlay value so pending/rejected state shows correctly
+                                -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">State</label>
+                                    <t t-set="perm_state_saved"
+                                       t-value="int(portal_overlay.get('private_state_id') or 0) if portal_overlay.get('private_state_id') else (employee.private_state_id.id if employee.private_state_id else 0)"/>
+                                    <t t-set="perm_country_saved"
+                                       t-value="int(portal_overlay.get('private_country_id') or 0) if portal_overlay.get('private_country_id') else (employee.private_country_id.id if employee.private_country_id else 0)"/>
+                                    <select name="private_state_id" id="permanentStateDropdown"
+                                            class="form-select" disabled="disabled"
+                                            t-att-data-saved-value="perm_state_saved"
+                                            t-att-data-saved-country="perm_country_saved">
+                                        <option value="">-- Select State --</option>
+                                        <t t-if="employee.private_state_id">
+                                            <option t-att-value="employee.private_state_id.id" selected="selected">
+                                                <t t-esc="employee.private_state_id.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                    <small class="text-muted">Select Country first to load states</small>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">ZIP/Postal Code</label>
+                                    <input type="text" name="private_zip" class="form-control"
+                                           t-att-value="portal_overlay.get('private_zip') or employee.private_zip or ''"
+                                           readonly="readonly" data-validation="digits-only"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Media -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="basic">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-share-alt text-primary me-2"></i>Social Media Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">LinkedIn</label>
+                                    <input type="text" name="linkedin" class="form-control"
+                                           t-att-value="portal_overlay.get('linkedin') or employee.linkedin or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Facebook Profile</label>
+                                    <input type="text" name="facebook_profile" class="form-control"
+                                           t-att-value="portal_overlay.get('facebook_profile') or employee.facebook_profile or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Instagram Profile</label>
+                                    <input type="text" name="insta_profile" class="form-control"
+                                           t-att-value="portal_overlay.get('insta_profile') or employee.insta_profile or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Twitter Profile</label>
+                                    <input type="text" name="twitter_profile" class="form-control"
+                                           t-att-value="portal_overlay.get('twitter_profile') or employee.twitter_profile or ''"
+                                           readonly="readonly"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!--  TAB: PROFESSIONAL                                            -->
+                    <!-- ============================================================ -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="professional">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fa fa-briefcase text-primary me-2"></i>Work Information
+                            </h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input edit-mode-toggle" type="checkbox"
+                                       id="editModeProfessional" onchange="syncAndToggleEditMode(this)"/>
+                                <label class="form-check-label" for="editModeProfessional">Edit Mode</label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Company</label>
+                                    <input type="text" class="form-control" t-att-value="employee.company_id.name"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Employee Code</label>
+                                    <input type="text" class="form-control" t-att-value="employee.emp_code"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Department</label>
+                                    <input type="text" class="form-control" t-att-value="employee.department_id.name"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Job Position</label>
+                                    <input type="text" class="form-control" t-att-value="employee.job_id.name"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Job Title</label>
+                                    <input type="text" class="form-control" t-att-value="employee.job_title"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Account Manager</label>
+                                    <input type="text" class="form-control" t-att-value="employee.parent_id.name"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Employment Status</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.employment_status_id.name if employee.employment_status_id else ''"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Practice</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.practice.name if employee.practice else ''"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Sub Practice</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.sub_practice.name if employee.sub_practice else ''"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Practice Head</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.practice_heads_id.name if employee.practice_heads_id else ''"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Work Location -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="professional">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-map-marker text-primary me-2"></i>Work Location
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Work Address</label>
+                                    <input type="text" class="form-control" t-att-value="employee.address_id.name or ''"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Work Location</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.work_location_id.name or ''" data-always-readonly="1"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">House Number and Building Name</label>
+                                    <input type="text" name="house_no" class="form-control"
+                                           t-att-value="portal_overlay.get('house_no') or employee.house_no or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Area / Town Name</label>
+                                    <input type="text" name="area_name" class="form-control"
+                                           t-att-value="portal_overlay.get('area_name') or employee.area_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">City</label>
+                                    <input type="text" name="city" class="form-control"
+                                           t-att-value="portal_overlay.get('city') or employee.city or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Country</label>
+                                    <select name="countries_id" id="workLocationCountryDropdown"
+                                            class="form-select" disabled="disabled"
+                                            onchange="loadStatesByCountry(this.value, 'workLocationStateDropdown')">
+                                        <option value="">-- Select Country --</option>
+                                        <t t-foreach="countries" t-as="country">
+                                            <option t-att-value="country.id"
+                                                    t-att-selected="'selected' if country.id == employee.countries_id.id else None">
+                                                <t t-esc="country.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">State</label>
+                                    <select name="states_id" id="workLocationStateDropdown"
+                                            class="form-select" disabled="disabled"
+                                            t-att-data-saved-value="employee.states_id.id if employee.states_id else 0"
+                                            t-att-data-saved-country="employee.countries_id.id if employee.countries_id else 0">
+                                        <option value="">-- Select State --</option>
+                                        <t t-if="employee.states_id">
+                                            <option t-att-value="employee.states_id.id" selected="selected">
+                                                <t t-esc="employee.states_id.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                    <small class="text-muted">Select Country first to load states</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Zip Code</label>
+                                    <input type="text" name="zip_code" class="form-control"
+                                           t-att-value="portal_overlay.get('zip_code') or employee.zip_code or ''"
+                                           readonly="readonly" data-validation="digits-only"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="professional">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-info-circle text-primary me-2"></i>General Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Employee Inside UAE</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="'Yes' if employee.emp_inside_uae else 'No'"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Current / Additional Role</label>
+                                    <input type="text" name="current_role" class="form-control"
+                                           t-att-value="portal_overlay.get('current_role') or employee.current_role or ''"
+                                           readonly="readonly"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="professional">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-building text-primary me-2"></i>Last Organisation Info
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Organisation Name</label>
+                                    <input type="text" name="last_organisation_name" class="form-control"
+                                           t-att-value="portal_overlay.get('last_organisation_name') or employee.last_organisation_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Location</label>
+                                    <input type="text" name="last_location" class="form-control"
+                                           t-att-value="portal_overlay.get('last_location') or employee.last_location or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Salary Per Annum Currency</label>
+                                    <input type="text" name="last_salary_per_annum_currency" class="form-control"
+                                           t-att-value="portal_overlay.get('last_salary_per_annum_currency') or employee.last_salary_per_annum_currency or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Salary Per Annum Amount</label>
+                                    <input type="number" name="last_salary_per_annum_amt" class="form-control"
+                                           t-att-value="portal_overlay.get('last_salary_per_annum_amt') or employee.last_salary_per_annum_amt or ''"
+                                           readonly="readonly" min="0" step="0.01"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Reason for Leaving</label>
+                                    <input type="text" name="reason_for_leaving" class="form-control"
+                                           t-att-value="portal_overlay.get('reason_for_leaving') or employee.reason_for_leaving or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Reporting Manager Name</label>
+                                    <input type="text" name="last_report_manager_name" class="form-control"
+                                           t-att-value="portal_overlay.get('last_report_manager_name') or employee.last_report_manager_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Reporting Manager Designation</label>
+                                    <input type="text" name="last_report_manager_designation" class="form-control"
+                                           t-att-value="portal_overlay.get('last_report_manager_designation') or employee.last_report_manager_designation or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Last Reporting Manager Mobile</label>
+                                    <input type="tel" name="last_report_manager_mob_no" class="form-control"
+                                           t-att-value="portal_overlay.get('last_report_manager_mob_no') or employee.last_report_manager_mob_no or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Reporting Manager Email</label>
+                                    <input type="email" name="last_report_manager_mail" class="form-control"
+                                           t-att-value="portal_overlay.get('last_report_manager_mail') or employee.last_report_manager_mail or ''"
+                                           readonly="readonly" data-validation="email"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="professional">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-user-circle text-primary me-2"></i>Employee Nominee &amp;
+                                Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Nominee Name</label>
+                                    <input type="text" name="employee_nominee_name" class="form-control"
+                                           t-att-value="portal_overlay.get('employee_nominee_name') or employee.employee_nominee_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Nominee Contact Number</label>
+                                    <input type="tel" name="employee_nominee_contact_no" class="form-control"
+                                           t-att-value="portal_overlay.get('employee_nominee_contact_no') or employee.employee_nominee_contact_no or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Career Details -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="professional">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-history text-primary me-2"></i>Career Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">No. of Career Break</label>
+                                    <input type="text" name="no_of_career_break" class="form-control"
+                                           t-att-value="portal_overlay.get('no_of_career_break') or employee.no_of_career_break or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Career Break</label>
+                                    <input type="text" name="career_break" class="form-control"
+                                           t-att-value="portal_overlay.get('career_break') or employee.career_break or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Career Break Detail</label>
+                                    <input type="text" name="career_break_detail" class="form-control"
+                                           t-att-value="portal_overlay.get('career_break_detail') or employee.career_break_detail or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Career Break Start Date</label>
+                                    <input type="date" name="career_break_start_date" class="form-control"
+                                           t-att-value="portal_overlay.get('career_break_start_date') or (employee.career_break_start_date.strftime('%Y-%m-%d') if employee.career_break_start_date else '')"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Career Break End Date</label>
+                                    <input type="date" name="career_break_end_date" class="form-control"
+                                           t-att-value="portal_overlay.get('career_break_end_date') or (employee.career_break_end_date.strftime('%Y-%m-%d') if employee.career_break_end_date else '')"
+                                           readonly="readonly"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="professional">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-industry text-primary me-2"></i>Industry Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Reference Name</label>
+                                    <input type="text" name="industry_ref_name" class="form-control"
+                                           t-att-value="portal_overlay.get('industry_ref_name') or employee.industry_ref_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Reference Email</label>
+                                    <input type="email" name="industry_ref_email" class="form-control"
+                                           t-att-value="portal_overlay.get('industry_ref_email') or employee.industry_ref_email or ''"
+                                           readonly="readonly" data-validation="email"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Reference Mobile</label>
+                                    <input type="tel" name="industry_ref_mob_no" class="form-control"
+                                           t-att-value="portal_overlay.get('industry_ref_mob_no') or employee.industry_ref_mob_no or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Previous Company Name</label>
+                                    <input type="text" name="previous_company_name" class="form-control"
+                                           t-att-value="portal_overlay.get('previous_company_name') or employee.previous_company_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Designation</label>
+                                    <input type="text" name="designation" class="form-control"
+                                           t-att-value="portal_overlay.get('designation') or employee.designation or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Period in Company</label>
+                                    <input type="text" name="period_in_company" class="form-control"
+                                           t-att-value="portal_overlay.get('period_in_company') or employee.period_in_company or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Industry Start Date</label>
+                                    <input type="date" name="industry_start_date" class="form-control"
+                                           t-att-value="portal_overlay.get('industry_start_date') or (employee.industry_start_date.strftime('%Y-%m-%d') if employee.industry_start_date else '')"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Years of Experience</label>
+                                    <input type="text" name="experience" class="form-control"
+                                           t-att-value="portal_overlay.get('experience') or employee.experience or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Home Country ID Name</label>
+                                    <input type="text" name="home_country_id_name" class="form-control"
+                                           t-att-value="portal_overlay.get('home_country_id_name') or employee.home_country_id_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Home Country ID Number</label>
+                                    <input type="text" name="home_country_id_number" class="form-control"
+                                           t-att-value="portal_overlay.get('home_country_id_number') or employee.home_country_id_number or ''"
+                                           readonly="readonly" data-validation="alphanumeric"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Letters and digits only</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!--  TAB: FAMILY                                                  -->
+                    <!-- ============================================================ -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="family">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fa fa-ambulance text-primary me-2"></i>Emergency Contact
+                            </h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input edit-mode-toggle" type="checkbox"
+                                       id="editModeFamily" onchange="syncAndToggleEditMode(this)"/>
+                                <label class="form-check-label" for="editModeFamily">Edit Mode</label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Country Code</label>
+                                    <select name="phone_code_1" class="form-select" disabled="disabled">
+                                        <option value="">-- Select --</option>
+                                        <t t-foreach="isd_codes" t-as="isd">
+                                            <option t-att-value="isd[0]"
+                                                    t-att-selected="'selected' if (portal_overlay.get('phone_code_1') or employee.phone_code_1 or '') == isd[0] else None">
+                                                <t t-esc="isd[1]"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                    <small class="text-muted">Select country dial code</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-phone text-muted me-1"></i>
+                                        Emergency Contact Phone
+                                    </label>
+                                    <input type="tel" name="emergency_phone" class="form-control"
+                                           t-att-value="portal_overlay.get('emergency_phone') or employee.emergency_phone or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Emergency Address</label>
+                                    <input type="text" name="e_private_city" class="form-control"
+                                           t-att-value="portal_overlay.get('e_private_city') or employee.e_private_city or ''"
+                                           readonly="readonly"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Contact Person -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="family">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-ambulance text-primary me-2"></i>Emergency Contact Person
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Contact Person Name</label>
+                                    <input type="text" name="emergency_contact_person_name" class="form-control"
+                                           t-att-value="portal_overlay.get('emergency_contact_person_name') or employee.emergency_contact_person_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+
+                                <!--
+                                    FIX CHANGE 3: Relationship with Employee
+                                    Field: relationship_with_emp_id = fields.Many2one('employee.relationship')
+                                    OLD BUG: Was a plain text <input> — wrong for Many2one field.
+                                             Submitting text string can't save to a Many2one field.
+                                    FIX: Changed to <select> dropdown using 'relationships' context variable
+                                         (loaded in controller from employee.relationship model).
+                                         portal_overlay pre-selection handled via rel_selected_id.
+                                         Fallback to readonly text if relationships list is empty.
+                                -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Relationship with Employee</label>
+                                    <t t-set="rel_overlay_id"
+                                       t-value="int(portal_overlay.get('relationship_with_emp_id') or 0) if portal_overlay.get('relationship_with_emp_id') else 0"/>
+                                    <t t-set="rel_current_id"
+                                       t-value="employee.relationship_with_emp_id.id if employee.relationship_with_emp_id else 0"/>
+                                    <t t-set="rel_selected_id"
+                                       t-value="rel_overlay_id if rel_overlay_id else rel_current_id"/>
+                                    <t t-if="relationships">
+                                        <select name="relationship_with_emp_id" class="form-select" disabled="disabled">
+                                            <option value="">-- Select Relationship --</option>
+                                            <t t-foreach="relationships" t-as="rel">
+                                                <option t-att-value="rel.id"
+                                                        t-att-selected="'selected' if rel.id == rel_selected_id else None">
+                                                    <t t-esc="rel.name"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </t>
+                                    <t t-else="">
+                                        <input type="text" class="form-control"
+                                               t-att-value="employee.relationship_with_emp_id.name if employee.relationship_with_emp_id else ''"
+                                               readonly="readonly"/>
+                                    </t>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Contact Person Phone</label>
+                                    <input type="tel" name="emergency_contact_person_phone" class="form-control"
+                                           t-att-value="portal_overlay.get('emergency_contact_person_phone') or employee.emergency_contact_person_phone or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Alternate Mobile Number</label>
+                                    <input type="tel" name="alternate_mobile_number" class="form-control"
+                                           t-att-value="portal_overlay.get('alternate_mobile_number') or employee.alternate_mobile_number or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Contact Person Name (1)</label>
+                                    <input type="text" name="emergency_contact_person_name_1" class="form-control"
+                                           t-att-value="portal_overlay.get('emergency_contact_person_name_1') or employee.emergency_contact_person_name_1 or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Relationship with Employee (1)</label>
+                                    <input type="text" name="second_relation_with_employee" class="form-control"
+                                           t-att-value="portal_overlay.get('second_relation_with_employee') or employee.second_relation_with_employee or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Contact Person Phone (1)</label>
+                                    <input type="tel" name="emergency_contact_person_phone_1" class="form-control"
+                                           t-att-value="portal_overlay.get('emergency_contact_person_phone_1') or employee.emergency_contact_person_phone_1 or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Second Alternative Number</label>
+                                    <input type="tel" name="second_alternative_number" class="form-control"
+                                           t-att-value="portal_overlay.get('second_alternative_number') or employee.second_alternative_number or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Home Land Line Number</label>
+                                    <input type="tel" name="home_land_line_no" class="form-control"
+                                           t-att-value="portal_overlay.get('home_land_line_no') or employee.home_land_line_no or ''"
+                                           readonly="readonly" data-validation="phone"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only, optional leading + for country code</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="family">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-heart text-primary me-2"></i>Spouse Info
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Spouse Passport No</label>
+                                    <input type="text" name="spouse_passport_no" class="form-control"
+                                           t-att-value="portal_overlay.get('spouse_passport_no') or employee.spouse_passport_no or ''"
+                                           readonly="readonly" data-validation="alphanumeric"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Passport Issue Date</label>
+                                    <input type="date" name="spouse_passport_issue_date" class="form-control"
+                                           t-att-value="portal_overlay.get('spouse_passport_issue_date') or (employee.spouse_passport_issue_date.strftime('%Y-%m-%d') if employee.spouse_passport_issue_date else '')"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Passport Expiry Date</label>
+                                    <input type="date" name="spouse_passport_expiry_date" class="form-control"
+                                           t-att-value="portal_overlay.get('spouse_passport_expiry_date') or (employee.spouse_passport_expiry_date.strftime('%Y-%m-%d') if employee.spouse_passport_expiry_date else '')"
+                                           readonly="readonly" data-validation="future-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Passport Issuing Country</label>
+                                    <t t-set="spouse_ppt_country_id"
+                                       t-value="int(portal_overlay.get('spouse_passport_issuing_countries_id') or 0) if portal_overlay.get('spouse_passport_issuing_countries_id') else (employee.spouse_passport_issuing_countries_id.id if employee.spouse_passport_issuing_countries_id else 0)"/>
+                                    <select name="spouse_passport_issuing_countries_id" class="form-select"
+                                            disabled="disabled">
+                                        <option value="">-- Select Country --</option>
+                                        <t t-foreach="countries" t-as="country">
+                                            <option t-att-value="country.id"
+                                                    t-att-selected="'selected' if country.id == spouse_ppt_country_id else None">
+                                                <t t-esc="country.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Visa No</label>
+                                    <input type="text" name="spouse_visa_no" class="form-control"
+                                           t-att-value="portal_overlay.get('spouse_visa_no') or employee.spouse_visa_no or ''"
+                                           readonly="readonly" data-validation="alphanumeric"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Visa Expiration Date</label>
+                                    <input type="date" name="spouse_visa_expire_date" class="form-control"
+                                           t-att-value="portal_overlay.get('spouse_visa_expire_date') or (employee.spouse_visa_expire_date.strftime('%Y-%m-%d') if employee.spouse_visa_expire_date else '')"
+                                           readonly="readonly" data-validation="future-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Emirates ID Number</label>
+                                    <input type="text" name="spouse_emirates_id_no" class="form-control"
+                                           t-att-value="portal_overlay.get('spouse_emirates_id_no') or employee.spouse_emirates_id_no or ''"
+                                           readonly="readonly" data-validation="emirates-id"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Emirates Issue Date</label>
+                                    <input type="date" name="spouse_emirates_issue_date" class="form-control"
+                                           t-att-value="portal_overlay.get('spouse_emirates_issue_date') or (employee.spouse_emirates_issue_date.strftime('%Y-%m-%d') if employee.spouse_emirates_issue_date else '')"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Emirates ID Expiry Date</label>
+                                    <input type="date" name="spouse_emirates_id_expiry_date" class="form-control"
+                                           t-att-value="portal_overlay.get('spouse_emirates_id_expiry_date') or (employee.spouse_emirates_id_expiry_date.strftime('%Y-%m-%d') if employee.spouse_emirates_id_expiry_date else '')"
+                                           readonly="readonly" data-validation="future-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Aadhar Number</label>
+                                    <input type="text" name="spouse_aadhar_no" class="form-control"
+                                           t-att-value="portal_overlay.get('spouse_aadhar_no') or employee.spouse_aadhar_no or ''"
+                                           readonly="readonly" data-validation="aadhar"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">12 digits only</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="family">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-child text-primary me-2"></i>Dependent Details (Child 1)
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Name</label>
+                                    <input type="text" name="dependent_child_name_1" class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_name_1') or employee.dependent_child_name_1 or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 DOB</label>
+                                    <input type="date" name="dependent_child_dob_1" class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_dob_1') or employee.dependent_child_dob_1 or ''"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Gender</label>
+                                    <t t-set="child1_gender_val"
+                                       t-value="portal_overlay.get('dependent_child_gender_1') or employee.dependent_child_gender_1 or ''"/>
+                                    <select name="dependent_child_gender_1" class="form-select" disabled="disabled">
+                                        <option value="">Select Gender</option>
+                                        <option value="male"
+                                                t-att-selected="'selected' if child1_gender_val == 'male' else None">
+                                            Male
+                                        </option>
+                                        <option value="female"
+                                                t-att-selected="'selected' if child1_gender_val == 'female' else None">
+                                            Female
+                                        </option>
+                                        <option value="other"
+                                                t-att-selected="'selected' if child1_gender_val == 'other' else None">
+                                            Other
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Passport No</label>
+                                    <input type="text" name="dependent_child_passport_no" class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_passport_no') or employee.dependent_child_passport_no or ''"
+                                           readonly="readonly" data-validation="alphanumeric"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Passport Issue Date</label>
+                                    <input type="date" name="dependent_child_passport_issue_date_1" class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_passport_issue_date_1') or employee.dependent_child_passport_issue_date_1 or ''"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Passport Expiry Date</label>
+                                    <input type="date" name="dependent_child_passport_expiry_date_1"
+                                           class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_passport_expiry_date_1') or employee.dependent_child_passport_expiry_date_1 or ''"
+                                           readonly="readonly" data-validation="future-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Passport Issuing Country</label>
+                                    <t t-set="child1_ppt_country_id"
+                                       t-value="int(portal_overlay.get('dependent_child_passport_issuing_countries_1_id') or 0) if portal_overlay.get('dependent_child_passport_issuing_countries_1_id') else (employee.dependent_child_passport_issuing_countries_1_id.id if employee.dependent_child_passport_issuing_countries_1_id else 0)"/>
+                                    <select name="dependent_child_passport_issuing_countries_1_id" class="form-select"
+                                            disabled="disabled">
+                                        <option value="">-- Select Country --</option>
+                                        <t t-foreach="all_countries" t-as="country">
+                                            <option t-att-value="country.id"
+                                                    t-att-selected="'selected' if country.id == child1_ppt_country_id else None">
+                                                <t t-esc="country.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Visa No</label>
+                                    <input type="text" name="dependent_child_visa_no_1" class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_visa_no_1') or employee.dependent_child_visa_no_1 or ''"
+                                           readonly="readonly" data-validation="alphanumeric"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Visa Expiration Date</label>
+                                    <input type="date" name="dependent_child_visa_expiration_date_1"
+                                           class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_visa_expiration_date_1') or employee.dependent_child_visa_expiration_date_1 or ''"
+                                           readonly="readonly" data-validation="future-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Emirates ID Number</label>
+                                    <input type="text" name="dependent_child_emirates_id_no_1" class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_emirates_id_no_1') or employee.dependent_child_emirates_id_no_1 or ''"
+                                           readonly="readonly" data-validation="emirates-id"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Emirates ID Issue Date</label>
+                                    <input type="date" name="dependent_child_emirates_id_issue_date_1"
+                                           class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_emirates_id_issue_date_1') or employee.dependent_child_emirates_id_issue_date_1 or ''"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Emirates ID Expiry Date</label>
+                                    <input type="date" name="dependent_child_emirates_id_expiry_date_1"
+                                           class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_emirates_id_expiry_date_1') or employee.dependent_child_emirates_id_expiry_date_1 or ''"
+                                           readonly="readonly" data-validation="future-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Child 1 Aadhar Number</label>
+                                    <input type="text" name="dependent_child_aadhar_no_1" class="form-control"
+                                           t-att-value="portal_overlay.get('dependent_child_aadhar_no_1') or employee.dependent_child_aadhar_no_1 or ''"
+                                           readonly="readonly" data-validation="aadhar"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">12 digits only</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="family">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-users text-primary me-2"></i>Family
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Disabled</label>
+                                    <input class="form-control" t-att-value="'Yes' if employee.disabled else 'No'"
+                                           data-always-readonly="1" readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Dependent Children</label>
+                                    <input name="children" class="form-control"
+                                           t-att-value="portal_overlay.get('children') or employee.children or ''"
+                                           readonly="readonly" data-validation="digits-only"/>
+                                    <div class="invalid-feedback"></div>
+                                    <small class="text-muted">Digits only</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Dependent Status</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.dependent_status or ''" data-always-readonly="1"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Father Name</label>
+                                    <input type="text" name="father_name" class="form-control"
+                                           t-att-value="portal_overlay.get('father_name') or employee.father_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Father DOB</label>
+                                    <input type="date" name="father_dob" class="form-control"
+                                           t-att-value="portal_overlay.get('father_dob') or (employee.father_dob.strftime('%Y-%m-%d') if employee.father_dob else '')"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Father Nationality</label>
+                                    <select name="father_nationalities_id" class="form-select" disabled="disabled">
+                                        <option value="">-- Select Country --</option>
+                                        <t t-foreach="countries" t-as="country">
+                                            <option t-att-value="country.id"
+                                                    t-att-selected="'selected' if country.id == employee.father_nationalities_id.id else None">
+                                                <t t-esc="country.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Mother Name</label>
+                                    <input type="text" name="mother_name" class="form-control"
+                                           t-att-value="portal_overlay.get('mother_name') or employee.mother_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Mother DOB</label>
+                                    <input type="date" name="mother_dob" class="form-control"
+                                           t-att-value="portal_overlay.get('mother_dob') or (employee.mother_dob.strftime('%Y-%m-%d') if employee.mother_dob else '')"
+                                           readonly="readonly" data-validation="past-date"/>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Mother Nationality</label>
+                                    <select name="mother_nationalities_id" class="form-select" disabled="disabled">
+                                        <option value="">-- Select Country --</option>
+                                        <t t-foreach="countries" t-as="country">
+                                            <option t-att-value="country.id"
+                                                    t-att-selected="'selected' if country.id == employee.mother_nationalities_id.id else None">
+                                                <t t-esc="country.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Dependent Status (1)</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="employee.dependent_status_1 or ''" data-always-readonly="1"
+                                           readonly="readonly"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="family">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fa fa-language text-primary me-2"></i>Languages
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Mother Tongue</label>
+                                    <input type="text" name="mother_tongue_name" class="form-control"
+                                           t-att-value="portal_overlay.get('mother_tongue_name') or employee.mother_tongue_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Languages Known</label>
+                                    <input type="text" name="language_known_name" class="form-control"
+                                           t-att-value="portal_overlay.get('language_known_name') or employee.language_known_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!--  TAB: EDUCATION                                               -->
+                    <!-- ============================================================ -->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="education">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fa fa-graduation-cap text-primary me-2"></i>Employee Education
+                                Details
+                            </h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input edit-mode-toggle" type="checkbox" id="editModeEducation"
+                                       onchange="syncAndToggleEditMode(this)"/>
+                                <label class="form-check-label" for="editModeEducation">Edit Mode</label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Institution Name</label>
+                                    <input type="text" name="institute_name" class="form-control"
+                                           t-att-value="portal_overlay.get('institute_name') or employee.institute_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Degree Name</label>
+                                    <input type="text" name="degree_name" class="form-control"
+                                           t-att-value="portal_overlay.get('degree_name') or employee.degree_name or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Field of Study</label>
+                                    <input type="text" name="field_of_study" class="form-control"
+                                           t-att-value="portal_overlay.get('field_of_study') or employee.field_of_study or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Study Field (Other)</label>
+                                    <input name="study_field" class="form-control"
+                                           t-att-value="portal_overlay.get('study_field') or employee.study_field or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Start Date of Degree</label>
+                                    <input type="date" name="start_date_of_degree" class="form-control"
+                                           t-att-value="portal_overlay.get('start_date_of_degree') or (employee.start_date_of_degree.strftime('%Y-%m-%d') if employee.start_date_of_degree else '')"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Completion Date of Degree</label>
+                                    <input type="date" name="completion_date_of_degree" class="form-control"
+                                           t-att-value="portal_overlay.get('completion_date_of_degree') or (employee.completion_date_of_degree.strftime('%Y-%m-%d') if employee.completion_date_of_degree else '')"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Year of Passing</label>
+                                    <select name="year_of_passing" class="form-select" disabled="disabled">
+                                        <option value="">-- Select Year --</option>
+                                        <t t-foreach="range(2030, 1959, -1)" t-as="yr">
+                                            <option t-att-value="str(yr)"
+                                                    t-att-selected="'selected' if str(employee.year_of_passing or '') == str(yr) else None">
+                                                <t t-out="yr"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                    <small class="text-muted">Select your year of passing</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Score</label>
+                                    <input type="text" name="score" class="form-control"
+                                           t-att-value="portal_overlay.get('score') or employee.score or ''"
+                                           readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Degree Certificate Legalisation</label>
+                                    <input type="text" class="form-control"
+                                           t-att-value="'Yes' if employee.degree_certificate_legal else 'No'"
+                                           readonly="readonly"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================ -->
+                    <!--  TAB: DOCUMENTS                                               -->
+                    <!-- ============================================================ -->
+                    <!--
+=======================================================================
+COMPLETE DOCUMENTS TAB CARD — replace the entire documents tab card
+in portal_employee_profile_personal.xml
+
+ALL document URLs now use /my/employee/document/<field> route
+which reads with sudo() to bypass ACL restrictions (fixes 404 on
+has_work_permit and any other restricted binary fields).
+=======================================================================
+-->
+                    <div class="card mb-4 shadow-sm profile-tab-section" data-tab-group="documents">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fa fa-folder-open text-primary me-2"></i>Document Management
+                            </h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input edit-mode-toggle" type="checkbox" id="editModeDocuments"
+                                       onchange="syncAndToggleEditMode(this)"/>
+                                <label class="form-check-label" for="editModeDocuments">Edit Mode</label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+
+                                <!-- Emirates ID Copy -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-id-card text-muted me-1"></i>Emirates ID Copy
+                                    </label>
+                                    <t t-if="employee.emirates_id_file">
+                                        <div class="mb-2">
+                                            <a href="/my/employee/document/emirates_id_file?download=True"
+                                               class="btn btn-sm btn-outline-primary me-1" target="_blank">
+                                                <i class="fa fa-download me-1"></i>Download
+                                            </a>
+                                            <a href="/my/employee/document/emirates_id_file"
+                                               class="btn btn-sm btn-outline-secondary" target="_blank">
+                                                <i class="fa fa-eye me-1"></i>View
+                                            </a>
+                                        </div>
+                                    </t>
+                                    <t t-else="">
+                                        <p class="text-muted small mb-1"><i class="fa fa-info-circle me-1"></i>No file
+                                            uploaded yet.
+                                        </p>
+                                    </t>
+                                    <input type="file" name="emirates_id_file" class="form-control file-upload-input"
+                                           accept=".pdf,.jpg,.jpeg,.png" disabled="disabled"/>
+                                    <small class="text-muted">PDF, JPG, PNG accepted</small>
+                                </div>
+
+                                <!-- Passport Copy -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-passport text-muted me-1"></i>Passport Copy
+                                    </label>
+                                    <t t-if="employee.passport_file">
+                                        <div class="mb-2">
+                                            <a href="/my/employee/document/passport_file?download=True"
+                                               class="btn btn-sm btn-outline-primary me-1" target="_blank">
+                                                <i class="fa fa-download me-1"></i>Download
+                                            </a>
+                                            <a href="/my/employee/document/passport_file"
+                                               class="btn btn-sm btn-outline-secondary" target="_blank">
+                                                <i class="fa fa-eye me-1"></i>View
+                                            </a>
+                                        </div>
+                                    </t>
+                                    <t t-else="">
+                                        <p class="text-muted small mb-1"><i class="fa fa-info-circle me-1"></i>No file
+                                            uploaded yet.
+                                        </p>
+                                    </t>
+                                    <input type="file" name="passport_file" class="form-control file-upload-input"
+                                           accept=".pdf,.jpg,.jpeg,.png" disabled="disabled"/>
+                                    <small class="text-muted">PDF, JPG, PNG accepted</small>
+                                </div>
+
+                                <!-- Other Documents -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-file-text text-muted me-1"></i>Other Documents
+                                    </label>
+                                    <t t-if="employee.other_documents">
+                                        <div class="mb-2">
+                                            <a href="/my/employee/document/other_documents?download=True"
+                                               class="btn btn-sm btn-outline-primary me-1" target="_blank">
+                                                <i class="fa fa-download me-1"></i>Download
+                                            </a>
+                                            <a href="/my/employee/document/other_documents"
+                                               class="btn btn-sm btn-outline-secondary" target="_blank">
+                                                <i class="fa fa-eye me-1"></i>View
+                                            </a>
+                                        </div>
+                                    </t>
+                                    <t t-else="">
+                                        <p class="text-muted small mb-1"><i class="fa fa-info-circle me-1"></i>No file
+                                            uploaded yet.
+                                        </p>
+                                    </t>
+                                    <input type="file" name="other_documents" class="form-control file-upload-input"
+                                           accept=".pdf,.jpg,.jpeg,.png" disabled="disabled"/>
+                                    <small class="text-muted">PDF, JPG, PNG accepted</small>
+                                </div>
+
+                                <!-- Work Permit -->
+                                <!--
+                                    FIX Issue 1: Work Permit 404/ACL Error
+                                    OLD: /web/content/hr.employee/ID/has_work_permit
+                                         → Fails with "Access Denied by ACLs" for portal users
+                                    NEW: /my/employee/document/has_work_permit
+                                         → Uses sudo() in our controller to read + stream the file
+                                         → No ACL error, works for all portal users
+                                -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-file text-muted me-1"></i>Work Permit
+                                    </label>
+                                    <t t-if="employee.has_work_permit">
+                                        <div class="mb-2">
+                                            <a href="/my/employee/document/has_work_permit?download=True"
+                                               class="btn btn-sm btn-outline-primary me-1" target="_blank">
+                                                <i class="fa fa-download me-1"></i>Download
+                                            </a>
+                                            <a href="/my/employee/document/has_work_permit"
+                                               class="btn btn-sm btn-outline-secondary" target="_blank">
+                                                <i class="fa fa-eye me-1"></i>View
+                                            </a>
+                                        </div>
+                                    </t>
+                                    <t t-else="">
+                                        <p class="text-muted small mb-1"><i class="fa fa-info-circle me-1"></i>No file
+                                            uploaded yet.
+                                        </p>
+                                    </t>
+                                    <input type="file" name="has_work_permit" class="form-control file-upload-input"
+                                           accept=".pdf,.jpg,.jpeg,.png" disabled="disabled"/>
+                                    <small class="text-muted">PDF, JPG, PNG accepted</small>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== FORM ACTIONS ===== -->
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center">
+                            <div id="formActions" style="display: none;">
+                                <div class="alert alert-warning text-start mb-3"
+                                     style="border-left: 4px solid #ffc107; border-radius: 6px;">
+                                    <div class="form-check d-flex align-items-start gap-2">
+                                        <input type="checkbox" id="personalDisclaimer" class="form-check-input mt-1"
+                                               onchange="toggleSaveBtn('personalDisclaimer','personalSaveBtn')"/>
+                                        <label class="form-check-label" for="personalDisclaimer"
+                                               style="font-size:0.875rem;">
+                                            <strong>Employee Disclaimer</strong>
+                                            – I, hereby confirm that the information updated by me is accurate and
+                                            complete to the best of my knowledge. I agree to keep my data updated at all
+                                            times and consent to the collection and use of such information, for
+                                            employment administration and legal compliances. I acknowledge that any
+                                            false or incomplete information may lead to actions in accordance with
+                                            company policies and applicable laws.
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-secondary me-2" onclick="cancelEdit()">
+                                    <i class="fa fa-times me-1"></i>Cancel
+                                </button>
+                                <button type="button" class="btn btn-info me-2" onclick="saveAsDraft()">
+                                    <i class="fa fa-save me-1"></i>Save as Draft
+                                </button>
+                                <button type="submit" id="personalSaveBtn" class="btn btn-primary" disabled="disabled"
+                                        style="opacity:0.6;">
+                                    <i class="fa fa-check me-1"></i>Submit for HR approval
+                                </button>
+                            </div>
+                            <div id="viewActions">
+                                <p class="text-muted mb-3">
+                                    <i class="fa fa-info-circle me-1"></i>
+                                    Profile last updated:
+                                    <strong id="profileLastUpdated">
+                                        <t t-esc="employee.write_date.strftime('%d %b, %Y at %I:%M %p') if employee.write_date else 'Never'"/>
+                                    </strong>
+                                </p>
+                                <button type="button" id="editProfileBtn" class="btn btn-outline-primary"
+                                        onclick="enableEditMode()">
+                                    <i class="fa fa-edit me-1"></i>Edit Profile
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+
+
+                <!-- ===== JAVASCRIPT (unchanged from doc7) ===== -->
+                <script type="text/javascript">
+                    <![CDATA[
+<!--var PENDING_LOCKED = (function() {-->
+<!--    var banner = document.getElementById('pendingLockBanner');-->
+<!--    return !!banner;-->
+<!--})();-->
+
+var PENDING_LOCKED = true;
+
+let isEditMode = false;
+let originalFormData = {};
+let activeProfileTab = 'basic';
+
+(function fixLastUpdatedTimezone() {
+    var el = document.getElementById('profileLastUpdated');
+    if (!el) return;
+    var raw = el.textContent.trim();
+    if (!raw || raw === 'Never') return;
+    try {
+        raw = raw.replace(/\u00a0/g, ' ').trim();
+        var dt = new Date(raw);
+        if (isNaN(dt.getTime())) {
+            var m = raw.match(/(\d{1,2})\s+(\w+),?\s+(\d{4})\s+at\s+(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (m) {
+                var months = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+                var monIdx = months[m[2].toLowerCase().substring(0,3)];
+                var hr = parseInt(m[4],10);
+                var isPM = m[6].toUpperCase()==='PM';
+                if (isPM && hr < 12) hr += 12;
+                if (!isPM && hr === 12) hr = 0;
+                dt = new Date(Date.UTC(parseInt(m[3],10), monIdx, parseInt(m[1],10), hr, parseInt(m[5],10)));
+            }
+        }
+        if (!isNaN(dt.getTime())) {
+            var opts = { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true };
+            el.textContent = dt.toLocaleString(undefined, opts);
+        }
+    } catch(e) {}
+})();
+
+function loadStatesByCountry(countryId, stateDropdownId) {
+    var stateDropdown = document.getElementById(stateDropdownId);
+    if (!stateDropdown) return;
+    var currentVal = stateDropdown.getAttribute('data-saved-value') || '0';
+    stateDropdown.innerHTML = '<option value="">-- Select State --</option>';
+    if (!countryId || countryId === '0' || countryId === '') return;
+    fetch('/portal/get_states', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', method: 'call', params: { country_id: parseInt(countryId) } })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var states = data.result || [];
+        states.forEach(function(state) {
+            var opt = document.createElement('option');
+            opt.value = state.id;
+            opt.textContent = state.name;
+            if (String(state.id) === String(currentVal)) { opt.selected = true; }
+            stateDropdown.appendChild(opt);
+        });
+        stateDropdown.removeAttribute('data-saved-value');
+    })
+    .catch(function(e) { console.error('Failed to load states:', e); });
+}
+
+function _fetchStates(stateDropdownEl, countryId, savedStateId) {
+    if (!stateDropdownEl || !countryId || countryId === '0') return;
+    stateDropdownEl.setAttribute('data-saved-value', savedStateId || '0');
+    loadStatesByCountry(countryId, stateDropdownEl.id);
+}
+
+function autosaveDraftNow() {
+    if (!isEditMode) return;
+    try {
+        const draftData = {};
+        document.querySelectorAll('#personalDetailsForm input, #personalDetailsForm select').forEach(function(input) {
+            if (input.type === 'hidden' || input.type === 'file') return;
+            if (!input.name) return;
+            draftData[input.name] = input.type === 'checkbox' ? (input.checked ? 'on' : '') : input.value;
+        });
+        localStorage.setItem('profileDraft', JSON.stringify(draftData));
+    } catch(e) { console.error('autosave error', e); }
+}
+
+function switchProfileTab(tabKey) {
+    const previousTab = activeProfileTab;
+    activeProfileTab = tabKey;
+    if (!isEditMode && previousTab && previousTab !== tabKey) { clearValidationStates(previousTab); }
+    document.querySelectorAll('#personalDetailsForm .profile-tab-section').forEach(card => {
+        card.style.display = (card.getAttribute('data-tab-group') === tabKey) ? '' : 'none';
+    });
+    document.querySelectorAll('#personalDetailsForm .profile-tab-button').forEach(btn => {
+        const active = btn.getAttribute('data-tab-target') === tabKey;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+}
+
+function syncAndToggleEditMode(sourceCheckbox) {
+    if (PENDING_LOCKED) { sourceCheckbox.checked = false; alert('Editing is disabled while your profile update is pending HR review.'); return; }
+    document.querySelectorAll('.edit-mode-toggle').forEach(t => { t.checked = sourceCheckbox.checked; });
+    sourceCheckbox.checked ? enableEditMode() : disableEditMode();
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function enableEditMode() {
+    if (PENDING_LOCKED) { alert('Editing is disabled while your profile update is pending HR review.'); return; }
+    isEditMode = true;
+    document.querySelectorAll('.edit-mode-toggle').forEach(t => t.checked = true);
+    storeOriginalFormData();
+    var editBtn = document.getElementById('editProfileBtn');
+    if (editBtn) { editBtn.classList.remove('btn-outline-primary'); editBtn.classList.add('btn-primary', 'edit-active'); editBtn.innerHTML = '<i class="fa fa-pencil me-1"></i>Editing Mode ON'; }
+    document.querySelectorAll('#personalDetailsForm input, #personalDetailsForm select').forEach(input => {
+        if (input.type === 'hidden') return;
+        if (input.classList.contains('edit-mode-toggle')) return;
+        if (input.hasAttribute('data-always-readonly')) {
+            input.setAttribute('readonly', 'readonly');
+            if (input.tagName === 'SELECT' || input.type === 'checkbox') input.setAttribute('disabled', 'disabled');
+            input.style.setProperty('pointer-events', 'none');
+            input.style.setProperty('background-color', '#e9ecef');
+            return;
+        }
+        if (input.type === 'file') { input.removeAttribute('disabled'); return; }
+        input.removeAttribute('readonly'); input.removeAttribute('disabled');
+        input.style.removeProperty('pointer-events'); input.style.removeProperty('background-color');
+    });
+    document.getElementById('formActions').style.display = 'block';
+    document.getElementById('viewActions').style.display = 'none';
+    const disc = document.getElementById('personalDisclaimer');
+    if (disc) disc.checked = false;
+    const btn = document.getElementById('personalSaveBtn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+    document.querySelectorAll('#personalDetailsForm input[type="file"].file-upload-input').forEach(fileInput => {
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) { showFilePreview(this, this.files[0]); }
+            else { this.value = ''; clearFilePreview(this); }
+        });
+    });
+    document.querySelectorAll('#personalDetailsForm input:not([type="file"]), #personalDetailsForm select').forEach(input => {
+        input.removeEventListener('input', validateField); input.removeEventListener('blur', validateField);
+        input.removeEventListener('change', autosaveDraftNow); input.removeEventListener('input', autosaveDraftNow);
+        input.addEventListener('input', validateField); input.addEventListener('blur', validateField);
+        input.addEventListener('input', autosaveDraftNow); input.addEventListener('change', autosaveDraftNow);
+    });
+}
+
+function disableEditMode() {
+    isEditMode = false;
+    localStorage.removeItem('profileEditActive'); localStorage.removeItem('profileDraft');
+    document.querySelectorAll('.edit-mode-toggle').forEach(t => t.checked = false);
+    var editBtn = document.getElementById('editProfileBtn');
+    if (editBtn) { editBtn.classList.remove('btn-primary', 'edit-active'); editBtn.classList.add('btn-outline-primary'); editBtn.innerHTML = '<i class="fa fa-edit me-1"></i>Edit Profile'; }
+    document.querySelectorAll('#personalDetailsForm input, #personalDetailsForm select').forEach(input => {
+        if (input.type === 'hidden') return;
+        if (input.classList.contains('edit-mode-toggle')) return;
+        if (input.hasAttribute('data-always-readonly')) {
+            input.setAttribute('readonly', 'readonly');
+            if (input.tagName === 'SELECT' || input.type === 'checkbox') input.setAttribute('disabled', 'disabled');
+            input.style.setProperty('pointer-events', 'none'); input.style.setProperty('background-color', '#e9ecef');
+            return;
+        }
+        if (input.type === 'file') { input.setAttribute('disabled', 'disabled'); input.value = ''; return; }
+        input.setAttribute('readonly', 'readonly');
+        if (input.tagName === 'SELECT' || input.type === 'checkbox') input.setAttribute('disabled', 'disabled');
+        input.classList.remove('is-valid', 'is-invalid');
+        input.style.removeProperty('pointer-events'); input.style.removeProperty('background-color');
+    });
+    document.getElementById('formActions').style.display = 'none';
+    document.getElementById('viewActions').style.display = 'block';
+    ['basic', 'professional', 'family', 'education', 'documents'].forEach(t => clearValidationStates(t));
+    const disc = document.getElementById('personalDisclaimer');
+    if (disc) disc.checked = false;
+    const btn = document.getElementById('personalSaveBtn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+    hideSaveError();
+}
+
+function toggleSaveBtn(checkboxId, btnId) {
+    const checked = document.getElementById(checkboxId).checked;
+    const btn = document.getElementById(btnId);
+    btn.disabled = !checked; btn.style.opacity = checked ? '1' : '0.6';
+}
+
+function storeOriginalFormData() {
+    originalFormData = {};
+    document.querySelectorAll('#personalDetailsForm input, #personalDetailsForm select').forEach(input => {
+        if (input.type === 'hidden' || input.type === 'file') return;
+        if (!input.name) return;
+        originalFormData[input.name] = input.type === 'checkbox' ? input.checked : input.value;
+    });
+}
+
+function cancelEdit() {
+    Object.entries(originalFormData).forEach(([key, value]) => {
+        const input = document.querySelector(`[name="${key}"]`);
+        if (!input || input.type === 'hidden' || input.type === 'file') return;
+        if (input.type === 'checkbox') { input.checked = value; } else { input.value = value; }
+    });
+    localStorage.removeItem('profileDraft'); localStorage.removeItem('profileEditActive');
+    disableEditMode();
+    showTabMessage(activeProfileTab, 'Changes cancelled.', 'info');
+}
+
+function saveAsDraft() { autosaveDraftNow(); showTabMessage(activeProfileTab, 'Profile saved as draft.', 'info'); }
+
+function showSaveError(html) {
+    let box = document.getElementById('saveErrorBox');
+    if (!box) {
+        box = document.createElement('div'); box.id = 'saveErrorBox'; box.className = 'alert alert-danger';
+        box.style.cssText = 'margin-bottom:12px;border-left:4px solid #dc3545;';
+        const saveBtn = document.getElementById('personalSaveBtn');
+        if (saveBtn) saveBtn.parentNode.insertBefore(box, saveBtn);
+        else document.getElementById('formActions').appendChild(box);
+    }
+    box.innerHTML = html; box.style.display = 'block';
+    setTimeout(() => box.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+}
+
+function hideSaveError() { const box = document.getElementById('saveErrorBox'); if (box) box.style.display = 'none'; }
+
+function validateField(event) {
+    if (!isEditMode) return true;
+    const field = event.target;
+    const parentSection = field.closest('.profile-tab-section');
+    const isUserEvent = event.type === 'input' || event.type === 'blur' || event.type === 'change';
+    if (isUserEvent && parentSection && parentSection.getAttribute('data-tab-group') !== activeProfileTab) return true;
+    const validationType = field.getAttribute('data-validation');
+    if (!validationType) return true;
+    let isValid = true, errorMessage = '';
+    field.classList.remove('is-valid', 'is-invalid');
+    const existingDynamic = field.parentNode.querySelector('.invalid-feedback.dynamic-error');
+    if (existingDynamic) existingDynamic.remove();
+    const feedback = field.parentNode.querySelector('.invalid-feedback:not(.dynamic-error)');
+    if (feedback) { feedback.textContent = ''; feedback.style.display = 'none'; }
+    const val = field.value ? field.value.trim() : '';
+    if (!val) { updateTabErrorBadges(); return true; }
+    switch (validationType) {
+        case 'email': if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { isValid = false; errorMessage = 'Please enter a valid email address.'; } break;
+        case 'phone': const pc = val.replace(/\s/g, ''); if (!/^\+?[0-9]+$/.test(pc)) { isValid = false; errorMessage = 'Phone number must contain digits only. A leading + is allowed.'; } else { const d = pc.replace('+', ''); if (d.length < 7 || d.length > 15) { isValid = false; errorMessage = 'Phone number must be between 7 and 15 digits.'; } } break;
+        case 'digits-only': if (!/^[0-9]+$/.test(val)) { isValid = false; errorMessage = 'This field must contain digits only.'; } break;
+        case 'alphanumeric': if (!/^[A-Za-z0-9]+$/.test(val)) { isValid = false; errorMessage = 'Letters and digits only (no spaces or special characters).'; } break;
+        case 'emirates-id': var eidClean = val.replace(/-/g, ''); if (!/^[0-9]{15}$/.test(eidClean)) { isValid = false; errorMessage = 'Please enter your unique 15-digit UAE Emirates ID number.'; } break;
+        case 'aadhar': if (!/^[0-9]{12}$/.test(val)) { isValid = false; errorMessage = 'Aadhar number must be exactly 12 digits.'; } break;
+        case 'pan': if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(val.toUpperCase())) { isValid = false; errorMessage = 'PAN must be in format: ABCDE1234F'; } break;
+        case 'past-date': const pd = new Date(val); const td1 = new Date(); td1.setHours(0,0,0,0); if (isNaN(pd.getTime())) { isValid = false; errorMessage = 'Please enter a valid date.'; } else if (pd > td1) { isValid = false; errorMessage = 'This date cannot be in the future.'; } break;
+        case 'future-date': const fd = new Date(val); const td2 = new Date(); td2.setHours(0,0,0,0); if (isNaN(fd.getTime())) { isValid = false; errorMessage = 'Please enter a valid date.'; } else if (fd <= td2) { isValid = false; errorMessage = 'Expiry date must be a future date.'; } break;
+    }
+    if (isValid) { if (isEditMode) field.classList.add('is-valid'); }
+    else {
+        field.classList.add('is-invalid');
+        if (feedback) { feedback.textContent = errorMessage; feedback.style.display = 'block'; }
+        else { const errDiv = document.createElement('div'); errDiv.className = 'invalid-feedback dynamic-error'; errDiv.style.cssText = 'display:block;color:#dc3545;font-size:0.8rem;margin-top:3px;'; errDiv.textContent = errorMessage; field.insertAdjacentElement('afterend', errDiv); }
+    }
+    updateTabErrorBadges(); return isValid;
+}
+
+function updateTabErrorBadges() {
+    ['basic', 'professional', 'family', 'education', 'documents'].forEach(tabKey => {
+        const tabBtn = document.querySelector(`.profile-tab-button[data-tab-target="${tabKey}"]`);
+        if (!tabBtn) return;
+        const existing = tabBtn.querySelector('.tab-error-badge');
+        if (existing) existing.remove();
+        const count = document.querySelectorAll(`.profile-tab-section[data-tab-group="${tabKey}"] .is-invalid`).length;
+        if (count > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'tab-error-badge badge bg-danger ms-1'; badge.textContent = count;
+            tabBtn.appendChild(badge);
+        }
+    });
+}
+
+function clearValidationStates(tabKey) {
+    const sections = document.querySelectorAll(`.profile-tab-section[data-tab-group="${tabKey}"]`);
+    sections.forEach(section => {
+        section.querySelectorAll('input, select').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
+        section.querySelectorAll('.invalid-feedback').forEach(el => { el.textContent = ''; el.style.display = 'none'; });
+        section.querySelectorAll('.tab-message-box, .dynamic-error').forEach(el => el.remove());
+    });
+    updateTabErrorBadges();
+}
+
+function clearFilePreview(inputEl) {
+    const existing = inputEl.parentNode.querySelector('.file-preview-box');
+    if (existing) { if (existing._objectURL) URL.revokeObjectURL(existing._objectURL); existing.remove(); }
+}
+
+function viewUploadedFile(objectURL, fileType, fileName) {
+    if (fileType.startsWith('image/')) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px';
+        overlay.innerHTML = `<div style="position:relative;max-width:90vw;max-height:85vh;"><img src="${objectURL}" alt="${escapeHtml(fileName)}" style="max-width:90vw;max-height:85vh;border-radius:8px;display:block;box-shadow:0 8px 32px rgba(0,0,0,0.4);"/></div><div style="display:flex;gap:12px;align-items:center;"><span style="color:#fff;font-size:0.85rem;opacity:0.8;">${escapeHtml(fileName)}</span><button onclick="this.closest('div[style*=fixed]').remove()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);color:#fff;border-radius:6px;padding:5px 16px;cursor:pointer;font-size:0.85rem;"><i class="fa fa-times me-1"></i>Close</button></div>`;
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+        const escHandler = function(e) { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', escHandler); } };
+        document.addEventListener('keydown', escHandler); document.body.appendChild(overlay);
+    } else { window.open(objectURL, '_blank'); }
+}
+
+function cancelFileUpload(removeBtn) {
+    const preview = removeBtn.closest('.file-preview-box'); if (!preview) return;
+    const inputEl = preview.previousElementSibling;
+    if (inputEl && inputEl.type === 'file') { inputEl.value = ''; }
+    if (preview._objectURL) { URL.revokeObjectURL(preview._objectURL); }
+    preview.remove();
+}
+
+function showFilePreview(inputEl, file) {
+    clearFilePreview(inputEl);
+    const sizeKB = (file.size / 1024).toFixed(1);
+    const sizeTxt = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : sizeKB + ' KB';
+    const isImage = file.type.startsWith('image/'); const isPDF = file.type === 'application/pdf';
+    const objectURL = URL.createObjectURL(file);
+    const preview = document.createElement('div'); preview.className = 'file-preview-box';
+    let thumbHtml = '';
+    if (isImage) { thumbHtml = `<img src="${objectURL}" alt="preview" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:0.5px solid #dee2e6;flex-shrink:0;" onerror="this.style.display='none'"/>`; }
+    else if (isPDF) { thumbHtml = `<span style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#fff3f3;border-radius:4px;border:0.5px solid #f5c6cb;flex-shrink:0;"><i class="fa fa-file-pdf-o" style="color:#dc3545;font-size:1.3rem;"></i></span>`; }
+    else { thumbHtml = `<span style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border-radius:4px;border:0.5px solid #dee2e6;flex-shrink:0;"><i class="fa fa-file" style="color:#6c757d;font-size:1.3rem;"></i></span>`; }
+    preview.style.cssText = 'display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 12px;border:1px solid #198754;border-radius:6px;background:#f0fdf4;font-size:0.85rem';
+    preview.innerHTML = thumbHtml + `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#155724;"><strong>${escapeHtml(file.name)}</strong><span style="margin-left:8px;color:#6c757d;font-size:0.78rem;">${sizeTxt}</span></span><button type="button" title="View file" onclick="viewUploadedFile('${objectURL}', '${escapeHtml(file.type)}', '${escapeHtml(file.name)}')" style="background:none;border:1px solid #0d6efd;color:#0d6efd;border-radius:5px;padding:3px 8px;font-size:0.78rem;cursor:pointer;white-space:nowrap;"><i class="fa fa-eye me-1"></i>View</button><button type="button" title="Remove file" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size:0.78rem;line-height:1.6;white-space:nowrap;" onclick="cancelFileUpload(this)"><i class="fa fa-times me-1"></i>Remove</button>`;
+    preview._objectURL = objectURL;
+    inputEl.parentNode.insertBefore(preview, inputEl.nextSibling);
+}
+
+function showTabMessage(tabKey, text, type) {
+    document.querySelectorAll('.tab-message-box').forEach(el => el.remove());
+    const firstCard = document.querySelector(`.profile-tab-section[data-tab-group="${tabKey}"]`);
+    if (!firstCard) return;
+    const alertClass = type === 'success' ? 'alert-success' : type === 'info' ? 'alert-info' : 'alert-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : type === 'info' ? 'fa-info-circle' : 'fa-exclamation-triangle';
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `tab-message-box alert ${alertClass} alert-dismissible fade show mb-3`;
+    msgDiv.innerHTML = `<i class="fa ${icon} me-2"></i><span>${text}</span><button type="button" class="btn-close" onclick="this.parentNode.remove()"></button>`;
+    firstCard.parentNode.insertBefore(msgDiv, firstCard);
+    msgDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => { if (msgDiv.parentNode) msgDiv.remove(); }, 5000);
+}
+
+document.getElementById('personalDetailsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (PENDING_LOCKED) { showSaveError('<i class="fa fa-lock me-2"></i>Editing is locked while your submission is pending HR review.'); return; }
+    const disc = document.getElementById('personalDisclaimer');
+    if (disc && !disc.checked) { showSaveError('<i class="fa fa-exclamation-triangle me-2"></i>Please read and accept the Employee Disclaimer before saving.'); return; }
+    const allTabs = ['basic', 'professional', 'family', 'education', 'documents'];
+    const tabNames = {'basic': 'Basic Info', 'professional': 'Professional', 'family': 'Family', 'education': 'Education', 'documents': 'Documents'};
+    const tabsWithErrors = [];
+    allTabs.forEach(tabKey => {
+        document.querySelectorAll(`.profile-tab-section[data-tab-group="${tabKey}"] input[data-validation], .profile-tab-section[data-tab-group="${tabKey}"] select[data-validation]`).forEach(input => {
+            if (!validateField({ target: input, type: 'submit' })) { if (!tabsWithErrors.includes(tabKey)) tabsWithErrors.push(tabKey); }
+        });
+    });
+    updateTabErrorBadges();
+    if (tabsWithErrors.length > 0) {
+        const tabLabels = tabsWithErrors.map(t => `<strong style="color:#721c24;">${tabNames[t] || t}</strong>`).join(', ');
+        showSaveError(`<i class="fa fa-exclamation-triangle me-2"></i>Please fix errors in the following tab(s) before saving: ${tabLabels}`);
+        return;
+    }
+    hideSaveError();
+    const toReenable = [];
+    document.querySelectorAll('#personalDetailsForm select[disabled], #personalDetailsForm input[type="checkbox"][disabled]').forEach(el => {
+        if (!el.hasAttribute('data-always-readonly') && el.type !== 'file') { el.removeAttribute('disabled'); toReenable.push(el); }
+    });
+    const formData = new FormData(this);
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    toReenable.forEach(el => el.setAttribute('disabled', 'disabled'));
+    fetch('/my/employee/personal', { method: 'POST', body: formData, headers: { 'X-CSRFToken': csrfToken } })
+    .then(r => r.json())
+    .then(data => {
+    if (data.success) {
+        localStorage.removeItem('profileDraft');
+        localStorage.removeItem('profileEditActive');
+        if (data.no_change) {
+            disableEditMode();
+            showTabMessage(activeProfileTab, 'No changes detected. Your profile is already up to date.', 'info');
+        } else {
+            const ref = data.reference || '';
+            // Disable edit mode first
+            disableEditMode();
+            // Remove any existing notification banners
+            document.querySelectorAll('.alert.alert-warning.alert-dismissible, .alert.alert-success.alert-dismissible, .alert.alert-danger.alert-dismissible').forEach(function(el) {
+                if (el.querySelector('.alert-heading')) el.remove();
+            });
+            document.getElementById('pendingLockBanner') && document.getElementById('pendingLockBanner').remove();
+            // Remove old info note banner
+            document.querySelectorAll('.alert.alert-info.alert-dismissible').forEach(function(el) { el.remove(); });
+            // Build and inject the pending banner (same as server renders)
+            const formEl = document.getElementById('personalDetailsForm');
+            const container = formEl.parentNode;
+            // 1. Warning notification banner (top)
+            const notifBanner = document.createElement('div');
+            notifBanner.className = 'alert alert-warning alert-dismissible fade show shadow-sm mb-4';
+            notifBanner.setAttribute('role', 'alert');
+            notifBanner.style.cssText = 'border-left: 5px solid; border-radius: 8px;';
+            notifBanner.innerHTML = `
+                <div class="d-flex align-items-start">
+                    <div class="me-3" style="font-size:28px;">⏳</div>
+                    <div class="flex-grow-1">
+                        <h5 class="alert-heading mb-1">Profile Update Pending Review</h5>
+                        <p class="mb-1">Your profile change request is awaiting HR review.</p>
+                        <hr class="my-2"/>
+                        <small class="text-muted">
+                            <i class="fa fa-info-circle me-1"></i>Reference:
+                            <strong>${ref}</strong>
+                            — HR will notify you once reviewed.
+                        </small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+            `;
+            container.insertBefore(notifBanner, formEl);
+            // 2. Info note banner
+            const infoBanner = document.createElement('div');
+            infoBanner.className = 'alert alert-info alert-dismissible fade show mb-3';
+            infoBanner.style.cssText = 'border-left:4px solid #2B2B6B;border-radius:6px;';
+            infoBanner.innerHTML = `
+                <i class="fa fa-info-circle me-2"></i>
+                <strong>Note:</strong>
+                The values shown below are from your
+                <span style="color:#2B2B6B;font-weight:bold;">pending submission</span>
+                currently awaiting HR review.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"/>
+            `;
+            container.insertBefore(infoBanner, formEl);
+            // 3. Editing Locked banner
+            const lockBanner = document.createElement('div');
+            lockBanner.id = 'pendingLockBanner';
+            lockBanner.className = 'alert alert-warning mb-3';
+            lockBanner.style.cssText = 'border-left:4px solid #ffc107;border-radius:6px;';
+            lockBanner.innerHTML = `
+                <i class="fa fa-lock me-2"></i>
+                <strong>Editing Locked:</strong>
+                You have a profile update currently pending HR review.
+                Editing is disabled until HR approves or rejects your request.
+            `;
+            container.insertBefore(lockBanner, formEl);
+            // 4. Set PENDING_LOCKED so JS locks editing
+            window.PENDING_LOCKED = true;
+            // Hide edit button
+            const editBtn = document.getElementById('editProfileBtn');
+            if (editBtn) { editBtn.disabled = true; editBtn.title = 'Editing locked — pending HR review'; }
+            // Hide all edit-mode toggles
+            document.querySelectorAll('.edit-mode-toggle').forEach(t => {
+                const sw = t.closest('.form-check.form-switch');
+                if (sw) sw.style.display = 'none';
+            });
+            // Scroll to top of page to show banners
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    } else {
+        showTabMessage(activeProfileTab, 'Error: ' + (data.error || 'Unknown error'), 'error');
+    }
+})
+    .catch(err => { console.error('Error:', err); showTabMessage(activeProfileTab, 'Network error. Please try again.', 'error'); });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('#personalDetailsForm .profile-tab-button').forEach(button => {
+        button.addEventListener('click', function() { switchProfileTab(this.getAttribute('data-tab-target')); });
+    });
+    switchProfileTab(activeProfileTab);
+    document.querySelectorAll('.edit-mode-toggle').forEach(t => t.checked = false);
+    document.getElementById('formActions').style.display = 'none';
+    document.getElementById('viewActions').style.display = 'block';
+    isEditMode = false;
+    document.querySelectorAll('#personalDetailsForm input[type="file"].file-upload-input').forEach(fi => { fi.setAttribute('disabled', 'disabled'); });
+    const draftRaw = localStorage.getItem('profileDraft');
+    const wasEditing = localStorage.getItem('profileEditActive') === '1';
+
+    window.essHasUnsavedChanges = function() {
+        return isEditMode === true;
+    };
+
+    localStorage.removeItem('profileEditActive');
+    sessionStorage.removeItem('ess_discarded');
+    window.addEventListener('beforeunload', function() {
+    if (isEditMode && sessionStorage.getItem('ess_discarded') !== '1') {
+            const draftData = {};
+            document.querySelectorAll('#personalDetailsForm input, #personalDetailsForm select').forEach(function(input) {
+                if (input.type === 'hidden' || input.type === 'file') return;
+                if (!input.name) return;
+                draftData[input.name] = input.type === 'checkbox' ? (input.checked ? 'on' : '') : input.value;
+            });
+            try { localStorage.setItem('profileDraft', JSON.stringify(draftData)); localStorage.setItem('profileEditActive', '1'); } catch(e) {}
+        }
+    });
+    if (draftRaw && wasEditing && !PENDING_LOCKED) {
+        try {
+            const draft = JSON.parse(draftRaw);
+            enableEditMode();
+            Object.entries(draft).forEach(function([key, value]) {
+                const input = document.querySelector('[name="' + key + '"]');
+                if (!input || input.type === 'hidden' || input.type === 'file') return;
+                if (input.type === 'checkbox') { input.checked = value === 'on'; } else { input.value = value; }
+            });
+            showTabMessage(activeProfileTab, 'Your unsaved changes have been restored. Please review and click Save Changes.', 'info');
+        } catch (ex) { console.error('Error loading draft:', ex); localStorage.removeItem('profileDraft'); }
+    }
+<!--    if (PENDING_LOCKED) {-->
+<!--        document.querySelectorAll('.edit-mode-toggle').forEach(t => {-->
+<!--            t.closest('.form-check.form-switch') && (t.closest('.form-check.form-switch').style.display = 'none');-->
+<!--        });-->
+<!--        var editBtn = document.getElementById('editProfileBtn');-->
+<!--        if (editBtn) { editBtn.disabled = true; editBtn.title = 'Editing locked — pending HR review'; }-->
+<!--    }-->
+
+        if (PENDING_LOCKED) {
+        document.querySelectorAll('.edit-mode-toggle').forEach(t => {
+            t.closest('.form-check.form-switch') && (t.closest('.form-check.form-switch').style.display = 'none');
+        });
+        var editBtn = document.getElementById('editProfileBtn');
+        if (editBtn) { editBtn.style.display = 'none'; }
+    }
+    setTimeout(function() {
+        var workCountrySel = document.getElementById('workLocationCountryDropdown');
+        var workStateSel   = document.getElementById('workLocationStateDropdown');
+        if (workCountrySel && workStateSel) {
+            var workCountryId = workCountrySel.value || workStateSel.getAttribute('data-saved-country') || '0';
+            var savedWork = workStateSel.getAttribute('data-saved-value') || '0';
+            if (workCountryId && workCountryId !== '0') {
+                if (!workCountrySel.value && workCountryId !== '0') { workCountrySel.value = workCountryId; }
+                _fetchStates(workStateSel, workCountryId, savedWork);
+            }
+        }
+        var permCountrySel = document.getElementById('permanentCountryDropdown');
+        var permStateSel   = document.getElementById('permanentStateDropdown');
+        if (permCountrySel && permStateSel) {
+            var permCountryId = permCountrySel.value || permStateSel.getAttribute('data-saved-country') || '0';
+            var savedPerm = permStateSel.getAttribute('data-saved-value') || '0';
+            if (permCountryId && permCountryId !== '0') {
+                if (!permCountrySel.value && permCountryId !== '0') { permCountrySel.value = permCountryId; }
+                _fetchStates(permStateSel, permCountryId, savedPerm);
+            }
+        }
+    }, 300);
+});
+
+
+                    ]]>
+                </script>
+
+                <!-- ===== CSS (unchanged from doc7) ===== -->
+                <style>
+                    <![CDATA[
+.form-label { font-weight: 600; color: #495057; margin-bottom: 0.5rem; }
+.profile-tab-navigation .nav-link { border-radius: 0.5rem 0.5rem 0 0; font-weight: 600; color: #495057; transition: color 0.2s; }
+.profile-tab-navigation .nav-link.active { color: #0d6efd; }
+.tab-error-badge { font-size: 0.65rem; border-radius: 50%; padding: 2px 6px; vertical-align: middle; animation: badgePop 0.2s ease; }
+@keyframes badgePop { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
+.form-control.is-invalid, .form-select.is-invalid { border-color: #dc3545 !important; box-shadow: 0 0 0 0.2rem rgba(220,53,69,0.2) !important; animation: shake 0.35s ease; }
+@keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+.form-control.is-valid { border-color: #198754; }
+.is-invalid ~ .invalid-feedback, .form-select.is-invalid ~ .invalid-feedback { display: block !important; color: #dc3545; font-size: 0.8rem; margin-top: 3px; }
+.form-control:focus, .form-select:focus { border-color: #80bdff; box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.25); }
+.card { transition: box-shadow 0.3s ease; }
+.card:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
+.form-switch .form-check-input { background-color: #6c757d; }
+.form-switch .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
+.tab-message-box { border-radius: 0.5rem; font-weight: 500; }
+#editProfileBtn.edit-active { box-shadow: 0 0 0 3px rgba(13,110,253,0.35); }
+input[type="file"]:disabled { background-color: #e9ecef; cursor: not-allowed; opacity: 0.65; }
+@media (max-width: 768px) { .card-body { padding: 1rem; } .row.g-3 > * { margin-bottom: 1rem; } .profile-tab-navigation .nav-link { font-size: 0.85rem; padding: 0.4rem 0.6rem; } }
+                    ]]>
+                </style>
+            </t>
+        </t>
+    </template>
+</odoo>

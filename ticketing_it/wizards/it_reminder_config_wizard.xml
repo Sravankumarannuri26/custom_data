@@ -1,0 +1,22 @@
+<odoo>
+    <record id="view_it_reminder_config_wizard_form" model="ir.ui.view">
+        <field name="name">it.reminder.config.wizard.form</field>
+        <field name="model">it.reminder.config.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reminder Configuration">
+                <group>
+                    <field name="reminder_days"/>
+                </group>
+                <footer>
+                    <button name="action_save"
+                            type="object"
+                            string="Save"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

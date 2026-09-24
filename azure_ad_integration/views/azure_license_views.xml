@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- License Dashboard List View -->
+    <record id="view_azure_license_tree" model="ir.ui.view">
+        <field name="name">azure.license.config.tree</field>
+        <field name="model">azure.license.config</field>
+        <field name="arch" type="xml">
+            <list string="Azure Licenses" create="false" edit="false" delete="false">
+                <field name="license_name" string="License Type"/>
+                <field name="license_sku" string="SKU ID"/>
+                <field name="total_licenses" string="Total"/>
+                <field name="assigned_licenses" string="Assigned"/>
+                <field name="available_licenses" string="Available"
+                       decoration-danger="available_licenses &lt; 5"
+                       decoration-warning="available_licenses &gt;= 5 and available_licenses &lt; 10"
+                       decoration-success="available_licenses &gt;= 10"/>
+                <field name="last_sync" string="Last Updated"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- License Dashboard Form View -->
+    <record id="view_azure_license_form" model="ir.ui.view">
+        <field name="name">azure.license.config.form</field>
+        <field name="model">azure.license.config</field>
+        <field name="arch" type="xml">
+            <form string="Azure License" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="license_name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="License Information">
+                            <field name="license_sku" readonly="1"/>
+                            <field name="total_licenses" readonly="1"/>
+                            <field name="assigned_licenses" readonly="1"/>
+                            <field name="available_licenses" readonly="1"/>
+                        </group>
+                        <group string="Sync Information">
+                            <field name="last_sync" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- License Dashboard Action -->
+    <record id="action_azure_license_dashboard" model="ir.actions.act_window">
+        <field name="name">Azure Licenses</field>
+        <field name="res_model">azure.license.config</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                 No license information available yet
+            </p>
+            <p>
+                Click <strong>"Azure AD → Sync from Azure"</strong> menu to fetch license information.
+            </p>
+            <p>
+                After syncing, you'll see all available Microsoft 365 licenses with their SKU IDs here.
+            </p>
+        </field>
+    </record>
+
+    <!-- Server Action for Syncing -->
+    <record id="action_sync_azure_licenses_server" model="ir.actions.server">
+        <field name="name">Sync from Azure</field>
+        <field name="model_id" ref="model_azure_license_config"/>
+        <field name="state">code</field>
+        <field name="code">
+action = model.action_sync_licenses_from_azure()
+        </field>
+    </record>
+
+    <!-- TOP LEVEL MENU -->
+    <menuitem id="menu_azure_root"
+              name="Azure AD"
+              sequence="100"
+              groups="hr.group_hr_user,hr.group_hr_manager"/>
+
+    <!-- SYNC MENU (First item) -->
+    <menuitem id="menu_azure_sync"
+              name="Sync from Azure"
+              parent="menu_azure_root"
+              action="action_sync_azure_licenses_server"
+              sequence="1"
+              groups="hr.group_hr_user,hr.group_hr_manager"/>
+
+    <!-- LICENSE MANAGEMENT MENU (Second item) -->
+    <menuitem id="menu_azure_licenses"
+              name="License Management"
+              parent="menu_azure_root"
+              action="action_azure_license_dashboard"
+              groups="hr.group_hr_user,hr.group_hr_manager"
+              sequence="10"/>
+</odoo>

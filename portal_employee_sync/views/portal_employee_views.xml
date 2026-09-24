@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Employee Form View -->
+    <record id="view_employee_form_portal" model="ir.ui.view">
+        <field name="name">hr.employee.form.portal</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='hr_settings']" position="inside">
+                <group string="Portal Integration" name="portal_integration">
+                    <field name="emp_code" placeholder="e.g., EMP001"/>
+                    <field name="portal_sync_date" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Employee Tree View -->
+    <record id="view_employee_tree_portal" model="ir.ui.view">
+        <field name="name">hr.employee.tree.portal</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="emp_code" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Employee Search View -->
+    <record id="view_employee_filter_portal" model="ir.ui.view">
+        <field name="name">hr.employee.search.portal</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="emp_code"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

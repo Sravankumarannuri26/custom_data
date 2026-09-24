@@ -1,0 +1,35 @@
+<odoo>
+    <!--  Wizard Form View  -->
+    <record id="view_employee_code_generation_wizard" model="ir.ui.view">
+        <field name="name">employee.code.generation.wizard.form</field>
+        <field name="model">employee.code.generation.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate Employee Code">
+                <group>
+                    <group>
+                        <field name="employee_id" invisible="1"/>
+                        <field name="employee_name"/>
+                    </group>
+                </group>
+                <group string="Employee Classification">
+                    <group>
+                        <field name="engagement_location" placeholder="Select Engagement Location"/>
+                        <field name="payroll_location" placeholder="Select Payroll Location"/>
+                    </group>
+                    <group>
+                        <field name="employment_type" placeholder="Select Employment Type"/>
+                    </group>
+                </group>
+                <group string="Preview">
+                    <field name="preview_code" class="oe_read_only"
+                           style="font-size: 16px; font-weight: bold; color: #00A09D;"/>
+                </group>
+                <footer>
+                    <button string="Generate Code" name="action_generate_code" type="object" class="btn-primary"
+                            data-hotkey="q"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

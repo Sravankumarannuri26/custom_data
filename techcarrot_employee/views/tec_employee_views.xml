@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="techcarrot_employee_inherit_form_view" model="ir.ui.view">
+        <field name="name">hr.employee.form</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!--inherited view place changed(sriman)-->
+            <xpath expr="//field[@name='employee_properties']" position="before">
+                <!-- 3 COLUMN LAYOUT - Each column in separate group -->
+                <group colspan="4" col="6" string="">
+                    <!-- COLUMN 1 -->
+                    <group string="" colspan="2">
+                        <field name="employee_first_name"/>
+                        <field name="employee_name_english"/>
+                        <field name="engagement_location" widget="selection"/>
+                    </group>
+
+                    <!-- COLUMN 2 -->
+                    <group string="" colspan="2">
+                        <field name="employee_middle_name"/>
+                        <field name="employee_name_arabic"/>
+                        <field name="payroll_location"/>
+                    </group>
+
+                    <!-- COLUMN 3 -->
+                    <group string="" colspan="2">
+                        <field name="employee_last_name"/>
+                        <field name="nationality_at_birth_id" options="{'no_create': True, 'no_open': True}"/>
+                        <field name="employment_type"/>
+                    </group>
+                </group>
+
+                <field name="country_code" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='department_id']" position="before">
+                <field name="emp_code"/>
+                <field name="hr_manager_id"
+                       string="Assigned HR Manager"
+                       placeholder="Select HR Manager..."/>
+            </xpath>
+            <xpath expr="//field[@name='mobile_phone']" position="before">
+                <field name="country_code_for_work_mobile"/>
+            </xpath>
+            <xpath expr="//field[@name='next_appraisal_date']" position="after">
+                <field name="billable"/>
+                <field name="billing_amt"/>
+                <field name="billing_currency_id"/>
+                <field name="emp_category_id" options="{'no_open': True, 'no_create': True}"/>
+            </xpath>
+
+        </field>
+
+    </record>
+
+
+    <!-- as contracts is not present in separate i am removing this code (sriman) -->
+    <!--    <record id="techcarrot_employee_contract_button_form_view" model="ir.ui.view">-->
+    <!--        <field name="name">hr.employee.form</field>-->
+    <!--        <field name="model">hr.employee</field>-->
+    <!--        <field name="inherit_id" ref="hr_contract.hr_hr_employee_view_form3"/>-->
+    <!--        <field name="arch" type="xml">-->
+    <!--            <xpath expr="//button[@name='action_open_contract']" position="attributes">-->
+    <!--                <attribute name="invisible">employee_type not in ['employee', 'student', 'trainee', 'permanent', 'temporary', 'bootcamp', 'seconded', 'freelance']</attribute>-->
+    <!--            </xpath>-->
+    <!--        </field>-->
+    <!--    </record>-->
+
+    <record id="techcarrot_employee_inherit_tree_view" model="ir.ui.view">
+        <field name="name">hr.employee.list</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-danger">
+                    <![CDATA[
+                    is_expiry_today
+                ]]>
+                </attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!--Adding Notebook and Pages to the employee module-->
+    <record id="techcarrot_employee_inherit_notebook_view" model="ir.ui.view">
+        <field name="name">hr.employee.notebook</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr_payroll.payroll_hr_employee_view_form"/>
+        <field name="arch" type="xml">
+            <page name="hr_settings" position="before">
+                <page string="techcarrot" name="Tec Employee Settings">
+                    <group>
+                        <group string="Emergency Contact Person Address">
+                            <field name="emergency_contact_person_name" string="Contact Person Name"/>
+                            <field name="emergency_contact_person_phone" string="Contact Person Phone Number"/>
+                            <label for="e_private_street" string="Emergency Address"/>
+                            <div class="o_address_format">
+                                <field name="e_private_street" placeholder="Street..." class="o_address_street"/>
+                                <field name="e_private_street2" placeholder="Street 2..." class="o_address_street"/>
+                                <field name="e_private_city" placeholder="City" class="o_address_city"/>
+                                <field name="e_private_state_id" class="o_address_state" placeholder="State"
+                                       options="{'no_open': True, 'no_quick_create': True}"
+                                       context="{'default_country_id': private_country_id}"/>
+                                <field name="e_private_zip" placeholder="ZIP" class="o_address_zip"/>
+                                <field name="e_private_country_id" placeholder="Country" class="o_address_country"
+                                       options='{"no_open": True, "no_create": True}'/>
+                            </div>
+                        </group>
+
+                        <group string="Bank Details">
+                            <label for="branch_name" string="Bank Details"/>
+                            <div class="o_address_format">
+                                <field name="branch_name" placeholder="Branch Name..." class="o_address_branch_name"/>
+                                <field name="bank_city" placeholder="Bank City..." class="o_address_bank_city"/>
+                                <field name="bank_account_no" placeholder="Bank Account Number..."
+                                       class="o_address_bank_account_no"/>
+                                <field name="iban_no" placeholder="IBAN Number" class="o_address_iban_no"/>
+                                <field name="ifsc_code" placeholder="Bank SWIFT / IFSC Code"
+                                       class="o_address_ifsc_code"/>
+                            </div>
+                            <field name="bank_name"/>
+                        </group>
+
+
+                        <separator string="Document Management"/>
+                        <group>
+                            <group string="Emirates ID Copy">
+                                <field name="emirates_id_file"
+                                       string="Emirates ID Copy"
+                                       widget="binary"
+                                       filename="emirates_id_filename"/>
+                                <field name="emirates_id_filename" invisible="1"/>
+                            </group>
+                            <group string="Passport Copy">
+                                <field name="passport_file"
+                                       string="Passport Copy"
+                                       widget="binary"
+                                       filename="passport_filename"/>
+                                <field name="passport_filename" invisible="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Other Documents">
+                                <field name="other_documents"
+                                       string="Other Documents"
+                                       widget="binary"
+                                       filename="other_documents_filename"/>
+                                <field name="other_documents_filename" invisible="1"/>
+                            </group>
+                        </group>
+
+
+                        <group string="Document and Personal Details">
+                            <field name="aadhar_no" string="Aadhar Number"/>
+                            <field name="pan" string="PAN"/>
+                            <field name="uan" string="UAN"/>
+                            <field name="pf_number" string="PF Number"/>
+                            <field name="country_residences_id" string="Country of Residence"/>
+                            <field name="country_code_for_personal_mob_no" string="Country Code"/>
+                            <field name="whatsapp" string="WhatsApp"/>
+                            <field name="doj" string="DOJ"/>
+                            <field name="original_hire_date" string="Original Hire Date"/>
+                            <field name="payroll" string="Payroll"/>
+                            <field name="mentor_names_id" string="Mentor Name"/>
+                            <field name="house_no" string="House Number and Building Name"/>
+                            <field name="area_name" string="Area / Town Name"/>
+                            <field name="city" string="City"/>
+                            <field name="countries_id" string="Country"/>
+                            <field name="states_id" string="State" domain="[('country_id', '=', countries_id)]"/>
+                            <field name="zip_code" string="Zip Code"/>
+                            <field name="linkedin" string="LinkedIn"/>
+                            <field name="religion" string="Religion"/>
+                            <field name="mother_tongue_name"/>
+                            <field name="language_known_name"/>
+                        </group>
+
+                        <group string="Dependent Details">
+                            <field name="dependent_child_name_1" string="Child 1 Name"/>
+                            <field name="dependent_child_dob_1" string="Child 1 DOB"/>
+                            <field name="dependent_child_gender_1" string="Child 1 Gender"/>
+                            <field name="dependent_child_passport_no" string="Child 1 Passport No"/>
+                            <field name="dependent_child_passport_issue_date_1" string="Child 1 Passport Issue Date"/>
+                            <field name="dependent_child_passport_expiry_date_1" string="Child 1 Passport Expiry Date"/>
+                            <field name="dependent_child_passport_issuing_countries_1_id"
+                                   string="Child 1 Passport Issuing Country"/>
+                            <field name="dependent_child_visa_no_1" string="Child 1 Visa No"/>
+                            <field name="dependent_child_visa_expiration_date_1" string="Child 1 Visa Expiration Date"/>
+                            <field name="dependent_child_emirates_id_no_1" string="Child 1 Emirates ID Number"/>
+                            <field name="dependent_child_emirates_id_issue_date_1"
+                                   string="Child 1 Emirates ID Issue Date"/>
+                            <field name="dependent_child_emirates_id_expiry_date_1"
+                                   string="Child 1 Emirates ID Expiry Date"/>
+                            <field name="dependent_child_aadhar_no_1" string="Child 1 Aadhar Number"/>
+                        </group>
+
+                        <group string="General Information">
+                            <field name="practice" string="Practice"/>
+                            <field name="sub_practice" string="Sub Practice"/>
+                            <field name="practice_heads_id" string="Practice Head"/>
+                            <field name="engagement_location" string="Engagement Location"/>
+                            <field name="emp_inside_uae" string="Employee Inside UAE"/>
+                        </group>
+                        <!--Full Address Inside UAE-->
+                        <group string="Full Address Inside UAE">
+                            <label for="u_private_street" string="Full Address Inside UAE"/>
+                            <div class="o_address_format">
+                                <field name="u_private_street" placeholder="Street..." class="o_address_street"/>
+                                <field name="u_private_street2" placeholder="Street 2..." class="o_address_street"/>
+                                <field name="u_private_city" placeholder="City" class="o_address_city"/>
+                                <field name="u_private_state_id" class="o_address_state" placeholder="State"
+                                       options="{'no_open': True, 'no_quick_create': True}"
+                                       context="{'default_country_id': private_country_id}"/>
+                                <field name="u_private_zip" placeholder="ZIP" class="o_address_zip"/>
+                                <field name="u_private_country_id" placeholder="Country" class="o_address_country"
+                                       options='{"no_open": True, "no_create": True}'/>
+                            </div>
+                        </group>
+
+                        <group string="Last Organisation Info">
+                            <field name="last_organisation_name" string="Organisation Name"/>
+                            <field name="last_location" string="Location"/>
+                            <field name="last_salary_per_annum_currency" string="Salary Per Annum Currency"/>
+                            <field name="last_salary_per_annum_amt" string="Salary Per Annum Amount"/>
+                            <field name="reason_for_leaving" string="Reason for Leaving"/>
+                            <field name="last_report_manager_name" string="Reporting Manager Name"/>
+                            <field name="last_report_manager_designation" string="Reporting Manager Designation"/>
+                            <field name="last_report_manager_mob_no" string="Last Reporting Manager Mobile Number"/>
+                            <field name="last_report_manager_mail" string="Reporting Manager Email-ID"/>
+                        </group>
+                        <!--Continuation of last organisation Info-->
+                        <group>
+                            <field name="industry_start_date" string="Industry Start Date"/>
+                            <field name="experience" string="Experience"/>
+                            <field name="current_role" string="Current / Additional Role"/>
+                            <field name="current_address" string="Current Work Address"/>
+                            <field name="phone_code_1" string="ISD Code"/>
+                            <field name="employment_status_id" string="Employment Status"/>
+                            <field name="notice_period" string="Notice Period(in days)"/>
+                            <field name="resign_date" string="Resignation Date"/>
+                            <field name="end_date" string="End Date"/>
+                            <field name="lwd" string="LWD"/>
+                        </group>
+
+                        <group string="Emergency Contact Person Number 1 Address Inside UAE">
+                            <field name="emergency_contact_person_name" string="Contact Person Name"/>
+                            <field name="relationship_with_emp_id" string="Relationship with Employee"/>
+                            <field name="emergency_contact_person_phone" string="Contact Person Phone Number"/>
+                            <field name="alternate_mobile_number"/>
+                            <field name="phone_code" string="Countrycode"/>
+                            <field name="home_land_line_no" string="Home Land Line Number"/>
+                        </group>
+                        <group string="Emergency Contact Person Number 2 Address Inside UAE">
+                            <field name="emergency_contact_person_name_1" string="Contact Person Name"/>
+                            <field name="second_relation_with_employee" string="Relationship with Employee"/>
+                            <field name="emergency_contact_person_phone_1" string="Contact Person Phone Number"/>
+                            <field name="second_alternative_number"/>
+                            <field name="phone_code" string="Countrycode"/>
+                            <field name="home_land_line_no_1" string="Home Land Line Number"/>
+                        </group>
+
+                        <group string="Passport, Visa and Emirates Info">
+                            <field name="issue_date" string="Passport Issue Date"/>
+                            <field name="expiry_date" string="Passport Expiry Date"/>
+                            <field name="issue_countries_id" string="Passport Issuing Country"/>
+                            <field name="entry_exit_date" string="First Entry Date / Exit Date"/>
+                            <field name="visa_sponsor" string="Visa Sponsor"/>
+                            <field name="visa_issue_date" string="Visa Issue Date"/>
+                            <field name="emirates_id_number" string="Emirates ID Number"/>
+                            <field name="emirates_issue_date" string="Emirates ID Issue Date"/>
+                            <field name="emirates_expiry_date" string="Emirates ID Expiry Date"/>
+                        </group>
+
+                        <group string="Spouse Info">
+                            <field name="spouse_passport_no" string="Passport No"/>
+                            <field name="spouse_passport_issue_date" string="Passport Issue Date"/>
+                            <field name="spouse_passport_expiry_date" string="Passport Expiry Date"/>
+                            <field name="spouse_passport_issuing_countries_id" string="Passport Issuing Country"/>
+                            <field name="spouse_visa_no" string="Visa No"/>
+                            <field name="spouse_visa_expire_date" string="Visa Expiration Date"/>
+                            <field name="spouse_emirates_id_no" string="Emirates ID Number"/>
+                            <field name="spouse_emirates_issue_date" string="Emirates Issue Date"/>
+                            <field name="spouse_emirates_id_expiry_date" string="Emirates ID Expiry Date"/>
+                            <field name="spouse_aadhar_no" string="Aadhar Number"/>
+                        </group>
+
+                        <group string="Father, Mother and Dependent Info">
+                            <field name="father_name" string="Father Name"/>
+                            <field name="father_nationalities_id" string="Father Nationality"/>
+                            <field name="dependent_status" string="Dependent Status"/>
+                            <field name="father_dob" string="Father DOB"/>
+                            <field name="mother_name" string="Mother Name"/>
+                            <field name="dependent_status_1" string="Dependent Status_1"/>
+                            <field name="mother_dob" string="Mother DOB"/>
+                            <field name="mother_nationalities_id" string="Mother Nationality"/>
+                        </group>
+
+                        <group string="Employee Details">
+                            <field name="employee_nominee_name" string="Nominee Name"/>
+                            <field name="employee_nominee_contact_no" string="Nominee Contact Number"/>
+                            <field name="total_it_experience"/>
+                            <field name="domain_worked" string="Domains Worked"/>
+                            <field name="primary_skill" string="Primary Skills"/>
+                            <field name="secondary_skill" string="Secondary Skills"/>
+                            <field name="tool_used" string="Tools Used"/>
+                        </group>
+
+                        <group string="Employee Education Details">
+                            <field name="institute_name" string="Institution Name"/>
+                            <field name="degree_name" string="Degree Name"/>
+                            <field name="field_of_study" string="Field of Study"/>
+                            <field name="start_date_of_degree" string="Start Date of Degree"/>
+                            <field name="completion_date_of_degree" string="Completion Date of Degree"/>
+                            <field name="year_of_passing" string="Year of Passing"/>
+                            <field name="score" string="Score"/>
+                            <field name="degree_certificate_legal" string="Degree Certificate Legalisation"/>
+                            <field name="certification_obtained" string="Certification Obtained"/>
+                            <field name="customer_acc_name" string="Customer / Account Name"/>
+                            <field name="parent_id" string="Account Manager"/>
+                            <field name="hr_manager_id"
+                                   string="Assigned HR Manager"
+                                   placeholder="Select HR Manager..."/>
+                            <field name="candidate_source" string="Candidate Source"/>
+                            <field name="blood_group" string="Blood Group"/>
+                        </group>
+
+                        <group string="Social Media Details">
+                            <field name="facebook_profile" string="Facebook Profile"/>
+                            <field name="insta_profile" string="Instagram Profile"/>
+                            <field name="twitter_profile" string="Twitter Profile"/>
+                        </group>
+
+                        <group string="Career Details">
+                            <field name="no_of_career_break" string="No. of career break"/>
+                            <field name="career_break" string="Career Break"/>
+                            <field name="career_break_detail" string="Career Break Detail"/>
+                            <field name="career_break_start_date" string="Career Break Start Date"/>
+                            <field name="career_break_end_date" string="Career Break End Date"/>
+                            <!--                            <field name="names" widget="many2many_tags" string="Language Known"/>-->
+                            <!--                            <field name="mother_tongue_id" string="Mother Tongue"/>-->
+                            <field name="phone_code_2" string="Country Code for Mobile Number"/>
+                        </group>
+
+                        <group string="Industry Details">
+                            <field name="industry_ref_name" string="Reference Name"/>
+                            <field name="industry_ref_email" string="Reference Email"/>
+                            <field name="industry_ref_mob_no" string="Reference Mobile Number"/>
+                            <field name="country_code_for_industry" string="Country Code"/>
+                            <field name="previous_company_name" string="Previous Company Name"/>
+                            <field name="designation" string="Designation"/>
+                            <field name="period_in_company" string="Period in Company"/>
+                            <field name="reason_of_leaving" string="Reason of Leaving"/>
+                            <field name="exit_type_id" string="Exit Type"/>
+                            <field name="exit_reason_id" string="Exit Reason"/>
+                            <field name="home_country_id_name" string="Home Country ID Name"/>
+                            <field name="home_country_id_number" string="Home Country ID Number"/>
+                        </group>
+                        <!-- <group string="Industry Details Reference 2">
+                            <field name="industry_ref_name_1" string="Reference Name"/>
+                            <field name="industry_ref_email_1" string="Reference Email"/>
+                            <field name="industry_ref_mob_no_1" string="Reference Mobile Number"/>
+                            <field name="country_code_for_industry" string="Country Code"/>
+                            <field name="previous_company_name_1" string="Previous Company Name"/>
+                            <field name="designation_1" string="Designation"/>
+                            <field name="period_in_company_1" string="Period in Company"/>
+                            <field name="reason_of_leaving_1" string="Reason of Leaving"/>
+                            <field name="exit_type_id_1" string="Exit Type"/>
+                            <field name="exit_reason_id_1" string="Exit Reason"/>
+                            <field name="home_country_id_name_1" string="Home Country ID Name"/>
+                            <field name="home_country_id_number_1" string="Home Country ID Number"/>
+                        </group> -->
+                    </group>
+                </page>
+            </page>
+
+        </field>
+    </record>
+
+
+    <!-- Separate record to inherit hr.view_employee_form for Resume tab -->
+    <record id="techcarrot_employee_resume_tab_view" model="ir.ui.view">
+        <field name="name">hr.employee.resume.experience</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//page[@name='resume']" position="inside">
+
+                <separator string="Work Experience &amp; Skills"/>
+
+
+                <separator string="Certifications"/>
+
+                <field name="certification_ids" mode="list" widget="one2many" nolabel="1"
+                       context="{'form_view_ref': 'hr_skills.employee_skill_view_inherit_certificate_form', 'dialog_size': 'large', 'default_employee_id': id, 'certificate_skill': True}">
+                    <list decoration-muted="valid_to and valid_to &lt; context_today().strftime('%Y-%m-%d')">
+                        <field name="skill_id" width="300" string="Certification"/>
+                        <field name="certificate_attachment_ids" string="Attachments" widget="many2many_binary"/>
+                        <field name="valid_from" string="From" widget="formatted_date"
+                               options="{                                 'month_format': 'short',                             }"/>
+                        <field name="valid_to" string="To" widget="formatted_date"
+                               options="{                                 'month_format': 'short',                                 'color': {                                     'danger': 'valid_to and valid_to &lt;= (context_today() + relativedelta(days=7)).strftime(\'%Y-%m-%d\') and valid_to &gt; context_today().strftime(\'%Y-%m-%d\')',                                     'warning': 'valid_to and valid_to &lt;= (context_today() + relativedelta(months=3)).strftime(\'%Y-%m-%d\') and valid_to &gt; (context_today() + relativedelta(days=7)).strftime(\'%Y-%m-%d\')'                                 }                             }"/>
+                    </list>
+                </field>
+                <group>
+                    <group string="Certifications">
+                        <field name="x_certifications"
+                               widget="text"
+                               placeholder="List your certifications..."/>
+                    </group>
+                </group>
+
+                <separator string="Skills"/>
+                <field name="employee_skill_ids" mode="list"  nolabel="1">
+                    <list >
+                        <field name="skill_type_id"/>
+                        <field name="skill_id"/>
+                        <field name="skill_level_id"/>
+                        <field name="level_progress" widget="progressbar" optional="show"/>
+                    </list>
+                </field>
+
+                <separator string="Professional Development"/>
+                <group>
+                    <group string="Resume/CV">
+                        <field name="resume_file" string="Resume/CV"
+                               widget="binary" filename="resume_file_filename"/>
+                        <field name="resume_file_filename" invisible="1"/>
+                    </group>
+                    <group string="Training Certificates">
+                        <field name="training_certificates" string="Training Certificates"
+                               widget="binary" filename="training_certificates_filename"/>
+                        <field name="training_certificates_filename" invisible="1"/>
+                    </group>
+                </group>
+                <group>
+                    <group string="Awards &amp; Recognition">
+                        <field name="awards_files" string="Awards &amp; Recognition"
+                               widget="binary" filename="awards_files_filename"/>
+                        <field name="awards_files_filename" invisible="1"/>
+                    </group>
+                </group>
+
+
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="techcarrot_employee_inherit_other_info_view" model="ir.ui.view">
+        <field name="name">hr.employee.other.info</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr_payroll.payroll_hr_employee_view_form"/>
+        <field name="arch" type="xml">
+            <page name="hr_settings" position="after">
+                <page string="Other Info" name="Tec Other Info">
+                    <group>
+                        <group>
+                            <field name="created_by" string="Created By"/>
+                            <field name="created_date_time" string="Created Date and Time"/>
+                            <field name="last_modified_by" string="Last Modified By"/>
+                            <field name="modify_date_time" string="Modified Date and Time"/>
+                        </group>
+                    </group>
+                </page>
+            </page>
+        </field>
+    </record>
+    <!--Inherit the Private Information tab and Inherit the emergency group and adding a field(sriman)-->
+    <record id="view_employee_form_private_info_tab_inherit" model="ir.ui.view">
+        <field name="name">hr.employee.private.info.form.inherit</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='emergency_contact']" position="before">
+                <field name="country_code_for_emergency_contact_person_phone_no"/>
+            </xpath>
+            <!--            <xpath expr="//group[@name='Emergency Contact']/separator" position="before">-->
+            <!--                &lt;!&ndash; Adding country code field &ndash;&gt;-->
+            <!--                <field name="country_code_for_emergency_contact_person_phone_no" string="Country Code"/>-->
+            <!--            </xpath>-->
+        </field>
+    </record>
+
+
+    <!-- Inherit certification popup form to add attachment field -->
+    <record id="techcarrot_certificate_form_view_inherit" model="ir.ui.view">
+        <field name="name">hr.employee.skill.certificate.form.inherit</field>
+        <field name="model">hr.employee.skill</field>
+        <field name="inherit_id" ref="hr_skills.employee_skill_view_inherit_certificate_form"/>
+        <field name="arch" type="xml">
+
+
+            <xpath expr="//field[@name='skill_id']" position="after">
+                <field name="certificate_attachment_ids"
+                       string="Attachments"
+                       widget="many2many_binary"/>
+            </xpath>
+
+        </field>
+    </record>
+
+
+</odoo>
+

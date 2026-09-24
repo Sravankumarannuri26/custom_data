@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<!--    Form View-->
+    <record id="view_approve_wizard_form" model="ir.ui.view">
+        <field name="name">it.ticket.approve.wizard.form</field>
+        <field name="model">it.ticket.approve.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Approve Ticket">
+                <group>
+                    <field name="ticket_id" invisible="1"/>
+                    <field name="comment"
+                           placeholder="Enter approval reason..."/>
+                </group>
+                <footer>
+                    <button string="Approve" name="approve_ticket"
+                            type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

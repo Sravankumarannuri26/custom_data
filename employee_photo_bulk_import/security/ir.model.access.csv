@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_employee_photo_bulk_import,employee.photo.bulk.import,model_employee_photo_bulk_import,hr.group_hr_manager,1,1,1,1

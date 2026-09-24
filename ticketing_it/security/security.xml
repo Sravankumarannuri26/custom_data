@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Security Groups -->
+    <record id="group_it_manager" model="res.groups">
+        <field name="name">IT Manager</field>
+    </record>
+
+    <record id="group_it_team" model="res.groups">
+        <field name="name">IT Support Team</field>
+    </record>
+
+    <!-- Sub-category-specific IT support groups. A ticket assigned to a member
+         of one of these instead of the flat group_it_team behaves identically
+         (assignment, mail-thread visibility, notification emails), it's just a
+         narrower audience.
+
+         NOTE: deliberately NOT using implied_ids here. implied_ids physically
+         adds a group's members as direct members of the implied group too — so
+         if these implied group_it_team, every narrow-group member would become
+         a genuine member of the flat IT Team group, and would then see every
+         ticket routed to that flat group as well (leaking across groups). Portal
+         "can you see the IT menu at all" access is instead handled dynamically
+         in code (see _user_has_it_access on it.ticket) by checking membership in
+         ANY group currently configured as an IT Support Group on some sub-
+         category, OR the flat group — no implication, so no leakage, and no code
+         change needed when a new group is added there. The one place that DOES
+         still need a one-line edit for a brand new group is the ir.rule's groups
+         list below — see the note on that rule for why. -->
+    <record id="group_it_odoo_support" model="res.groups">
+        <field name="name">Odoo Support</field>
+    </record>
+
+    <record id="group_it_powerapps_support" model="res.groups">
+        <field name="name">PowerApps Support</field>
+    </record>
+
+    <record id="group_line_manager" model="res.groups">
+        <field name="name">Line Manager</field>
+    </record>
+
+    <!-- ================================================
+         PORTAL USER: own tickets + line manager + it manager
+         (Line Manager branch excludes Level-0 tickets — he's never part of that
+          flow, even if line_manager_id happens to be populated on the record.
+          IT Manager branch scoped to Level-2 tickets that have reached his
+          stage, or that he rejected — same logic as the backend rule below)
+    ================================================ -->
+    <record id="rule_it_ticket_portal" model="ir.rule">
+        <field name="name">Portal: Own Tickets + Line Manager + IT Manager</field>
+        <field name="model_id" ref="model_it_ticket"/>
+        <field name="domain_force">['|', '|', ('employee_id.user_id', '=', user.id),
+            '&amp;', ('line_manager_id', '=', user.id), ('workflow_level', '!=', '0'),
+            '&amp;', '&amp;', ('it_manager_id', '=', user.id), ('workflow_level', '=', '2'),
+            '|', ('state', 'in', ['it_approval', 'assigned', 'in_progress', 'done']),
+            '&amp;', ('state', '=', 'rejected'), ('rejected_by_id', '=', user.id)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- ================================================
+         LINE MANAGER (internal): sees their team tickets at all stages,
+         EXCEPT Level-0 tickets — those never involve him at all, even if
+         line_manager_id got populated on the record.
+    ================================================ -->
+    <record id="rule_it_ticket_line_manager" model="ir.rule">
+        <field name="name">Line Manager: See team tickets at all stages</field>
+        <field name="model_id" ref="model_it_ticket"/>
+        <field name="domain_force">[('line_manager_id', '=', user.id), ('workflow_level', '!=', '0')]</field>
+        <field name="groups" eval="[(4, ref('ticketing_it.group_line_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- ================================================
+         IT MANAGER (internal): sees ONLY Level-2 tickets, and ONLY once the
+         ticket has actually reached IT-approval stage (i.e. Line Manager has
+         already approved) — never before, never for Level 0/1/3 tickets.
+    ================================================ -->
+    <record id="rule_it_ticket_it_manager" model="ir.rule">
+        <field name="name">IT Manager: Tickets pending IT approval</field>
+        <field name="model_id" ref="model_it_ticket"/>
+        <field name="domain_force">['&amp;', '&amp;', ('it_manager_id', '=', user.id), ('workflow_level', '=', '2'),
+            '|', ('state', 'in', ['it_approval', 'assigned', 'in_progress', 'done']),
+            '&amp;', ('state', '=', 'rejected'), ('rejected_by_id', '=', user.id)]
+        </field>
+        <field name="groups" eval="[(4, ref('ticketing_it.group_it_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ================================================
+         IT TEAM: sees only assigned tickets
+    ================================================ -->
+    <record id="rule_it_ticket_it_team" model="ir.rule">
+        <field name="name">IT Team: Assigned or resolved-group tickets</field>
+        <field name="model_id" ref="model_it_ticket"/>
+        <field name="domain_force">['&amp;', ('state', 'in', ['assigned', 'in_progress', 'done']),
+            '|', ('assigned_to_id', '=', user.id),
+                 ('ticket_type_id.it_support_group_id.user_ids', 'in', [user.id])]
+        </field>
+        <!-- This groups list is the ONE spot that genuinely needs a new group
+             added by hand when you create one — NOT via implied_ids (see the
+             note above on why that leaks visibility), and not by leaving this
+             list empty either: an ir.rule with no groups is GLOBAL and gets
+             ANDed onto every other access rule for every user on this model,
+             which would silently break normal employees seeing their OWN
+             submitted tickets. So: whenever a new IT support group is created,
+             add it here too — Settings > Technical > Security > Record Rules >
+             "IT Team: Assigned or resolved-group tickets" > Groups tab > Add.
+             The domain_force above already does the real per-ticket filtering
+             correctly for any group added here; this list only decides WHO the
+             rule runs for. -->
+        <field name="groups" eval="[(4, ref('ticketing_it.group_it_team')),
+            (4, ref('ticketing_it.group_it_odoo_support')),
+            (4, ref('ticketing_it.group_it_powerapps_support'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- ================================================
+         CROSS-COMPANY: IT Manager and IT Support can read
+         hr.employee records across companies
+    ================================================ -->
+    <record id="rule_hr_employee_it_manager_cross_company" model="ir.rule">
+        <field name="name">IT Manager: Read employees across companies</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('ticketing_it.group_it_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+
+    <!-- HR Reviewer: sees only tickets pending HR approval -->
+    <record id="rule_it_ticket_hr_manager" model="ir.rule">
+        <field name="name">HR Reviewer: Tickets pending HR approval</field>
+        <field name="model_id" ref="model_it_ticket"/>
+        <field name="domain_force">[('state', '=', 'hr_approval')]</field>
+        <field name="groups" eval="[(4, ref('employee_profile_change_request.group_profile_change_hr_reviewer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_hr_employee_it_team_cross_company" model="ir.rule">
+        <field name="name">IT Support: Read employees across companies</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('ticketing_it.group_it_team'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>

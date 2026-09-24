@@ -1,0 +1,28 @@
+<!-- Copyright 2020 CorTex IT Solutions Ltd. (<https://cortexsolutions.net/>)-->
+<!-- License OPL-1-->
+
+<odoo>
+    <data>
+        <record id="view_hr_payslip_tree" model="ir.ui.view">
+            <field name="name">hr.payslip.view.list.inherit</field>
+            <field name="model">hr.payslip</field>
+            <field name="inherit_id" ref="hr_payroll.view_hr_payslip_tree"/>
+            <field name="arch" type="xml">
+                <field name="net_wage" position="after">
+                    <field name="currency_id" groups="base.group_multi_currency" optional="show"/>
+                </field>
+            </field>
+        </record>
+
+        <record id="view_hr_payslip_filter" model="ir.ui.view">
+            <field name="name">hr.payslip.view.search.inherit</field>
+            <field name="model">hr.payslip</field>
+            <field name="inherit_id" ref="hr_payroll.view_hr_payslip_filter"/>
+            <field name="arch" type="xml">
+                <filter name="group_by_company_id" position="after">
+                   <filter name="group_by_currency" string="Currency" domain="[]" context="{'group_by':'currency_id'}"/>
+                </filter>
+            </field>
+        </record>
+    </data>
+</odoo>

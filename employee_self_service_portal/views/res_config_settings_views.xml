@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_ess_leave" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.ess.leave</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="ESS Leave" string="ESS Leave" name="employee_self_service_portal">
+                    <block title="Leave Approval" name="ess_leave_approval_block">
+                        <setting id="ess_leave_approval_required_setting"
+                                 string="Require Manager Approval"
+                                 help="When enabled, leave requests go through the manager approval flow. When disabled, leave is approved immediately when the employee applies.">
+                            <field name="leave_approval_required"/>
+                        </setting>
+                    </block>
+                    <block title="Leave Notification Recipients" name="ess_leave_notify_block">
+                        <setting id="ess_leave_hr_manager_setting"
+                                 string="HR Manager"
+                                 help="Company-wide HR Manager notified on every leave application.">
+                            <field name="leave_hr_manager_id"/>
+                        </setting>
+                        <setting id="ess_leave_delivery_head_setting"
+                                 string="Delivery Head"
+                                 help="Company-wide Delivery Head notified on every leave application.">
+                            <field name="leave_delivery_head_id"/>
+                        </setting>
+                        <setting id="ess_leave_hr_dept_email_setting"
+                                 string="HR Department Email"
+                                 help="HR department address notified on leave application and cancellation.">
+                            <field name="leave_hr_department_email"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

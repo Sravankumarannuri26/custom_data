@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="techcarrot_tecproject_type_tree_view" model="ir.ui.view">
+        <field name="name">tecproject.type.tree.view</field>
+        <field name="model">tecproject.type</field>
+        <field name="arch" type="xml">
+            <list string="Project Type" editable="top">
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="tecproject_type_action" model="ir.actions.act_window">
+        <field name="name">Project Type</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">tecproject.type</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Project type not created. Let's create one!
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+            id="menu_project_type"
+            name="Project Type"
+            action="tecproject_type_action"
+            parent="sale.menu_sale_config"
+            sequence="25"/>
+</odoo>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Show inactive employees with muted style in list view -->
+    <record id="view_employee_list_inherit_show_inactive" model="ir.ui.view">
+        <field name="name">hr.employee.list.inherit.show.inactive</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-muted">active == False</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Update existing employee action to show all employees -->
+    <record id="hr.open_view_employee_list_my" model="ir.actions.act_window">
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <!-- Hide the "Archived" ribbon on the employee form view -->
+<!--    <record id="view_employee_form_inherit_hide_archived_ribbon" model="ir.ui.view">-->
+<!--        <field name="name">hr.employee.form.inherit.hide.archived.ribbon</field>-->
+<!--        <field name="model">hr.employee</field>-->
+<!--        <field name="inherit_id" ref="hr.view_employee_form"/>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <xpath expr="//widget[@name='web_ribbon']" position="attributes">-->
+<!--                <attribute name="invisible">1</attribute>-->
+<!--            </xpath>-->
+<!--        </field>-->
+<!--    </record>-->
+</odoo>

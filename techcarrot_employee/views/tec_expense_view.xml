@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <record id="techcarrot_employee_expense_inherit" model="ir.ui.view">
+        <field name="name">hr.expense.form</field>
+        <field name="model">hr.expense</field>
+        <field name="inherit_id" ref="hr_expense.hr_expense_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//label[@id='lo']" position="before">
+                <field name="emp_code"/>
+                <field name="project_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

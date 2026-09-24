@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!--<record id="techcarrot_converted_deal_tree_view" model="ir.ui.view">
+            <field name="name">converted.deal.tree.view</field>
+            <field name="model">converted.deal</field>
+            <field name="arch" type="xml">
+                <list string="Converted Deal" editable="top">
+                    <field name="name"/>
+                </list>
+            </field>
+        </record>
+
+    <record id="converted_deal_action" model="ir.actions.act_window">
+        <field name="name">Converted Deal</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">converted.deal</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Converted Deal found. Let's create one!
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+            id="menu_converted_deal"
+            name="Converted Deal"
+            action="converted_deal_action"
+            parent="crm.crm_menu_config"
+            sequence="20"/>-->
+</odoo>

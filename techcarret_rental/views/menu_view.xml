@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <record id="sale_renting.rental_order_action" model="ir.actions.act_window">
+        <field name="name">Rental Orders</field>
+        <field name="path">rental</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,kanban,form,calendar,pivot,graph,activity</field>
+        <field name="search_view_id" ref="sale_renting.rental_order_view_search"/>
+        <field name="context">{'in_rental_app': 1, 'search_default_from_rental': 1}</field>
+        <field name="domain">[('is_rental_order', '!=', False)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new quotation, the first step of a new rental!
+            </p>
+            <p>
+                Once the quotation is confirmed, it becomes a rental order.<br/> You will be able to create an invoice and collect the payment.
+            </p>
+        </field>
+    </record>
+
+    <record id="sale_subscription.sale_subscription_action_quotes" model="ir.actions.act_window">
+        <field name="name">Quotations</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,kanban,form,pivot,graph,cohort,activity</field>
+        <field name="context">{
+            'default_has_recurring_line':True,
+            'search_default_my_subscriptions': 1,
+        }</field>
+        <!-- All kind of subscription except upsell -->
+        <field name="domain">[('is_subscription', '!=', False),('subscription_state', 'in', ['1_draft', '2_renewal', '3_progress', '4_paused', '5_renewed', '6_churn'])]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('sale_subscription.sale_subscription_quotation_tree_view'), 'sequence': 1}),
+                (0, 0, {'view_mode': 'kanban', 'sequence': 2}),
+            ]"/>
+        <field name="search_view_id" ref='sale_subscription.sale_subscription_view_search'/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a subscription quotation
+            </p><p>
+                Create subscriptions to manage recurring invoicing and payments from your customers.
+            </p>
+        </field>
+    </record>
+
+    <record id="sale_subscription.sale_subscription_action" model="ir.actions.act_window">
+        <field name="name">Subscriptions</field>
+        <field name="path">subscriptions</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,kanban,form,pivot,graph,cohort,activity</field>
+        <field name="context">{
+            'default_has_recurring_line':True,
+            'default_is_tec_subscription': '1',
+            'default_subscription_state': '1_draft',
+            'search_default_progress': 1,
+            'search_default_paused': 1,
+        }</field>
+        <field name="domain">[('is_subscription', '!=', False),('subscription_state', 'not in', ['2_renewal', '5_renewed', '7_upsell', False])]</field>
+<!--        <field name="search_view_id" ref='tec_sale_subscription_view_search'/>-->
+        <field name="help" type="html">
+            <p class="o_view_nocontent_subscription_graph">
+                Create a new subscription
+            </p><p>
+                Automate invoices and payments, simplify upsell quotes, reduce churn and get insights (MRR, churn, CLTV, ...)
+            </p>
+        </field>
+    </record>
+
+    <record id="sale_subscription.sale_subscription_action_filtered" model="ir.actions.act_window">
+        <field name="name">Subscriptions</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form,kanban,pivot,graph,activity</field>
+        <field name="context">{
+            'default_has_recurring_line':True,
+            'search_default_sale_order_template_id': [active_id],
+            'default_sale_order_template_id': active_id,
+        }
+        </field>
+        <field name="domain">[('is_subscription', '!=', False)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new subscription
+            </p><p>
+                Automate invoices and payments, simplify upsell quotes, reduce churn and get insights (MRR, churn, CLTV, ...)
+            </p>
+        </field>
+    </record>
+
+    <record id="sale_subscription.sale_subscription_action_pending" model="ir.actions.act_window">
+        <field name="name">To Renew</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form,pivot,graph,kanban,cohort,activity</field>
+        <field name="context">{
+            'default_has_recurring_line':True,
+            'search_default_my_subscription':1,
+            'search_default_to_renew':1,
+            'default_subscription_state': '1_draft',
+        }</field>
+        <field name="domain">[('is_subscription', '!=', False),('subscription_state', '!=', False)]</field>
+        <field name="search_view_id" ref='sale_subscription.sale_subscription_view_search'/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Great, there are no subscriptions to renew!
+          </p><p>
+            Here you will find subscriptions overdue for renewal.
+          </p><p>
+            It could be due to the fail of the automatic payment
+            or because the new invoice has not yet been issued.
+          </p>
+        </field>
+    </record>
+
+
+    <record id="sale.action_quotations_with_onboarding" model="ir.actions.act_window">
+        <field name="name">Quotations</field>
+        <field name="path">sales</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_id" ref="sale.view_quotation_tree_with_onboarding"/>
+        <field name="view_mode">list,kanban,form,calendar,pivot,graph,activity</field>
+        <field name="search_view_id" ref="sale.sale_order_view_search_inherit_quotation"/>
+        <field name="context">{'search_default_my_quotation': 1}</field>
+        <field name="domain">[('is_rental_order', '!=', True),('is_subscription', '!=', True)]</field>
+        <field name="help" type="html">
+            <br/>
+            <h2>
+            Beat competitors with stunning quotations!
+            </h2><p>
+            Boost sales with online payments or signatures, upsells, and a great customer portal.
+            </p>
+            <a
+                role="button"
+                class="btn btn-secondary"
+                href="https://www.odoo.com/documentation/master/_downloads/56a93429515b36105d952e1d2b802f9e/sample_quotation.pdf"
+                target="_blank"
+            >
+                Check a sample. It's clean!
+            </a>
+        </field>
+    </record>
+
+    <record id="sale.action_orders" model="ir.actions.act_window">
+        <field name="name">Sales Orders</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,kanban,form,calendar,pivot,graph,activity</field>
+        <field name="search_view_id" ref="sale.sale_order_view_search_inherit_sale"/>
+        <field name="context">{}</field>
+        <field name="path">orders</field>
+        <field name="domain">[('is_rental_order', '!=', True),('is_subscription', '!=', True),('state', 'not in', ('draft', 'sent', 'cancel'))]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new quotation, the first step of a new sale!
+            </p><p>
+                Once the quotation is confirmed, it becomes a sales order.<br/> You will be able to create an invoice and collect the payment.
+            </p>
+        </field>
+    </record>
+
+    <record id="tech_rental_invoices" model="ir.actions.act_window">
+        <field name="name">Invoice to create</field>
+        <field name="res_model">rental.invoice.history</field>
+        <field name="view_mode">list</field>
+<!--        <field name="search_view_id" ref="view_rental_history_filter"/>-->
+        <field name="path">tech-rental-invoice</field>
+    </record>
+
+    <menuitem id="menu_tech_rental_schedule_invoices"
+              name="Rental Invoices"
+              parent="sale_renting.rental_menu_root"
+              action="tech_rental_invoices"
+              sequence="2"/>
+
+</odoo>

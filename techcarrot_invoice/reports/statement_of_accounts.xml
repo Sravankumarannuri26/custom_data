@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="statement_account_logo" inherit_id="account_reports.pdf_export_main_customer_report">
+        <xpath expr="//div[hasclass('row')][1]" position="before">
+            <div class="row mb-2">
+                <div class="col-12 text-start mb-3">
+                    <img t-if="env.company.sudo().logo" t-att-src="image_data_uri(env.company.sudo().logo)"
+                         style="max-height: 60px; max-width: 280px;" alt="Company Logo"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <record id="account_reports.followup_report" model="account.report">
+        <field name="name">Statement of Accounts</field>
+    </record>
+
+    <template id="statement_account_bank_details" inherit_id="account_reports.bank_information_customer_report">
+        <xpath expr="//t[@t-set='bank_account']" position="replace">
+            <t t-set="bank_accounts"
+               t-value="env.company.partner_id.bank_ids.filtered(lambda bank: bank.allow_out_payment)"/>
+        </xpath>
+        <xpath expr="//div[hasclass('row')]" position="replace">
+            <t t-foreach="bank_accounts" t-as="bank_account">
+                <t t-set="linked_journal"
+                   t-value="env['account.journal'].sudo().search([('bank_account_id', '=', bank_account.id)], limit=1)"/>
+                <t t-set="currency_label"
+                   t-value="linked_journal.currency_id.name if linked_journal and linked_journal.currency_id else env.company.currency_id.name"/>
+                <div class="row">
+                    Bank Details for
+                    <t t-out="currency_label"/>
+                    Transfers:
+                    <t t-out="bank_account.acc_number"/>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+    <record id="statement_of_accounts_reference_column" model="account.report.column">
+        <field name="name">Reference</field>
+        <field name="expression_label">ref</field>
+        <field name="report_id" ref="account_reports.followup_report"/>
+        <field name="sequence">0</field>
+        <field name="figure_type">string</field>
+    </record>
+
+    <record id="statement_of_accounts_transaction_column" model="account.report.column">
+        <field name="name">Transaction</field>
+        <field name="expression_label">transaction_type</field>
+        <field name="report_id" ref="account_reports.followup_report"/>
+        <field name="sequence">10</field>
+        <field name="figure_type">string</field>
+    </record>
+
+    <record id="statement_of_accounts_payments_column" model="account.report.column">
+        <field name="name">Payments</field>
+        <field name="expression_label">payment_id</field>
+        <field name="report_id" ref="account_reports.followup_report"/>
+        <field name="sequence">55</field>
+        <field name="figure_type">monetary</field>
+    </record>
+
+    <record id="statement_of_accounts_currency_column" model="account.report.column">
+        <field name="name">Invoice Currency</field>
+        <field name="expression_label">currency_id</field>
+        <field name="report_id" ref="account_reports.followup_report"/>
+        <field name="sequence">65</field>
+        <field name="figure_type">string</field>
+    </record>
+
+</odoo>

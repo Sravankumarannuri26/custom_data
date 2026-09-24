@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+            <record id="wm_payroll_multi_currency_employee_inherit_form_view" model="ir.ui.view">
+        <field name="name">hr.employee.form.multicurrency</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+<!--inherited view place changed(sriman)-->
+            <xpath expr="//field[@name='employee_properties']" position="before">
+                <group>
+                    <group>
+
+
+                    </group>
+                    <group>
+
+                    <field name="currency_id" groups="base.group_multi_currency"
+                           options="{'no_create': True,'no_open':True}"/>
+
+
+
+
+                    </group>
+                </group>
+
+            </xpath>
+            <xpath expr="//field[@name='wage']" position="replace">
+                    <field name="wage" class="oe_inline o_hr_narrow_field" nolabel="1" widget="monetary"/>
+                </xpath>
+
+        </field>
+    </record>
+
+<!--        <record id="hr_contract_view_form_inherit_multi_currency" model="ir.ui.view">-->
+<!--            <field name="name">hr.contract.form.inherit.multi.currency</field>-->
+<!--            <field name="model">hr.contract</field>-->
+<!--            <field name="priority">15</field>-->
+<!--            <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>-->
+<!--            <field name="arch" type="xml">-->
+<!--                <xpath expr="//field[@name='job_id']" position="after">-->
+<!--                    <field name="currency_id" groups="base.group_multi_currency"-->
+<!--                           options="{'no_create': True,'no_open':True}"/>-->
+<!--                </xpath>-->
+<!--                <xpath expr="//field[@name='wage']" position="replace">-->
+<!--                    <field name="wage" class="oe_inline o_hr_narrow_field" nolabel="1" widget="monetary"/>-->
+<!--                </xpath>-->
+<!--            </field>-->
+<!--        </record>-->
+
+<!--        <record id="hr_contract_search_inherit" model="ir.ui.view">-->
+<!--            <field name="name">hr.contract.search.inherit</field>-->
+<!--            <field name="model">hr.contract</field>-->
+<!--            <field name="inherit_id" ref="hr_contract.hr_contract_view_search"/>-->
+<!--            <field name="arch" type="xml">-->
+<!--                <filter name="group_by_state" position="after">-->
+<!--                    <filter name="group_by_currency" string="Currency" domain="[]"-->
+<!--                            context="{'group_by':'currency_id'}"/>-->
+<!--                </filter>-->
+<!--            </field>-->
+<!--        </record>-->
+
+        <record id="wm_payroll_multi_currency_employee_tree_inherit" model="ir.ui.view">
+            <field name="name">hr.employee.multicurrency.tree.inherit</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_tree"/>
+            <field name="arch" type="xml">
+                <field name="job_id" position="after">
+                    <field name="currency_id" groups="base.group_multi_currency" optional="show"/>
+                </field>
+            </field>
+        </record>
+    </data>
+</odoo>

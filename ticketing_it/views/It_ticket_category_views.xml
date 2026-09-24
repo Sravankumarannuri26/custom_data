@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- List view for it.ticket.category -->
+    <record id="view_it_ticket_category_list" model="ir.ui.view">
+        <field name="name">it.ticket.category.list</field>
+        <field name="model">it.ticket.category</field>
+        <field name="arch" type="xml">
+            <list string="IT Ticket Categories" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form view for it.ticket.category -->
+    <record id="view_it_ticket_category_form" model="ir.ui.view">
+        <field name="name">it.ticket.category.form</field>
+        <field name="model">it.ticket.category</field>
+        <field name="arch" type="xml">
+            <form string="IT Ticket Category">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="Sub-Categories">
+                            <field name="ticket_type_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for it.ticket.category -->
+    <record id="action_it_ticket_category" model="ir.actions.act_window">
+        <field name="name">Ticket Categories</field>
+        <field name="res_model">it.ticket.category</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first ticket category!
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu item under IT Helpdesk > Configuration > Categories -->
+    <menuitem
+        id="menu_it_ticket_category"
+        name="Categories"
+        parent="ticketing_it.menu_it_tickets_configuration"
+        action="action_it_ticket_category"
+        sequence="5"/>
+
+</odoo>

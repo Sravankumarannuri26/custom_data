@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyc
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+*.swp
+
+# Odoo
+*.pot
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment
+.env
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+.directory
+
+# Backup files
+*~
+*.bak
+*.swp

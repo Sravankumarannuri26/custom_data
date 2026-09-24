@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Employee Form with SharePoint Fields + License Management -->
+    <record id="view_employee_form_azure_license" model="ir.ui.view">
+        <field name="name">hr.employee.form.azure.license</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add SharePoint Fields to Personal Information Tab -->
+            <xpath expr="//page[@name='personal_information']" position="inside">
+<!--                <group string="Name Details (From SharePoint)">-->
+<!--                    <group>-->
+<!--                        <field name="employee_first_name"/>-->
+<!--                        <field name="employee_middle_name"/>-->
+<!--                        <field name="employee_last_name"/>-->
+<!--                    </group>-->
+<!--                    <group>-->
+<!--                        <field name="place_of_birth"/>-->
+<!--                    </group>-->
+<!--                </group>-->
+
+                <group string="Languages">
+                    <group>
+                        <field name="mother_tongue_id"/>
+                    </group>
+                    <group>
+                        <field name="language_known_ids" widget="many2many_tags"/>
+                    </group>
+                </group>
+            </xpath>
+
+
+<!--            <xpath expr="//page[@name='techcarrot']" position="inside">-->
+<!--                <group string="EMPLOYEE DETAILS">-->
+<!--                    <field name="total_it_experience"/>-->
+<!--                </group>-->
+
+<!--                <group string="EMERGENCY CONTACT PERSON ADDRESS INSIDE UAE">-->
+<!--                    <field name="alternate_mobile_number"/>-->
+<!--                    <field name="second_alternative_number"/>-->
+<!--                </group>-->
+<!--            </xpath>-->
+
+            <!-- Azure AD Info Tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Azure AD Info" name="azure_ad_info" groups="hr.group_hr_user,hr.group_hr_manager">
+
+                    <group>
+                        <group string="Azure Account">
+                            <field name="azure_email" readonly="1"/>
+                            <field name="azure_user_id" readonly="1"/>
+                        </group>
+                        <group string="License Info">
+                            <field name="azure_license_assigned" readonly="1" widget="boolean"/>
+                            <field name="azure_license_name" readonly="1"
+                                   invisible="azure_license_assigned == False"/>
+                        </group>
+                    </group>
+
+                    <!-- License Management Section -->
+                    <group string="License Management">
+                        <div class="alert alert-info" role="alert"
+                             invisible="azure_license_assigned == True or azure_user_id == False">
+                            <p>
+                                <strong>License Not Assigned</strong>
+                            </p>
+                            <p>Before assigning a license, check available licenses in
+                                <strong>Azure AD → License Management</strong>
+                            </p>
+                        </div>
+
+                        <!-- Assign Button -->
+                        <button name="action_assign_license"
+                                type="object"
+                                string=" Assign License"
+                                class="btn-success"
+                                icon="fa-plus-circle"
+                                confirm="Are you sure you want to assign a Microsoft 365 license to this employee?"
+                                groups="hr.group_hr_user,hr.group_hr_manager"
+                                invisible="azure_license_assigned == True or azure_user_id == False"
+                                help="This will assign an available Microsoft 365 license"/>
+
+                        <!-- Unassign Button -->
+                        <button name="action_unassign_license"
+                                type="object"
+                                string="Unassign License"
+                                class="btn-warning"
+                                icon="fa-minus-circle"
+                                confirm="This will remove the license and DISABLE the user account. Are you sure?"
+                                invisible="azure_license_assigned == False"
+                                help="This will remove the license and disable the Azure account"/>
+                    </group>
+
+                    <!-- Quick Actions -->
+                    <group string="Quick Actions" col="2">
+                        <button name="%(azure_ad_integration.action_azure_license_dashboard)d"
+                                type="action"
+                                string="View All Licenses"
+                                class="btn-info btn-block"
+                                icon="fa-eye"
+                                help="Open the license management dashboard"/>
+
+                        <button name="action_view_azure_user"
+                                type="object"
+                                string="View in Azure Portal"
+                                class="btn-primary btn-block"
+                                icon="fa-external-link"
+                                invisible="azure_user_id == False"
+                                help="Open this user's profile in Azure portal"/>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Employee Tree View -->
+    <record id="view_employee_tree_azure" model="ir.ui.view">
+        <field name="name">hr.employee.tree.azure</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='work_email']" position="after">
+                <field name="employee_first_name" optional="hide"/>
+                <field name="employee_last_name" optional="hide"/>
+                <field name="azure_email" optional="show"/>
+                <field name="azure_license_assigned" optional="show" widget="boolean"/>
+                <field name="azure_license_name" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

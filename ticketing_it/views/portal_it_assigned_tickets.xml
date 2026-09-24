@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Portal list of tickets assigned to the current IT Support (portal) user.
+         Linked from the "My Assigned Tickets" dashboard card in
+         employee_self_service_portal. Each row opens /my/tickets/<id> where
+         Start Work / Mark Done actions live. -->
+    <template id="portal_it_assigned_tickets" name="IT Helpdesk: My Assigned Tickets">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal_wrap">
+                <div class="container mt-4 mb-5">
+                    <nav aria-label="breadcrumb" class="mb-3">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/my/ess">Dashboard</a></li>
+                            <li class="breadcrumb-item active">My Assigned Tickets</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Header banner -->
+                    <div class="d-flex align-items-center gap-3 mb-4 p-4 rounded-4"
+                         style="background:linear-gradient(90deg,#1B5E3A,#E8542E); box-shadow:0 6px 18px rgba(27,94,58,0.25);">
+                        <div class="d-flex align-items-center justify-content-center rounded-circle"
+                             style="width:56px;height:56px;background:rgba(255,255,255,0.2);">
+                            <i class="fa fa-wrench fa-lg text-white"/>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 text-white" style="font-weight:700;">My Assigned Tickets</h3>
+                            <p class="mb-0 text-white" style="opacity:0.9;">Everything routed to you — start work, track progress, mark done</p>
+                        </div>
+                    </div>
+
+                    <t t-if="tickets">
+                        <!-- Quick stats -->
+                        <t t-set="total_count" t-value="len(tickets)"/>
+                        <t t-set="progress_count" t-value="len([t for t in tickets if t.state == 'in_progress'])"/>
+                        <t t-set="assigned_count" t-value="len([t for t in tickets if t.state == 'assigned'])"/>
+                        <t t-set="done_count" t-value="len([t for t in tickets if t.state == 'done'])"/>
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-md-3">
+                                <div class="rounded-4 py-3 text-center text-white"
+                                     style="background:linear-gradient(135deg,#1B5E3A,#E8542E);">
+                                    <h3 class="mb-0 fw-bold"><t t-esc="total_count"/></h3>
+                                    <small style="opacity:0.9;">Total Assigned</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="rounded-4 py-3 text-center text-white"
+                                     style="background:#E8542E;">
+                                    <h3 class="mb-0 fw-bold"><t t-esc="assigned_count"/></h3>
+                                    <small style="opacity:0.9;">Waiting to Start</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="rounded-4 py-3 text-center text-white"
+                                     style="background:linear-gradient(135deg,#E8542E,#1B5E3A);">
+                                    <h3 class="mb-0 fw-bold"><t t-esc="progress_count"/></h3>
+                                    <small style="opacity:0.9;">In Progress</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="rounded-4 py-3 text-center text-white"
+                                     style="background:#1B5E3A;">
+                                    <h3 class="mb-0 fw-bold"><t t-esc="done_count"/></h3>
+                                    <small style="opacity:0.9;">Completed</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <style>
+                            .it-ticket-row { transition: background 0.15s ease, transform 0.15s ease; }
+                            .it-ticket-row:hover { background: #f4f8fb; transform: translateX(2px); }
+                            .it-avatar {
+                                width: 36px; height: 36px; border-radius: 50%;
+                                display:flex; align-items:center; justify-content:center;
+                                color:#fff; font-weight:600; font-size:0.85rem;
+                                background: linear-gradient(135deg,#1B5E3A,#E8542E);
+                            }
+                        </style>
+
+                        <div class="card border-0 shadow-sm" style="border-radius:16px;overflow:hidden;">
+                            <div class="table-responsive">
+                                <table class="table mb-0 align-middle">
+                                    <thead>
+                                        <tr style="background:linear-gradient(90deg,#1B5E3A1a,#E8542E1a);">
+                                            <th class="ps-4 py-3">Ticket</th>
+                                            <th class="py-3">Employee</th>
+                                            <th class="py-3">Subject</th>
+                                            <th class="py-3">Status</th>
+                                            <th class="py-3 pe-4"/>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="tickets" t-as="tk">
+                                            <t t-set="status_map" t-value="{
+                                                'assigned':    ('#E8542E', 'fa-inbox',        'Assigned to IT'),
+                                                'in_progress': ('#E8542E', 'fa-spinner',       'In Progress'),
+                                                'done':        ('#1B5E3A', 'fa-check-circle',  'Completed'),
+                                            }"/>
+                                            <t t-set="si" t-value="status_map.get(tk.state, ('#E8542E', 'fa-circle', tk.state))"/>
+                                            <tr class="it-ticket-row" t-attf-style="border-left:4px solid {{ si[0] }};">
+                                                <td class="ps-4">
+                                                    <strong style="color:#1B5E3A;"><t t-esc="tk.name"/></strong>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="it-avatar">
+                                                            <t t-esc="(tk.employee_id.name or '?')[0].upper()"/>
+                                                        </div>
+                                                        <span><t t-esc="tk.employee_id.name"/></span>
+                                                    </div>
+                                                </td>
+                                                <td><t t-esc="tk.subject or ''"/></td>
+                                                <td>
+                                                    <span t-attf-class="badge rounded-pill px-3 py-2"
+                                                          t-attf-style="background:{{ si[0] }}1a; color:{{ si[0] }}; font-weight:600;">
+                                                        <i t-attf-class="fa {{ si[1] }} me-1"/>
+                                                        <t t-esc="si[2]"/>
+                                                    </span>
+                                                </td>
+                                                <td class="pe-4 text-end">
+                                                    <a t-attf-href="/my/tickets/#{tk.id}" class="btn btn-sm text-white"
+                                                       style="background:linear-gradient(90deg,#1B5E3A,#E8542E); border:none;">
+                                                        Open →
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="text-center py-5">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                                 style="width:80px;height:80px;background:linear-gradient(135deg,#1B5E3A1a,#E8542E1a);">
+                                <i class="fa fa-inbox fa-2x" style="color:#1B5E3A;"/>
+                            </div>
+                            <h5 class="text-muted">No tickets assigned to you</h5>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

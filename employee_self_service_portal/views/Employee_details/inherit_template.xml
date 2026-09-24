@@ -1,0 +1,554 @@
+<odoo>
+    <template id="portal_employee_profile_personal_inherit_extra"
+              inherit_id="employee_self_service_portal.portal_employee_profile_personal">
+
+        <t t-set="all_countries" t-value="request.env['res.country'].sudo().search([], order='name')"/>
+
+
+        <xpath expr="//div[@class='card shadow-sm'][.//div[@id='formActions']]" position="before">
+
+            <!-- ================= Private Contact ================= -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Private Contact</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label>Email</label>
+                            <input type="text" name="private_email" class="form-control"
+                                   t-att-value="employee.private_email or ''"
+                                   readonly="readonly"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Phone</label>
+                            <input type="text" name="private_phone" class="form-control"
+                                   t-att-value="employee.private_phone or ''"
+                                   readonly="readonly"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Bank Accounts</label>
+                            <input type="text" class="form-control"
+                                   t-att-value="', '.join(employee.bank_account_ids.mapped('acc_number')) if employee.bank_account_ids else ''"
+                                   data-always-readonly="1"
+                                   readonly="readonly"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= Visa & Work Permit ================= -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Visa &amp; Work Permit</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label>Visa No</label>
+                            <input name="visa_no" class="form-control"
+                                   t-att-value="employee.visa_no or ''"
+                                   data-always-readonly="1"
+                                   readonly="readonly"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Work Permit No</label>
+                            <input name="permit_no" class="form-control"
+                                   t-att-value="employee.permit_no or ''"
+                                   data-always-readonly="1"
+                                   readonly="readonly"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Work Permit</label>
+                            <t t-if="employee.has_work_permit">
+                                <div class="mb-2">
+                                    <a t-att-href="'/web/content/hr.employee/%s/has_work_permit?download=true' % employee.id"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-download me-1"></i>Download Current File
+                                    </a>
+                                </div>
+                            </t>
+                            <input type="file" name="has_work_permit" class="form-control"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= Citizenship ================= -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Citizenship</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label>Nationality</label>
+                            <input class="form-control"
+                                   t-att-value="employee.country_id.name or ''"
+                                   data-always-readonly="1"
+                                   readonly="readonly"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Non Resident</label>
+                            <div class="form-check mt-2">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       name="is_non_resident"
+                                       id="is_non_resident"
+                                       t-att-checked="'checked' if employee.is_non_resident else None"
+                                       disabled="disabled"/>
+                                <label class="form-check-label" for="is_non_resident">
+                                    <t t-if="employee.is_non_resident">Yes</t>
+                                    <t t-else="">No</t>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Identification No</label>
+                            <input name="identification_id" class="form-control"
+                                   t-att-value="employee.identification_id or ''"
+                                   data-always-readonly="1"
+                                   readonly="readonly"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label>SSN No</label>
+                            <input name="ssnid" class="form-control"
+                                   t-att-value="employee.ssnid or ''"
+                                   data-always-readonly="1"
+                                   readonly="readonly"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Passport No</label>
+                            <input name="passport_id" class="form-control"
+                                   t-att-value="employee.passport_id or ''"
+                                   data-always-readonly="1"
+                                   readonly="readonly"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= Family ================= -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Family</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label>Disabled</label>
+                            <input class="form-control"
+                                   t-att-value="'Yes' if employee.disabled else 'No'"
+                                   data-always-readonly="1"
+                                   readonly="readonly"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Children</label>
+                            <input name="children" class="form-control"
+                                   t-att-value="employee.children or ''"
+                                   readonly="readonly"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Certificate</label>
+                            <select name="certificate" class="form-select" disabled="disabled">
+                                <option value="">Select Certificate</option>
+                                <option value="graduate"
+                                        t-att-selected="'selected' if employee.certificate == 'graduate' else None">
+                                    Graduate
+                                </option>
+                                <option value="bachelor"
+                                        t-att-selected="'selected' if employee.certificate == 'bachelor' else None">
+                                    Bachelor
+                                </option>
+                                <option value="master"
+                                        t-att-selected="'selected' if employee.certificate == 'master' else None">
+                                    Master
+                                </option>
+                                <option value="doctor"
+                                        t-att-selected="'selected' if employee.certificate == 'doctor' else None">
+                                    Doctor
+                                </option>
+                                <option value="other"
+                                        t-att-selected="'selected' if employee.certificate == 'other' else None">
+                                    Other
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Field of Study</label>
+                            <input name="study_field" class="form-control"
+                                   t-att-value="employee.study_field or ''"
+                                   data-always-readonly="1"
+                                   readonly="readonly"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= Social Media Details ================= -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fa fa-share-alt text-primary me-2"></i>Social Media Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Facebook Profile</label>
+                            <input type="text" name="facebook_profile" class="form-control"
+                                   t-att-value="employee.facebook_profile or ''"
+                                   readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Instagram Profile</label>
+                            <input type="text" name="insta_profile" class="form-control"
+                                   t-att-value="employee.insta_profile or ''"
+                                   readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Twitter Profile</label>
+                            <input type="text" name="twitter_profile" class="form-control"
+                                   t-att-value="employee.twitter_profile or ''"
+                                   readonly="readonly"/>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= Career Details ================= -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fa fa-briefcase text-primary me-2"></i>Career Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">No. of Career Break</label>
+                            <input type="text" name="no_of_career_break" class="form-control"
+                                   t-att-value="employee.no_of_career_break or ''"
+                                   data-always-readonly="1" readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Career Break</label>
+                            <input type="text" name="career_break" class="form-control"
+                                   t-att-value="employee.career_break or ''"
+                                   data-always-readonly="1" readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Career Break Detail</label>
+                            <input type="text" name="career_break_detail" class="form-control"
+                                   t-att-value="employee.career_break_detail or ''"
+                                   readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Career Break Start Date</label>
+                            <input type="date" name="career_break_start_date" class="form-control"
+                                   t-att-value="employee.career_break_start_date.strftime('%Y-%m-%d') if employee.career_break_start_date else ''"
+                                   data-always-readonly="1" readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Career Break End Date</label>
+                            <input type="date" name="career_break_end_date" class="form-control"
+                                   t-att-value="employee.career_break_end_date.strftime('%Y-%m-%d') if employee.career_break_end_date else ''"
+                                   data-always-readonly="1" readonly="readonly"/>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= Industry Details ================= -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fa fa-industry text-primary me-2"></i>Industry Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Reference Name</label>
+                            <input type="text" name="industry_ref_name" class="form-control"
+                                   t-att-value="employee.industry_ref_name or ''"
+                                   readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Reference Email</label>
+                            <input type="email" name="industry_ref_email" class="form-control"
+                                   t-att-value="employee.industry_ref_email or ''"
+                                   readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Reference Mobile Number</label>
+                            <input type="tel" name="industry_ref_mob_no" class="form-control"
+                                   t-att-value="employee.industry_ref_mob_no or ''"
+                                   readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Previous Company Name</label>
+                            <input type="text" name="previous_company_name" class="form-control"
+                                   t-att-value="employee.previous_company_name or ''"
+                                   data-always-readonly="1" readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Designation</label>
+                            <input type="text" name="designation" class="form-control"
+                                   t-att-value="employee.designation or ''"
+                                   data-always-readonly="1" readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Period in Company</label>
+                            <input type="text" name="period_in_company" class="form-control"
+                                   t-att-value="employee.period_in_company or ''"
+                                   data-always-readonly="1" readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Reason of Leaving</label>
+                            <input type="text" name="reason_of_leaving" class="form-control"
+                                   t-att-value="employee.reason_of_leaving or ''"
+                                   data-always-readonly="1" readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Exit Type</label>
+                            <input type="text" class="form-control"
+                                   t-att-value="employee.exit_type_id.name if employee.exit_type_id else ''"
+                                   data-always-readonly="1" readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Exit Reason</label>
+                            <input type="text" class="form-control"
+                                   t-att-value="employee.exit_reason_id.name if employee.exit_reason_id else ''"
+                                   data-always-readonly="1" readonly="readonly"/>
+                        </div>
+
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Home Country ID Name</label>
+                            <input type="text" name="home_country_id_name" class="form-control"
+                                   t-att-value="employee.home_country_id_name or ''"
+                                   readonly="readonly"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Home Country ID Number</label>
+                            <input type="text" name="home_country_id_number" class="form-control"
+                                   t-att-value="employee.home_country_id_number or ''"
+                                   readonly="readonly"/>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= Languages ================= -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Languages</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!--                        <div class="col-md-6">-->
+                        <!--                            <label>Mother Tongue</label>-->
+                        <!--                            <input class="form-control"-->
+                        <!--                                   t-att-value="employee.mother_tongue_id.name or ''"-->
+                        <!--                                   data-always-readonly="1"-->
+                        <!--       readonly="readonly"/>-->
+                        <!--                        </div>-->
+                        <!-- ================= Languages ================= -->
+                        <div class="card mb-4 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Languages</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Mother Tongue</label>
+                                        <input type="text"
+                                               name="mother_tongue_name"
+                                               class="form-control"
+                                               t-att-value="employee.mother_tongue_name or ''"
+                                               readonly="readonly"/>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Languages Known</label>
+                                        <input type="text"
+                                               name="language_known_name"
+                                               class="form-control"
+                                               t-att-value="employee.language_known_name or ''"
+                                               readonly="readonly"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </xpath>
+
+        <!-- ================= JavaScript ================= -->
+        <xpath expr="//script[@type='text/javascript']" position="after">
+            <script type="text/javascript">
+                <![CDATA[
+// ✅ Fields that should NEVER be editable (system/readonly fields)
+// Add any field name here to make it always readonly
+const ALWAYS_READONLY = [
+    'bank_account_ids',
+    'country_id',
+    'disabled',
+    'mother_tongue_id',
+];
+
+// ✅ Helper function to check if input should always be readonly
+function isAlwaysReadonly(input) {
+    // Check by data attribute
+    if (input.hasAttribute('data-always-readonly')) return true;
+    // Check by field name
+    const fieldName = input.name || '';
+    if (ALWAYS_READONLY.includes(fieldName)) return true;
+    return false;
+}
+
+// ✅ Override enableEditMode to handle extra fields
+const _originalEnableEditMode = window.enableEditMode;
+window.enableEditMode = function() {
+    // Call original function first
+    if (typeof _originalEnableEditMode === 'function') {
+        _originalEnableEditMode();
+    }
+
+    // ✅ Handle all inputs in the form
+    const allInputs = document.querySelectorAll('#personalDetailsForm input, #personalDetailsForm select');
+
+    allInputs.forEach(function(input) {
+        if (input.type === 'hidden') return;
+        if (input.type === 'file') return;
+
+        // ✅ Always-readonly fields - lock them even in edit mode
+        if (isAlwaysReadonly(input)) {
+            input.setAttribute('readonly', 'readonly');
+            if (input.tagName === 'SELECT' || input.type === 'checkbox') {
+                input.setAttribute('disabled', 'disabled');
+            }
+            input.style.setProperty('pointer-events', 'none');
+            input.style.setProperty('background-color', '#e9ecef');
+            return;
+        }
+
+        // ✅ Editable fields - unlock them
+        input.removeAttribute('disabled');
+        input.removeAttribute('readonly');
+        input.style.removeProperty('pointer-events');
+        input.style.removeProperty('background-color');
+    });
+
+    // ✅ Special handle for checkbox - enable only if NOT always readonly
+    const nonResidentCheckbox = document.getElementById('is_non_resident');
+    if (nonResidentCheckbox && !isAlwaysReadonly(nonResidentCheckbox)) {
+        nonResidentCheckbox.removeAttribute('disabled');
+    }
+
+    // ✅ Special handle for language select - enable only if NOT always readonly
+    const langSelect = document.getElementById('language_known_ids');
+    if (langSelect && !isAlwaysReadonly(langSelect)) {
+        langSelect.removeAttribute('disabled');
+        langSelect.style.removeProperty('pointer-events');
+    }
+
+    console.log('Edit mode enabled');
+};
+
+// ✅ Override disableEditMode to handle extra fields
+const _originalDisableEditMode = window.disableEditMode;
+window.disableEditMode = function() {
+    // Call original function first
+    if (typeof _originalDisableEditMode === 'function') {
+        _originalDisableEditMode();
+    }
+
+    // ✅ Lock all selects
+    const extraSelects = document.querySelectorAll('#personalDetailsForm select');
+    extraSelects.forEach(function(select) {
+        select.setAttribute('disabled', 'disabled');
+        // ✅ Keep always-readonly styling
+        if (isAlwaysReadonly(select)) {
+            select.style.setProperty('pointer-events', 'none');
+            select.style.setProperty('background-color', '#e9ecef');
+        } else {
+            select.style.removeProperty('pointer-events');
+            select.style.removeProperty('background-color');
+        }
+    });
+
+    // ✅ Lock all inputs
+    const extraInputs = document.querySelectorAll('#personalDetailsForm input');
+    extraInputs.forEach(function(input) {
+        if (input.type === 'hidden' || input.type === 'file') return;
+        if (input.type === 'checkbox') {
+            input.setAttribute('disabled', 'disabled');
+            return;
+        }
+        input.setAttribute('readonly', 'readonly');
+        // ✅ Keep always-readonly styling
+        if (isAlwaysReadonly(input)) {
+            input.style.setProperty('pointer-events', 'none');
+            input.style.setProperty('background-color', '#e9ecef');
+        } else {
+            input.style.removeProperty('pointer-events');
+            input.style.removeProperty('background-color');
+        }
+    });
+
+    console.log('Edit mode disabled');
+};
+
+// ✅ Fix form submit - remove disabled from selects before submitting
+// BUT keep always-readonly fields disabled so they are NOT submitted
+document.getElementById('personalDetailsForm').addEventListener('submit', function(e) {
+
+    // ✅ Only enable non-always-readonly selects for submission
+    const disabledSelects = this.querySelectorAll('select[disabled]');
+    disabledSelects.forEach(function(select) {
+        if (!isAlwaysReadonly(select)) {
+            select.removeAttribute('disabled');
+        }
+    });
+
+    // ✅ Only enable non-always-readonly checkboxes for submission
+    const disabledCheckboxes = this.querySelectorAll('input[type="checkbox"][disabled]');
+    disabledCheckboxes.forEach(function(cb) {
+        if (!isAlwaysReadonly(cb)) {
+            cb.removeAttribute('disabled');
+        }
+    });
+
+}, true); // capture phase - runs BEFORE the existing submit handler
+]]>
+            </script>
+        </xpath>
+
+    </template>
+</odoo>

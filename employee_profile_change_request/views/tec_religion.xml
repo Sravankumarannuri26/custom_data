@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="religion_christianity" model="tec.religion">
+            <field name="name">Christianity</field>
+        </record>
+
+        <record id="religion_islam" model="tec.religion">
+            <field name="name">Islam</field>
+        </record>
+
+        <record id="religion_hinduism" model="tec.religion">
+            <field name="name">Hinduism</field>
+        </record>
+
+        <record id="religion_buddhism" model="tec.religion">
+            <field name="name">Buddhism</field>
+        </record>
+
+        <record id="religion_sikhism" model="tec.religion">
+            <field name="name">Sikhism</field>
+        </record>
+
+        <record id="religion_judaism" model="tec.religion">
+            <field name="name">Judaism</field>
+        </record>
+
+        <record id="religion_bahai" model="tec.religion">
+            <field name="name">Baha'i</field>
+        </record>
+
+        <record id="religion_jainism" model="tec.religion">
+            <field name="name">Jainism</field>
+        </record>
+
+        <record id="religion_shinto" model="tec.religion">
+            <field name="name">Shinto</field>
+        </record>
+
+        <record id="religion_taoism" model="tec.religion">
+            <field name="name">Taoism</field>
+        </record>
+
+        <record id="religion_confucianism" model="tec.religion">
+            <field name="name">Confucianism</field>
+        </record>
+
+        <record id="religion_zoroastrianism" model="tec.religion">
+            <field name="name">Zoroastrianism</field>
+        </record>
+
+    </data>
+</odoo>

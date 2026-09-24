@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Adds a "My IT Tickets" card to the ESS dashboard (/my/ess) for IT
+         Support (portal) users, without modifying employee_self_service_portal.
+         Lets them Start Work / Mark Done from the portal only. -->
+    <template id="portal_ess_dashboard_it_card"
+              inherit_id="employee_self_service_portal.portal_ess_dashboard_enhanced">
+        <xpath expr="//div[@class='row g-4']" position="inside">
+            <t t-if="request.env['it.ticket'].sudo()._user_has_it_access(request.env.user)">
+                <div class="col-md-4">
+                    <div class="module-card card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="icon-circle me-3" style="background:#1B5E3A1a;">
+                                    <i class="fa fa-wrench fa-lg" style="color:#1B5E3A;"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">My IT Tickets</h5>
+                                    <p class="text-muted mb-0 small">
+                                        Tickets assigned to you — start work or mark done
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="/my/it-tickets" class="btn btn-sm text-white"
+                                   style="background: linear-gradient(90deg, #1B5E3A 0%, #E8542E 100%); border: none;">
+                                    <i class="fa fa-wrench me-1"></i>
+                                    Manage My Tickets
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+</odoo>

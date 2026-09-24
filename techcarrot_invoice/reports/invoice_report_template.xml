@@ -1,0 +1,1217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <template id="report_techcarrot_invoices_document">
+            <t t-call="web.html_container">
+                <t t-call="web.basic_layout">
+                    <style>
+                        <!--                        body {-->
+                        <!--                            font-size: 18px; /* Set the base font size for the report */-->
+                        <!--                        }-->
+                        table, th, td {
+                        border:1px solid black;
+                        padding-left:10px;
+                        padding:5px;
+                        }
+                        .br-right {
+                        border:1px solid black;
+                        padding:5px;
+                        }
+                        .text-right {
+                        text-align: end;
+                        }
+                        .o_report_logo_large {
+                        height: 80px;
+                        width: 320px;
+                        object-fit: contain;
+                        }
+                    </style>
+                    <t t-if="o.move_type == 'out_invoice'">
+                        <div class="page">
+                            <div class="row mb-4">
+                                <div class="col-6" name="logo">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <img t-if="o.company_id.logo" class="o_report_logo_large"
+                                             t-att-src="image_data_uri(o.company_id.logo)" alt="Logo"/>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-end" name="div_billing_address">
+                                    <!--                                <div name="partner_header" class="row mb-4">-->
+                                    <div class="text-end no-border" style="font-size:24px;">
+                                        <b>
+                                            <t t-esc="o.company_id.name"/>
+                                        </b>
+                                    </div>
+                                    <div class="text-end no-border">
+                                        <t t-esc="o.company_id.street"/>
+                                    </div>
+                                    <div class="text-end no-border">
+                                        <t t-esc="o.company_id.street2"/>
+                                    </div>
+                                    <div class="text-end no-border"><t t-esc="o.company_id.city"/>,<t
+                                            t-esc="o.company_id.state_id.name"/>,
+                                        <t t-esc="o.company_id.zip"/>
+                                    </div>
+                                    <div class="text-end no-border">
+                                        <t t-esc="o.company_id.country_id.name"/>
+                                    </div>
+                                    <div class="text-end no-border">TRN
+                                        <t t-esc="o.company_id.vat"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <h3 class="text-center">TAX INVOICE</h3>
+                            <br></br>
+
+                            <div class="row mb-4">
+                                <div class="col-6" name="div_billing_address">
+                                    <div name="customer_address">
+                                        <strong>Bill To</strong>
+                                    </div>
+                                    <div name="partner_header">
+                                        <div class="no-border" style="font-size:24px;">
+                                            <b>
+                                                <t t-esc="o.partner_id.name"/>
+                                            </b>
+                                        </div>
+                                        <div class="no-border"><t t-esc="o.partner_id.street"/>,
+                                            <t t-esc="o.partner_id.street2"/>
+                                        </div>
+                                        <div class="no-border">
+                                            <t t-esc="o.partner_id.city"/>
+                                        </div>
+                                        <div class="no-border">
+                                            <t t-esc="o.partner_id.zip"/>
+                                        </div>
+                                        <div class="no-border"><t t-esc="o.partner_id.state_id.name"/>,
+                                            <t t-esc="o.partner_id.country_id.name"/>
+                                        </div>
+                                        <div class="no-border">TRN
+                                            <t t-esc="o.partner_id.vat"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-end" name="div_billing_address">
+                                    <div name="customer_address">
+                                        <strong>Invoice#</strong>
+                                    </div>
+                                    <div name="address_not_same_as_shipping">
+                                        <address class="mb-0" t-field="o.name"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="clearfix invoice_main">
+                                <div class="page mb-4">
+                                    <div class="oe_structure"></div>
+                                    <table width="100%">
+                                        <thead>
+                                            <tr style="background-color:#d6d6d6;">
+                                                <th name="inv_date" width="25%" class="  text-start">Invoice Date</th>
+                                                <th name="terms" width="25%" class="  text-start">Terms</th>
+                                                <th name="due_date" width="22%" class="  text-start">Due Date</th>
+                                                <th name="due_date" width="28%" class="  text-start">P.O.#</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="border-bottom:none;border-top:none">
+                                                <td name="inv_dt" style="border-bottom:none;border-top:none">
+                                                    <span t-esc="o.invoice_date.strftime('%d %b %Y')"></span>
+                                                </td>
+                                                <td name="inv_dt" style="border-bottom:none;border-top:none">
+                                                    <span t-field="o.invoice_payment_term_id.name"></span>
+                                                </td>
+                                                <td name="inv_dt" style="border-bottom:none;border-top:none">
+                                                    <t t-if="o.invoice_date_due">
+                                                        <span t-esc="o.invoice_date_due.strftime('%d %b %Y')"></span>
+                                                    </t>
+                                                </td>
+                                                <td name="inv_dt" style="border-bottom:none;border-top:none">
+                                                    <t t-if="o.line_ids.sale_line_ids">
+                                                        <span t-field="o.line_ids.sale_line_ids.order_id.client_order_ref"></span>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+
+                                    </table>
+                                    <br></br>
+                                    <table width="100%" style="border:none;" name="invoice_line_table">
+                                        <thead>
+                                            <tr style="background-color:#d6d6d6;">
+                                                <th name="th_description" width="35%" class="text-start">
+                                                    <span>Item &amp; Description</span>
+                                                </th>
+                                                <th name="th_quantity" width="10%" class="text-end">
+                                                    <span>Qty</span>
+                                                </th>
+                                                <th name="th_quantity" width="12%" class="text-end">
+                                                    <span>Rate</span>
+                                                </th>
+                                                <th name="th_quantity" width="15%" class="text-end">
+                                                    <span>Taxable Amount</span>
+                                                </th>
+                                                <th name="th_quantity" width="13%" class="text-end">
+                                                    <span>VAT</span>
+                                                </th>
+                                                <th name="th_quantity" width="15%" class="text-center">
+                                                    <span>Total Amount</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="invoice_tbody">
+                                            <t t-set="lines"
+                                               t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
+                                            <t t-foreach="lines" t-as="line">
+                                                <tr style="border-bottom:none;border-top:none"
+                                                    t-att-class="'fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
+                                                    <t t-if="line.display_type == 'product'"
+                                                       name="account_invoice_line_accountable">
+                                                        <td name="account_invoice_line_name"
+                                                            style="border-bottom:none;border-top:none">
+                                                            <span t-if="line.name" t-field="line.name"
+                                                                  t-options="{'widget': 'text'}">Bacon Burger
+                                                            </span>
+                                                            <!--                                                    <span t-if="line.name" t-field="line.name" t-options="{'widget': 'text'}">Bacon Burger</span>-->
+                                                        </td>
+                                                        <td name="td_quantity" class="text-end text-nowrap"
+                                                            style="border-bottom:none;border-top:none">
+                                                            <span t-out="line._check_qty_whole_fraction()">3.00</span>
+                                                            <span t-field="line.product_uom_id" groups="uom.group_uom">
+                                                                units
+                                                            </span>
+                                                        </td>
+                                                        <td name="td_price_unit"
+                                                            style="border-bottom:none;border-top:none"
+                                                            t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                            <span class="text-nowrap" t-field="line.price_unit">9.00
+                                                            </span>
+                                                        </td>
+                                                        <td name="td_subtotal"
+                                                            style="border-bottom:none;border-top:none"
+                                                            class="text-end o_price_total">
+                                                            <t t-set="subtotal"
+                                                               t-value="'{:,.2f}'.format(line.price_subtotal)"/>
+                                                            <span class="text-nowrap" t-esc="subtotal">27.00</span>
+                                                        </td>
+                                                        <t t-set="taxes"
+                                                           t-value="', '.join([(tax.invoice_label or tax.name) for tax in line.tax_ids])"/>
+                                                        <td name="td_taxes" style="border-bottom:none;border-top:none"
+                                                            t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }} {{ 'text-nowrap' if len(taxes) &lt; 10 else '' }}">
+                                                            <t t-set="l10n_ae_vat_amount"
+                                                               t-value="'{:,.2f}'.format(line.l10n_gcc_invoice_tax_amount)"/>
+                                                            <span t-esc="l10n_ae_vat_amount" id="line_tax_ids">Tax 15%
+                                                            </span>
+                                                            <br></br>
+                                                            <span t-out="taxes" id="line_tax_ids"></span>
+                                                        </td>
+
+                                                        <td name="td_subtotal"
+                                                            style="border-bottom:none;border-top:none"
+                                                            class="text-center o_price_total">
+                                                            <t t-set="price_total"
+                                                               t-value="'{:,.2f}'.format(line.price_total)"/>
+                                                            <span class="text-nowrap" t-esc="price_total">27.00</span>
+                                                        </td>
+                                                    </t>
+                                                    <t t-elif="line.display_type == 'line_section'">
+                                                        <td style="border-bottom:none;border-top:none">
+                                                            <span t-field="line.name" t-options="{'widget': 'text'}">A
+                                                                section title
+                                                            </span>
+                                                        </td>
+                                                        <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                            UOM
+                                                        </td>
+                                                        <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                            UOM
+                                                        </td>
+                                                        <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                            UOM
+                                                        </td>
+                                                        <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                            UOM
+                                                        </td>
+                                                        <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                            UOM
+                                                        </td>
+                                                    </t>
+                                                    <t t-elif="line.display_type == 'line_note'">
+                                                        <td style="border-bottom:none;border-top:none">
+                                                            <span t-field="line.name" t-options="{'widget': 'text'}">A
+                                                                note, whose content usually applies to the section or
+                                                                product above.
+                                                            </span>
+                                                        </td>
+                                                        <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                            UOM
+                                                        </td>
+                                                        <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                            UOM
+                                                        </td>
+                                                        <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                            UOM
+                                                        </td>
+                                                        <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                            UOM
+                                                        </td>
+                                                        <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                            UOM
+                                                        </td>
+                                                    </t>
+                                                </tr>
+                                            </t>
+                                            <t t-set="lines" t-value="o.invoice_line_ids"/>
+                                            <t t-foreach="range(max(3-len(lines),0))" t-as="ln">
+                                                <tr style="color: #ffffff;border-bottom:none;border-top:none">
+                                                    <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                        Packs
+                                                    </td>
+                                                    <td style="color: #ffffff;border-bottom:none;border-top:none">UOM
+                                                    </td>
+                                                    <td style="color: #ffffff;border-bottom:none;border-top:none">
+                                                        Particulars
+                                                    </td>
+                                                    <td style="color: #ffffff;border-bottom:none;border-top:none">SKU
+                                                    </td>
+                                                    <td style="color: #ffffff;border-bottom:none;border-top:none">SKU
+                                                    </td>
+                                                    <td style="color: #ffffff;border-bottom:none;border-top:none">SKU
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                            <tr style="border-top:none;">
+                                                <td style="border-top:none;"></td>
+                                                <td style="border-top:none;"></td>
+                                                <td style="border-top:none;"></td>
+                                                <td style="border-top:none;"></td>
+                                                <td style="border-top:none;"></td>
+                                                <td style="border-top:none;"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <br/>
+                                    <br/>
+                                    <div>
+                                        <div id="right-elements"
+                                             t-attf-class="#{'col-5' if report_type != 'html' else 'col-12 col-md-3'} ms-5 d-inline-block float-end">
+                                            <div id="total" class="clearfix row mt-n3">
+                                                <div class="ms-auto">
+                                                    <table class="o_total_table table  table-borderless avoid-page-break-inside"
+                                                           style="border : none">
+
+                                                        <!-- Tax totals summary (invoice currency) -->
+                                                        <t t-if="o.tax_totals">
+                                                            <t t-set="tax_totals" t-value="o.tax_totals"/>
+                                                            <t t-set="currency" t-value="o.currency_id.name"/>
+                                                            <tr class="o_total"
+                                                                style="border-bottom: 0.5px solid black;">
+                                                                <td class="text-end">
+                                                                    <strong>Total</strong>
+                                                                </td>
+                                                                <td class="text-end o_price_total">
+                                                                    <t t-set="amount_total"
+                                                                       t-value="'{:,.2f}'.format(o.amount_total)"/>
+                                                                    <t t-if="o.company_id.currency_id != o.currency_id">
+                                                                        <b>
+                                                                            <span t-esc="o.currency_id.name"/>
+                                                                            <span class="text-nowrap"
+                                                                                  t-esc="amount_total">31.05
+                                                                            </span>
+                                                                        </b>
+                                                                    </t>
+                                                                    <t t-else="">
+                                                                        <b>
+                                                                            <span t-esc="o.currency_id.name"/>
+                                                                            <span class="text-nowrap"
+                                                                                  t-esc="amount_total">31.05
+                                                                            </span>
+                                                                        </b>
+                                                                    </t>
+
+
+                                                                </td>
+                                                            </tr>
+                                                        </t>
+
+                                                        <!--Payments-->
+                                                    </table>
+                                                    <div class="mb-3">
+                                                        <div class="mb-2">
+                                                            <p class="text-muted text-end lh-sm">
+                                                                Total In Words:
+                                                                <b>
+                                                                    <span t-field="o.currency_id.name"></span>
+                                                                    <span t-field="o.amount_total_words"></span>
+                                                                </b>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="page mb-4">
+                                <t t-if="o.company_id.currency_id != o.currency_id">
+                                    <t t-set="invoice_currency_rate" t-value="1/o.invoice_currency_rate"/>
+                                    <strong><span>Tax Summary</span>( 1<span t-field="o.currency_id.name"></span>=<span
+                                            t-esc="invoice_currency_rate"></span> AED)
+                                    </strong>
+                                </t>
+                                <t t-else="">
+                                    <h3>Tax Summary</h3>
+                                </t>
+                                <table width="100%">
+                                    <thead>
+                                        <tr style="background-color:#d6d6d6;">
+                                            <th name="inv_date" width="25%" class="  text-start">Tax Details</th>
+                                            <th name="terms" width="25%" class="  text-end">Taxable Amount(AED)</th>
+                                            <th name="due_date" width="25%" class="  text-end">Tax Amount(AED)</th>
+                                            <th name="due_date" width="25%" class="  text-end">Total Amount(AED)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="tax_totals" t-value="o.tax_totals"/>
+                                        <t t-set="currency" t-value="o.currency_id.name"/>
+                                        <tr style="border-bottom:none;border-top:none">
+                                            <td name="inv_dt" style="border-bottom:none;border-top:none">
+                                                <span>Standard Rate (5%)</span>
+                                            </td>
+                                            <td name="inv_dt" style="border-bottom:none;border-top:none"
+                                                class="  text-end">
+                                                <t t-set="amount_untaxed_signed"
+                                                   t-value="'{:,.2f}'.format(o.amount_untaxed_signed)"/>
+                                                <span t-esc="amount_untaxed_signed"></span>
+                                            </td>
+                                            <td name="inv_dt" style="border-bottom:none;border-top:none"
+                                                class="  text-end">
+                                                <t t-set="amount_tax_signed"
+                                                   t-value="'{:,.2f}'.format(o.amount_tax_signed)"/>
+                                                <span t-esc="amount_tax_signed"></span>
+                                            </td>
+                                            <td name="inv_dt" style="border-bottom:none;border-top:none"
+                                                class="  text-end">
+                                                <t t-set="amount_total_signed"
+                                                   t-value="'{:,.2f}'.format(o.amount_total_signed)"/>
+                                                <span t-esc="amount_total_signed"></span>
+                                            </td>
+                                        </tr>
+                                        <tr style="border-bottom:none;border-top:none">
+                                            <td name="inv_dt" style="border-bottom:none;border-top:none">
+                                                <span>
+                                                    <b>Total</b>
+                                                </span>
+                                            </td>
+                                            <td name="inv_dt" style="border-bottom:none;border-top:none"
+                                                class="  text-end">
+                                                <t t-set="amount_untaxed_signed"
+                                                   t-value="'{:,.2f}'.format(o.amount_untaxed_signed)"/>
+                                                <b>
+                                                    <span t-esc="o.company_id.currency_id.name"/>
+                                                    <span t-esc="amount_untaxed_signed"></span>
+                                                </b>
+                                            </td>
+                                            <td name="inv_dt" style="border-bottom:none;border-top:none"
+                                                class="  text-end">
+                                                <t t-set="amount_tax_signed"
+                                                   t-value="'{:,.2f}'.format(o.amount_tax_signed)"/>
+                                                <b>
+                                                    <span t-esc="o.company_id.currency_id.name"/>
+                                                    <span t-esc="amount_tax_signed"></span>
+                                                </b>
+                                            </td>
+                                            <td name="inv_dt" style="border-bottom:none;border-top:none"
+                                                class="  text-end">
+                                                <t t-set="amount_total_signed"
+                                                   t-value="'{:,.2f}'.format(o.amount_total_signed)"/>
+                                                <b>
+                                                    <span t-esc="o.company_id.currency_id.name"/>
+                                                    <span t-esc="amount_total_signed"></span>
+                                                </b>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <br></br>
+                                <!--                            <div id="terms_and_bank_details" class="row mb-4">-->
+                                <table width="100%" class="table table-borderless" style="border : 1px solid black;">
+                                    <!--                        <table width="100%" >-->
+                                    <tr style="border : 1px solid black;">
+                                        <td colspan="3" style="border-right : 1px solid black;">
+                                            <b>Bank Details for AED Transfers</b>
+                                        </td>
+                                        <td colspan="3">
+                                            <b>Bank Details for USD Transfers</b>
+                                        </td>
+                                    </tr>
+                                    <t t-set="aed_bank"
+                                       t-value="o.company_id.bank_ids.filtered(lambda l: l.currency_id.name == 'AED')"/>
+                                    <t t-set="usd_bank"
+                                       t-value="o.company_id.bank_ids.filtered(lambda l: l.currency_id.name == 'USD')"/>
+                                    <tr style="line-height: 0.8;">
+                                        <td width="15%">
+                                            <span>Account Title</span>
+                                        </td>
+                                        <td width="3%">
+                                            <strong>:</strong>
+                                        </td>
+                                        <td width="32%" style="border-right : 1px solid black;">
+                                            <span t-field="aed_bank.partner_id.name"/>
+                                        </td>
+                                        <td width="15%">
+                                            <span>Account Title</span>
+                                        </td>
+                                        <td width="3%">
+                                            <strong>:</strong>
+                                        </td>
+                                        <td width="32%" style="border-right : 1px solid black;">
+                                            <span t-field="usd_bank.partner_id.name"/>
+                                        </td>
+                                    </tr>
+                                    <tr style="line-height: 0.8;">
+                                        <td>
+                                            <span>Account No.</span>
+                                        </td>
+                                        <td>
+                                            <strong>:</strong>
+                                        </td>
+                                        <td style="border-right : 1px solid black;">
+                                            <span t-field="aed_bank.acc_number"/>
+                                        </td>
+                                        <td>
+                                            <span>Account No.</span>
+                                        </td>
+                                        <td>
+                                            <strong>:</strong>
+                                        </td>
+                                        <td>
+                                            <span t-field="usd_bank.acc_number"/>
+                                        </td>
+                                    </tr>
+                                    <tr style="line-height: 0.8;">
+                                        <td>
+                                            <span>IBAN</span>
+                                        </td>
+                                        <td>
+                                            <strong>:</strong>
+                                        </td>
+                                        <td style="border-right : 1px solid black;">
+                                            <span t-field="aed_bank.iban_no"/>
+                                        </td>
+                                        <td>
+                                            <span>IBAN</span>
+                                        </td>
+                                        <td>
+                                            <strong>:</strong>
+                                        </td>
+                                        <td>
+                                            <span t-field="usd_bank.iban_no"/>
+                                        </td>
+                                    </tr>
+                                    <tr style="line-height: 0.8;">
+                                        <td>
+                                            <span>Beneficiary Bank</span>
+                                        </td>
+                                        <td>
+                                            <strong>:</strong>
+                                        </td>
+                                        <td style="border-right : 1px solid black;">
+                                            <span t-field="aed_bank.bank_id.name"/>
+                                        </td>
+                                        <td>
+                                            <span>Beneficiary Bank</span>
+                                        </td>
+                                        <td>
+                                            <strong>:</strong>
+                                        </td>
+                                        <td>
+                                            <span t-field="usd_bank.bank_id.name"/>
+                                        </td>
+                                    </tr>
+                                    <tr style="line-height: 0.8;">
+                                        <td>
+                                            <span>SWIFT Code</span>
+                                        </td>
+                                        <td>
+                                            <strong>:</strong>
+                                        </td>
+                                        <td style="border-right : 1px solid black;">
+                                            <span t-field="aed_bank.bank_id.bic"/>
+                                        </td>
+                                        <td>
+                                            <span>SWIFT Code</span>
+                                        </td>
+                                        <td>
+                                            <strong>:</strong>
+                                        </td>
+                                        <td>
+                                            <span t-field="usd_bank.bank_id.bic"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div>
+                                    <span>This is a system generated document &amp; does not require a signature.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+
+                    <t t-if="o.move_type == 'out_refund'">
+                        <div class="page" style="border:none;">
+                            <div class="row mb-4">
+                                <div class="col-6" name="logo">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <img t-if="o.company_id.logo" class="o_company_logo_small"
+                                             t-att-src="image_data_uri(o.company_id.logo)" alt="Logo"/>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-end" name="div_credit_note_title">
+                                    <div class="text-end no-border" style="font-size:26px;">Tax Credit Note</div>
+                                    <div class="text-end no-border">#
+                                        <t t-esc="o.name"/>
+                                    </div>
+                                    <div class="text-end no-border" style="margin-top:10px;">
+                                        <span style="font-size:9px; color:#777;">Credits Remaining</span>
+
+                                        <br></br>
+                                        <b style="font-size:15px;">
+                                            <t t-set="credits_remaining" t-value="'{:,.2f}'.format(o.amount_residual)"/>
+                                            <span t-esc="o.currency_id.name"/>
+                                            <span t-esc="credits_remaining"/>
+                                        </b>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <div class="col-6" name="company_address">
+                                    <div class="no-border" style="font-size:16px;">
+                                        <b>
+                                            <t t-esc="o.company_id.name"/>
+                                        </b>
+                                    </div>
+                                    <div class="no-border">
+                                        <t t-esc="o.company_id.street"/>
+                                    </div>
+                                    <div class="no-border">
+                                        <t t-esc="o.company_id.street2"/>
+                                    </div>
+                                    <div class="no-border">
+                                        <t t-esc="o.company_id.city"/>
+                                    </div>
+                                    <div class="no-border"><t t-esc="o.company_id.state_id.name"/>,
+                                        <t t-esc="o.company_id.country_id.name"/>
+                                    </div>
+                                    <div class="no-border">TRN
+                                        <t t-esc="o.company_id.vat"/>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-end" name="credit_note_dates">
+                                    <!-- Resolve the original invoice: prefer the direct reversal link,
+                                         fall back to parsing it out of the "Reversal of: PS-XXXX, reason"
+                                         text in o.ref when that link isn't set. -->
+                                    <t t-set="orig_move" t-value="o.reversed_entry_id"/>
+                                    <t t-if="not orig_move and o.ref and 'Reversal of' in o.ref">
+                                        <t t-set="ref_inv_name" t-value="o.ref.split(':')[1].split(',')[0].strip() if ':' in o.ref else False"/>
+                                        <t t-if="ref_inv_name">
+                                            <t t-set="orig_move" t-value="o.env['account.move'].sudo().search([('name', '=', ref_inv_name)], limit=1)"/>
+                                        </t>
+                                    </t>
+                                    <table width="100%" class="table table-borderless" style="border:none;">
+                                        <tr style="border:none;">
+                                            <td style="border:none;" class="text-end">Credit Date :</td>
+                                            <td style="border:none;" class="text-end">
+                                                <span t-esc="o.invoice_date.strftime('%d %b %Y')"></span>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="o.ref" style="border:none;">
+                                            <td style="border:none;" class="text-end">PO# :</td>
+                                            <td style="border:none;" class="text-end">
+                                                <span t-esc="o.ref"></span>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="orig_move" style="border:none;">
+                                            <td style="border:none;" class="text-end">Invoice# :</td>
+                                            <td style="border:none;" class="text-end">
+                                                <span t-esc="orig_move.name"></span>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="orig_move and orig_move.invoice_date"
+                                            style="border:none;">
+                                            <td style="border:none;" class="text-end">Invoice Date :</td>
+                                            <td style="border:none;" class="text-end">
+                                                <span t-esc="orig_move.invoice_date.strftime('%d %b %Y')"></span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <div class="col-6" name="bill_to">
+                                    <div name="customer_address">
+                                        <strong>Bill To</strong>
+                                    </div>
+                                    <div class="no-border" style="font-size:16px;">
+                                        <b>
+                                            <t t-esc="o.partner_id.name"/>
+                                        </b>
+                                    </div>
+                                    <div class="no-border"><t t-esc="o.partner_id.street"/>,
+                                        <t t-esc="o.partner_id.street2"/>
+                                    </div>
+                                    <div class="no-border">
+                                        <t t-esc="o.partner_id.city"/>
+                                    </div>
+                                    <div class="no-border"><t t-esc="o.partner_id.state_id.name"/>,
+                                        <t t-esc="o.partner_id.country_id.name"/>
+                                    </div>
+                                    <div class="no-border">TRN
+                                        <t t-esc="o.partner_id.vat"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <table width="100%" style="border:none;" name="credit_note_line_table">
+                                <thead>
+                                    <tr style="background-color:#404040;border:none;">
+                                        <th width="6%" class="text-center" style="color:white;border:none;">
+                                            <span>#</span>
+                                        </th>
+                                        <th width="40%" style="color:white;border:none;">
+                                            <span>Item &amp; Description</span>
+                                        </th>
+                                        <th width="10%" class="text-end" style="color:white;border:none;">
+                                            <span>Qty</span>
+                                        </th>
+                                        <th width="14%" class="text-end" style="color:white;border:none;">
+                                            <span>Rate</span>
+                                        </th>
+                                        <th width="14%" class="text-end" style="color:white;border:none;">
+                                            <span>Tax</span>
+                                        </th>
+                                        <th width="16%" class="text-end" style="color:white;border:none;">
+                                            <span>Amount</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="lines"
+                                       t-value="o.invoice_line_ids.filtered(lambda l: l.display_type == 'product')"/>
+                                    <t t-set="count" t-value="0"/>
+                                    <t t-foreach="lines" t-as="line">
+                                        <t t-set="count" t-value="count + 1"/>
+                                        <tr style="border:none;">
+                                            <td class="text-center" style="border:none;">
+                                                <span t-esc="count"></span>
+                                            </td>
+                                            <td style="border:none;">
+                                                <span t-if="line.name" t-field="line.name"
+                                                      t-options="{'widget': 'text'}"/>
+                                            </td>
+                                            <td class="text-end" style="border:none;">
+                                                <span t-esc="line.quantity"/>
+                                            </td>
+                                            <td class="text-end" style="border:none;">
+                                                <span t-field="line.price_unit"/>
+                                            </td>
+                                            <td class="text-end" style="border:none;">
+                                                <t t-set="line_tax"
+                                                   t-value="'{:,.2f}'.format(line.price_total - line.price_subtotal)"/>
+                                                <span t-esc="line_tax"/>
+                                                <br></br>
+                                                <t t-set="taxes"
+                                                   t-value="', '.join([str(tax.amount) + '%' for tax in line.tax_ids])"/>
+                                                <span t-esc="taxes" style="font-size:9px;color:#777;"/>
+                                            </td>
+                                            <td class="text-end" style="border:none;">
+                                                <t t-set="line_total" t-value="'{:,.2f}'.format(line.price_total)"/>
+                                                <span t-esc="line_total"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <tr style="border-top:1px solid #ccc;">
+                                        <td colspan="4" class="text-end" style="border:none;">
+                                            <b>Sub Total</b>
+                                        </td>
+                                        <td class="text-end" style="border:none;">
+                                            <t t-set="cn_tax_total"
+                                               t-value="sum(lines.mapped('price_total')) - sum(lines.mapped('price_subtotal'))"/>
+                                            <t t-set="cn_tax_fmt" t-value="'{:,.2f}'.format(cn_tax_total)"/>
+                                            <b>
+                                                <span t-esc="cn_tax_fmt"/>
+                                            </b>
+                                        </td>
+                                        <td class="text-end" style="border:none;">
+                                            <t t-set="cn_grand_total" t-value="sum(lines.mapped('price_total'))"/>
+                                            <t t-set="cn_grand_total_fmt" t-value="'{:,.2f}'.format(cn_grand_total)"/>
+                                            <b>
+                                                <span t-esc="o.currency_id.name"/>
+                                                <span t-esc="cn_grand_total_fmt"/>
+                                            </b>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <br></br>
+                            <div id="right-elements" class="d-inline-block float-end" style="width:260px;">
+                                <table width="100%" class="table table-borderless" style="border:none;">
+                                    <tr style="border:none;">
+                                        <td class="text-end" style="border:none;">
+                                            <b>Total</b>
+                                        </td>
+                                        <td class="text-end" style="border:none;">
+                                            <t t-set="cn_total_all" t-value="'{:,.2f}'.format(cn_grand_total)"/>
+                                            <b>
+                                                <span t-esc="o.currency_id.name"/>
+                                                <span t-esc="cn_total_all"/>
+                                            </b>
+                                        </td>
+                                    </tr>
+                                    <tr style="border:none;">
+                                        <td class="text-end" style="border:none;">Credits Used</td>
+                                        <td class="text-end" style="border:none;color:red;">
+                                            <t t-set="credits_used"
+                                               t-value="'{:,.2f}'.format(cn_grand_total - abs(o.amount_residual))"/>
+                                            <span t-esc="'(-) ' + credits_used"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <t t-if="round(cn_tax_total, 2) != 0">
+                                <div class="page mb-4" style="clear:both;">
+                                    <t t-if="o.company_id.currency_id != o.currency_id">
+                                        <t t-set="cn_currency_rate" t-value="1/o.invoice_currency_rate"/>
+                                        <strong>
+                                            <span>Tax Summary</span>
+                                            ( 1
+                                            <span t-esc="o.currency_id.name"/>
+                                            = <span t-esc="cn_currency_rate"></span> AED)
+                                        </strong>
+                                    </t>
+                                    <t t-else="">
+                                        <h3>Tax Summary</h3>
+                                    </t>
+                                    <table width="100%">
+                                        <thead>
+                                            <tr style="background-color:#d6d6d6;">
+                                                <th width="34%" class="text-start">Tax Details</th>
+                                                <th width="33%" class="text-end">Taxable Amount(AED)</th>
+                                                <th width="33%" class="text-end">Tax Amount(AED)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="border-bottom:none;border-top:none">
+                                                <td>
+                                                    <span>Standard Rate (5%)</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <t t-set="amount_untaxed_signed"
+                                                       t-value="'{:,.2f}'.format(abs(o.amount_untaxed_signed))"/>
+                                                    <span t-esc="amount_untaxed_signed"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <t t-set="amount_tax_signed"
+                                                       t-value="'{:,.2f}'.format(abs(o.amount_tax_signed))"/>
+                                                    <span t-esc="amount_tax_signed"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <b>Total</b>
+                                                </td>
+                                                <td class="text-end">
+                                                    <b>
+                                                        <span t-esc="o.company_id.currency_id.name"/>
+                                                        <span t-esc="amount_untaxed_signed"/>
+                                                    </b>
+                                                </td>
+                                                <td class="text-end">
+                                                    <b>
+                                                        <span t-esc="o.company_id.currency_id.name"/>
+                                                        <span t-esc="amount_tax_signed"/>
+                                                    </b>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </t>
+
+                            <br></br>
+                            <div>
+                                <strong>Notes</strong>
+
+                                <br></br>
+                                <span>This is an electronically generated document and does not require
+                                    signature.
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+
+                    <t t-if="o.move_type == 'in_invoice'">
+                        <div class="page">
+                            <div class="row mb-4">
+                                <div class="col-6" name="logo">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <img t-if="o.company_id.logo" class="o_company_logo_small"
+                                             t-att-src="image_data_uri(o.company_id.logo)" alt="Logo"/>
+                                    </div>
+                                    <div class="no-border" style="font-size:24px;">
+                                        <b>
+                                            <t t-esc="o.company_id.name"/>
+                                        </b>
+                                    </div>
+                                    <div class="no-border"><t t-esc="o.company_id.street"/>,
+                                        <t t-esc="o.company_id.street2"/>
+                                    </div>
+                                    <div class="no-border">
+                                        <t t-esc="o.company_id.city"/>
+                                    </div>
+                                    <div class="no-border">
+                                        <t t-esc="o.company_id.zip"/>
+                                    </div>
+                                    <div class="no-border"><t t-esc="o.company_id.state_id.name"/>,
+                                        <t t-esc="o.company_id.country_id.name"/>
+                                    </div>
+                                    <div class="no-border">
+                                        <t t-esc="o.company_id.vat"/>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-end" name="div_billing_address">
+                                    <div class="text-end no-border" style="font-size:24px;">
+                                        <b>Bill</b>
+                                    </div>
+                                    <div class="text-end no-border" style="font-size:18px;">
+                                        <b>
+                                            <t t-esc="o.name"/>
+                                        </b>
+                                    </div>
+                                    <br></br>
+                                    <div class="text-end no-border" style="font-size:16px;">
+                                        <b>Balance Due</b>
+                                    </div>
+                                    <div class="text-end no-border" style="font-size:17px;">
+                                        <t t-set="amount_residual" t-value="'{:,.2f}'.format(o.amount_residual)"/>
+                                        <b>AED
+                                            <t t-esc="amount_residual"></t>
+                                        </b>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--                        <h3 class="text-center">TAX INVOICE</h3>-->
+                            <br></br>
+
+                            <div class="row mb-4">
+                                <div class="col-6" name="div_billing_address">
+                                    <br></br>
+                                    <br></br>
+                                    <br></br>
+                                    <div name="customer_address">
+                                        <span>Bill From</span>
+                                    </div>
+                                    <div name="partner_header">
+                                        <div name="partner_header">
+                                            <div class="no-border" style="font-size:24px;">
+                                                <b>
+                                                    <t t-esc="o.partner_id.name"/>
+                                                </b>
+                                            </div>
+                                            <div class="no-border"><t t-esc="o.partner_id.street"/>,
+                                                <t t-esc="o.partner_id.street2"/>
+                                            </div>
+                                            <div class="no-border">
+                                                <t t-esc="o.partner_id.city"/>
+                                            </div>
+                                            <div class="no-border">
+                                                <t t-esc="o.partner_id.zip"/>
+                                            </div>
+                                            <div class="no-border"><t t-esc="o.partner_id.state_id.name"/>,
+                                                <t t-esc="o.partner_id.country_id.name"/>
+                                            </div>
+                                            <div class="no-border">TRN
+                                                <t t-esc="o.partner_id.vat"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 text-end" name="div_billing_address">
+                                    <table class="table table-borderless" width="100%" style="border : none;">
+                                        <tr>
+                                            <td width="60%">Order Number</td>
+                                            <td width="5%">:</td>
+                                            <td width="35%">
+                                                <span t-field="o.line_ids.purchase_line_id.order_id.name"></span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Bill Date</td>
+                                            <td>:</td>
+                                            <td>
+                                                <t t-if="o.invoice_date">
+                                                    <span t-esc="o.invoice_date.strftime('%d %b %Y')"></span>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Due Date</td>
+                                            <td>:</td>
+                                            <td>
+                                                <t t-if="o.invoice_date_due">
+                                                    <span t-esc="o.invoice_date_due.strftime('%d %b %Y')"></span>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Terms</td>
+                                            <td>:</td>
+                                            <td>
+                                                <span t-field="o.invoice_payment_term_id.name"></span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Doc #</td>
+                                            <td>:</td>
+                                            <td>
+                                                <span t-field="o.doc_no"></span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Customer INV Date</td>
+                                            <td>:</td>
+                                            <td>
+                                                <span t-field="o.cust_inv_date"></span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <br></br>
+                            <div class="clearfix invoice_main">
+                                <div class="page mb-4">
+                                    <table width="100%" style="border:none;" class="table table-borderless">
+                                        <thead>
+                                            <tr style="background-color:#404040;border:none;">
+                                                <th name="th_description" width="6%" class="text-center"
+                                                    style="color: white;border:none;">
+                                                    <span>#</span>
+                                                </th>
+                                                <th name="th_description" width="25%" style="color: white;border:none;">
+                                                    <span>Item &amp; Description</span>
+                                                </th>
+                                                <th name="th_quantity" width="18%" class="text-center"
+                                                    style="color: white;border:none;">
+                                                    <span>Account</span>
+                                                </th>
+                                                <th name="th_quantity" width="9%" class="text-center"
+                                                    style="color: white;border:none;">
+                                                    <span>Qty</span>
+                                                </th>
+                                                <th name="th_quantity" width="9%" class="text-end"
+                                                    style="color: white;border:none;">
+                                                    <span>Rate</span>
+                                                </th>
+                                                <th name="th_quantity" width="10%" class="text-end"
+                                                    style="color: white;border:none;">
+                                                    <span>Discount</span>
+                                                </th>
+                                                <th name="th_quantity" width="11%" class="text-end"
+                                                    style="color: white;border:none;">
+                                                    <span>Tax</span>
+                                                </th>
+                                                <th name="th_quantity" width="12%" class="text-end"
+                                                    style="color: white;border:none;">
+                                                    <span>Amount</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="invoice_tbody">
+                                            <t t-set="lines"
+                                               t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
+                                            <t t-set="count" t-value="0"/>
+                                            <t t-foreach="lines" t-as="line">
+                                                <t t-set="count" t-value="count + 1"/>
+                                                <tr style="border:none"
+                                                    t-att-class="'fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
+                                                    <t t-if="line.display_type == 'product'"
+                                                       name="account_invoice_line_accountable">
+                                                        <td class="text-center text-nowrap" style="border:none">
+                                                            <span t-out="count"></span>
+                                                        </td>
+                                                        <td name="account_invoice_line_name" class="text-nowrap"
+                                                            style="border:none">
+                                                            <span t-if="line.name" t-field="line.name"
+                                                                  t-options="{'widget': 'text'}">Bacon Burger
+                                                            </span>
+                                                            <!--                                                    <span t-if="line.name" t-field="line.name" t-options="{'widget': 'text'}">Bacon Burger</span>-->
+                                                        </td>
+                                                        <td name="td_quantity" class="text-center text-nowrap"
+                                                            style="border:none">
+                                                            <span t-field="line.account_id.name">3.00</span>
+                                                        </td>
+                                                        <td name="td_quantity" class="text-center text-nowrap"
+                                                            style="border:none">
+                                                            <span t-out="line._check_qty_whole_fraction()">3.00</span>
+                                                            <span t-field="line.product_uom_id" groups="uom.group_uom">
+                                                                units
+                                                            </span>
+                                                        </td>
+                                                        <td name="td_price_unit" style="border:none"
+                                                            t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                            <span class="text-nowrap" t-field="line.price_unit">9.00
+                                                            </span>
+                                                        </td>
+                                                        <td name="td_price_unit" style="border:none"
+                                                            t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                            <span class="text-nowrap" t-field="line.discount">9.00
+                                                            </span>
+                                                        </td>
+                                                        <t t-set="taxes"
+                                                           t-value="', '.join([(tax.invoice_label or tax.name) for tax in line.tax_ids])"/>
+                                                        <td name="td_taxes" style="border:none"
+                                                            t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }} {{ 'text-nowrap' if len(taxes) &lt; 10 else '' }}">
+                                                            <span t-field="line.l10n_ae_vat_amount" id="line_tax_ids">
+                                                                Tax 15%
+                                                            </span>
+                                                        </td>
+
+                                                        <td name="td_subtotal" style="border:none"
+                                                            class="text-end o_price_total">
+                                                            <span class="text-nowrap" t-field="line.price_subtotal">
+                                                                27.00
+                                                            </span>
+                                                        </td>
+                                                    </t>
+                                                    <t t-elif="line.display_type == 'line_section'">
+                                                        <td style="border-bottom:none;border-top:none" colspan="8">
+                                                            <span t-field="line.name" t-options="{'widget': 'text'}">A
+                                                                section title
+                                                            </span>
+                                                        </td>
+                                                    </t>
+                                                    <t t-elif="line.display_type == 'line_note'">
+                                                        <td style="border-bottom:none;border-top:none" colspan="8">
+                                                            <span t-field="line.name" t-options="{'widget': 'text'}">A
+                                                                note, whose content usually applies to the section or
+                                                                product above.
+                                                            </span>
+                                                        </td>
+                                                    </t>
+
+                                                </tr>
+                                            </t>
+                                            <t t-set="lines" t-value="o.invoice_line_ids"/>
+                                            <t t-foreach="range(max(5-len(lines),0))" t-as="ln">
+                                                <tr style="color: #ffffff;border:none">
+                                                    <td style="color: #ffffff;border:none">Packs</td>
+                                                    <td style="color: #ffffff;border:none">UOM</td>
+                                                    <td style="color: #ffffff;border:none">Particulars</td>
+                                                    <td style="color: #ffffff;border:none">SKU</td>
+                                                    <td style="color: #ffffff;border:none">SKU</td>
+                                                    <td style="color: #ffffff;border:none">SKU</td>
+                                                    <td style="color: #ffffff;border:none">SKU</td>
+                                                    <td style="color: #ffffff;border:none">SKU</td>
+                                                </tr>
+                                            </t>
+                                            <tr style="border:none;">
+                                                <td style="border:none;"></td>
+                                                <td style="border:none;"></td>
+                                                <td style="border:none;"></td>
+                                                <td style="border:none;"></td>
+                                                <td style="border:none;"></td>
+                                                <td style="border:none;"></td>
+                                                <td style="border:none;"></td>
+                                                <td style="border:none;"></td>
+                                            </tr>
+                                            <tr style="border-top:0.8px solid black;border-bottom:1px solid black;border-left:none;border-right:none;">
+                                                <td colspan="6" class="text-end" style="border:none;">
+                                                    <b>Sub Total</b>
+                                                </td>
+                                                <td class="text-end" style="border:none;">
+                                                    <span t-field="o.amount_tax"></span>
+                                                </td>
+                                                <td class="text-end" style="border:none;">
+                                                    <span t-field="o.amount_untaxed"></span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="row mb-4">
+                                        <!--                            <div class="col-6" name="logo">-->
+                                        <!--                                <div class="d-flex justify-content-between align-items-center mb-2">-->
+                                        <!--                                    <img t-if="o.company_id.logo" class="o_company_logo_small" t-att-src="image_data_uri(o.company_id.logo)" alt="Logo"/>-->
+                                        <!--                                </div>-->
+                                        <!--                                <div class="no-border" style="font-size:24px;"><b><t t-esc="o.company_id.name"/></b></div>-->
+                                        <!--                                <div t-field="o.company_id.partner_id" t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}'/>-->
+                                        <!--                                <div class="no-border" ><t t-esc="o.company_id.vat"/></div>-->
+                                        <!--                            </div>-->
+                                        <div class="col-12 text-end" name="div_billing_address">
+                                            <!--                                <div class="text-end no-border" >Discount</div>-->
+                                            <t t-set="amount_paid" t-value="o.amount_total - o.amount_residual"/>
+                                            <t t-set="amount_paid" t-value="'{:,.2f}'.format(amount_paid)"/>
+                                            <t t-set="amount_residual" t-value="'{:,.2f}'.format(o.amount_residual)"/>
+
+                                            <div class="text-end no-border">
+                                                <b>Total :</b>
+                                                <span t-field="o.amount_total"></span>
+                                            </div>
+                                            <br></br>
+                                            <div class="text-end no-border">Payments Made :
+                                                <span t-esc="amount_paid"></span>
+                                            </div>
+                                            <div class="text-end no-border">
+                                                <b>Balance Due
+                                                    <t t-esc="amount_residual"></t>
+                                                </b>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+
+                </t>
+            </t>
+        </template>
+
+        <template id="report_techcarrot_invoices">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-if="o.company_id.country_id.code == 'IN'">
+                        <t t-call="techcarrot_invoice.report_techcarrot_invoices_india_document"
+                           t-lang="o.partner_id.lang"/>
+                    </t>
+                    <t t-else="">
+                        <t t-call="techcarrot_invoice.report_techcarrot_invoices_document" t-lang="o.partner_id.lang"/>
+                    </t>
+
+                </t>
+            </t>
+        </template>
+
+        <template id="report_footer_tech">
+            <div class="footer" style="font-size:10px;">
+                <hr style="border-top: 0.9px solid #000; margin-top: 30px;"/>
+            </div>
+        </template>
+
+        <template id="web.basic_layout">
+            <t t-call="web.html_container">
+                <t t-if="not o" t-set="o" t-value="doc"/>
+                <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"
+                     t-att-data-oe-lang="o and o.env.context.get('lang')">
+                    <t t-out="0"/>
+                </div>
+                <t t-call="techcarrot_invoice.report_footer_tech"/>
+            </t>
+        </template>
+
+    </data>
+</odoo>

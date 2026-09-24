@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_employee_profile_payroll" name="Employee Payroll Portal">
+        <t t-call="employee_self_service_portal.portal_employee_profile_base">
+            <t t-set="section" t-value="'payroll'"/>
+            <t t-set="section_content">
+
+                <!-- Messages -->
+                <div id="messageContainer" style="display:none;">
+                    <div id="successMessage" class="alert alert-success alert-dismissible fade" style="display:none;">
+                        <i class="fa fa-check-circle me-2"></i>
+                        <span id="successText"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div id="errorMessage" class="alert alert-danger alert-dismissible fade" style="display:none;">
+                        <i class="fa fa-exclamation-triangle me-2"></i>
+                        <span id="errorText"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+
+                <form id="payrollForm" method="post">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                    <!-- Contract Overview -->
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fa fa-file-contract text-primary me-2"></i>Contract Overview
+                            </h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="editToggleBtn"
+                                    onclick="enableEditMode()">
+                                <i class="fa fa-edit me-1"></i>Edit
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Contract Start Date</label>
+                                    <input type="date" name="contract_date_start"
+                                           t-att-value="employee.contract_date_start or ''"
+                                           class="form-control"
+                                           data-always-readonly="1"
+       readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Wage Type</label>
+                                    <input type="text" name="wage_type"
+                                           t-att-value="employee.wage_type or ''"
+                                           class="form-control"
+                                           data-always-readonly="1"
+       readonly="readonly"/>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">CTC (Sub Total)</label>
+                                    <input type="text" name="sub_total"
+                                           t-att-value="employee.sub_total or ''"
+                                           class="form-control"
+                                           data-always-readonly="1"
+       readonly="readonly"/>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Annual Leave Days</label>
+                                    <input type="number" name="l10n_ae_number_of_leave_days"
+                                           t-att-value="employee.l10n_ae_number_of_leave_days or ''"
+                                           class="form-control"
+                                           data-always-readonly="1"
+       readonly="readonly"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">TDS</label>
+                                    <input type="number" name="l10n_in_tds"
+                                           t-att-value="employee.l10n_in_tds or ''"
+                                           class="form-control"
+                                           data-always-readonly="1"
+       readonly="readonly"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Salary Components - Only show if Pay Category contains 'Manual' -->
+                    <t t-if="'Manual' in (employee.structure_type_id.name or '')">
+                        <div class="card mb-4 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-money-bill text-primary me-2"></i>Manual Salary Components
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Basic Salary</label>
+                                        <input type="number" step="0.01" name="basic_salary_manual"
+                                               t-att-value="employee.basic_salary_manual or ''"
+                                               class="form-control" data-always-readonly="1"
+       readonly="readonly"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">HRA</label>
+                                        <input type="number" step="0.01" name="hra_manual"
+                                               t-att-value="employee.hra_manual or ''"
+                                               class="form-control" data-always-readonly="1"
+       readonly="readonly"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Flexi</label>
+                                        <input type="number" step="0.01" name="flexi_manual"
+                                               t-att-value="employee.flexi_manual or ''"
+                                               class="form-control" data-always-readonly="1"
+       readonly="readonly"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Statutory</label>
+                                        <input type="number" step="0.01" name="statutory_manual"
+                                               t-att-value="employee.statutory_manual or ''"
+                                               class="form-control" data-always-readonly="1"
+       readonly="readonly"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Gratuity</label>
+                                        <input type="number" step="0.01" name="gratuity_manual"
+                                               t-att-value="employee.gratuity_manual or ''"
+                                               class="form-control" data-always-readonly="1"
+       readonly="readonly"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">PF</label>
+                                        <input type="number" step="0.01" name="pf_manual"
+                                               t-att-value="employee.pf_manual or ''"
+                                               class="form-control" data-always-readonly="1"
+       readonly="readonly"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Medical</label>
+                                        <input type="number" step="0.01" name="medical_manual"
+                                               t-att-value="employee.medical_manual or ''"
+                                               class="form-control" data-always-readonly="1"
+       readonly="readonly"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- Form Actions -->
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center">
+
+                            <!-- View Mode -->
+                            <div id="viewActions">
+                                <p class="text-muted mb-3">
+                                    <i class="fa fa-clock me-1"></i>
+                                    Last updated:
+                                    <strong>
+                                        <t t-esc="employee.write_date.strftime('%d %b, %Y at %I:%M %p') if employee.write_date else 'Never'"/>
+                                    </strong>
+                                </p>
+                                <button type="button" class="btn btn-outline-primary" onclick="enableEditMode()">
+                                    <i class="fa fa-edit me-1"></i>Edit Payroll
+                                </button>
+                            </div>
+
+                            <!-- Edit Mode Actions (hidden by default) -->
+                            <div id="formActions" style="display:none;">
+                                <button type="button" class="btn btn-secondary me-2" onclick="cancelEdit()">
+                                    <i class="fa fa-times me-1"></i>Cancel
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-save me-1"></i>Save Changes
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </form>
+
+                <script type="text/javascript">
+                    <![CDATA[
+    let originalValues = {};
+
+    document.addEventListener('DOMContentLoaded', function () {
+        storeOriginalValues();
+
+        document.getElementById('payrollForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            fetch('/my/employee/payroll', {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('Payroll updated successfully!', 'success');
+                    storeOriginalValues();
+                    disableEditMode();
+                } else {
+                    showMessage(data.error || 'Unknown error', 'error');
+                }
+            })
+            .catch(() => showMessage('Network error. Please try again.', 'error'));
+        });
+    });
+
+    function storeOriginalValues() {
+        const inputs = document.querySelectorAll('#payrollForm input[name]');
+        inputs.forEach(input => {
+            originalValues[input.name] = input.value;
+        });
+    }
+
+    function enableEditMode() {
+        const inputs = document.querySelectorAll('#payrollForm input[name]');
+        inputs.forEach(input => {
+
+            // ✅ Skip always-readonly fields
+            if (input.hasAttribute('data-always-readonly')) {
+                input.setAttribute('readonly', 'readonly');
+                input.style.setProperty('pointer-events', 'none');
+                input.style.setProperty('background-color', '#e9ecef');
+                return;
+            }
+
+            input.removeAttribute('readonly');
+            input.style.removeProperty('pointer-events');
+            input.style.removeProperty('background-color');
+            input.classList.add('border-primary');
+        });
+
+        document.getElementById('viewActions').style.display = 'none';
+        document.getElementById('formActions').style.display = 'block';
+        document.getElementById('editToggleBtn').style.display = 'none';
+
+        showMessage('Edit mode enabled. Make your changes and click Save.', 'success');
+    }
+
+    function disableEditMode() {
+        const inputs = document.querySelectorAll('#payrollForm input[name]');
+        inputs.forEach(input => {
+
+            // ✅ Always-readonly fields stay locked
+            if (input.hasAttribute('data-always-readonly')) {
+                input.setAttribute('readonly', 'readonly');
+                input.style.setProperty('pointer-events', 'none');
+                input.style.setProperty('background-color', '#e9ecef');
+                return;
+            }
+
+            input.setAttribute('readonly', 'readonly');
+            input.classList.remove('border-primary');
+        });
+
+        document.getElementById('viewActions').style.display = 'block';
+        document.getElementById('formActions').style.display = 'none';
+        document.getElementById('editToggleBtn').style.display = 'inline-block';
+    }
+
+    function cancelEdit() {
+        const inputs = document.querySelectorAll('#payrollForm input[name]');
+        inputs.forEach(input => {
+            if (originalValues.hasOwnProperty(input.name)) {
+                input.value = originalValues[input.name];
+            }
+        });
+
+        disableEditMode();
+        showMessage('Changes cancelled.', 'error');
+    }
+
+    function showMessage(text, type) {
+        const container = document.getElementById('messageContainer');
+        const successMsg = document.getElementById('successMessage');
+        const errorMsg = document.getElementById('errorMessage');
+
+        successMsg.style.display = 'none';
+        errorMsg.style.display = 'none';
+        successMsg.classList.remove('show');
+        errorMsg.classList.remove('show');
+
+        if (type === 'success') {
+            document.getElementById('successText').textContent = text;
+            successMsg.style.display = 'block';
+            successMsg.classList.add('show');
+        } else {
+            document.getElementById('errorText').textContent = text;
+            errorMsg.style.display = 'block';
+            errorMsg.classList.add('show');
+        }
+
+        container.style.display = 'block';
+        container.scrollIntoView({ behavior: 'smooth' });
+
+        setTimeout(() => {
+            successMsg.classList.remove('show');
+            errorMsg.classList.remove('show');
+        }, 5000);
+    }
+]]>
+                </script>
+
+            </t>
+        </t>
+    </template>
+</odoo>

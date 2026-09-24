@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="res_config_rental_settings_inherit_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.rental</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale_renting.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <setting name="rental_delay_costs" position="after">
+                <setting string="Prior Invoice Days"
+                         help="Helps the cron job to create rental invoices before scheduled days">
+                    <div class="content-group">
+                        <div class="row mt16 o_light_label">
+                            <label for="r_invoice_day" class="col-lg-3"/>
+                            <field name="r_invoice_day" class="col-lg-2"/>
+                        </div>
+                    </div>
+                </setting>
+            </setting>
+            <setting name="rental_delay_costs" position="after">
+                <setting id="rental_aa_plan" string="Default Analytic Plans">
+                    <div class="content-group">
+                        <div class="row mt16 o_light_label">
+                            <label for="r_analytic_plan_id" class="col-lg-3"/>
+                            <field name="r_analytic_plan_id" class="col-lg-2"/>
+                        </div>
+                        <div class="row mt16 o_light_label">
+                            <label for="r_analytic_sub_plan_id" class="col-lg-3"/>
+                            <field name="r_analytic_sub_plan_id" class="col-lg-2"/>
+                        </div>
+                    </div>
+                </setting>
+                <setting id="rental_default_journal" string="Default Journal">
+                    <div class="content-group">
+                        <div class="row mt16 o_light_label">
+                            <label for="rental_journal_id" class="col-lg-3"/>
+                            <field name="rental_journal_id" class="col-lg-2"/>
+                        </div>
+                    </div>
+                </setting>
+            </setting>
+            <setting id="setting_commission" position="after">
+                <setting id="sale_aa_plan" string="Default Analytic Plans">
+                    <div class="content-group">
+                        <div class="row mt16 o_light_label">
+                            <label for="s_analytic_plan_id" class="col-lg-3"/>
+                            <field name="s_analytic_plan_id" class="col-lg-2"/>
+                        </div>
+                        <div class="row mt16 o_light_label">
+                            <label for="s_analytic_sub_plan_id" class="col-lg-3"/>
+                            <field name="s_analytic_sub_plan_id" class="col-lg-2"/>
+                        </div>
+                    </div>
+                </setting>
+                <setting id="sale_default_journal" string="Default Journal">
+                    <div class="content-group">
+                        <div class="row mt16 o_light_label">
+                            <label for="sales_journal_id" class="col-lg-3"/>
+                            <field name="sales_journal_id" class="col-lg-2"/>
+                        </div>
+                    </div>
+                </setting>
+            </setting>
+        </field>
+    </record>
+
+    <record id="res_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.sale</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="11"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app notApp="101" string="Subscription" data-string="Subscriptions" name="subscriptions_management">
+                    <block title="Subscription" name="subscription_setting_container">
+                        <setting id="setting_subscription" string="Default Analytic Plans">
+                            <div class="content-group">
+                                    <div class="row mt16 o_light_label">
+                                        <label for="ss_analytic_plan_id" class="col-lg-3"/>
+                                        <field name="ss_analytic_plan_id" class="col-lg-2"/>
+                                    </div>
+                                    <div class="row mt16 o_light_label">
+                                        <label for="ss_analytic_sub_plan_id" class="col-lg-3"/>
+                                        <field name="ss_analytic_sub_plan_id" class="col-lg-2"/>
+                                    </div>
+                                </div>
+                        </setting>
+                        <setting id="setting_subscription_journal" string="Default Journal">
+                            <div class="content-group">
+                                <div class="row mt16 o_light_label">
+                                    <label for="subscription_journal_id" class="col-lg-3"/>
+                                    <field name="subscription_journal_id" class="col-lg-2"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

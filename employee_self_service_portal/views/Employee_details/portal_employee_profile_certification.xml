@@ -1,0 +1,912 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_employee_profile_certification" name="Employee Certification Portal">
+        <t t-call="employee_self_service_portal.portal_employee_profile_base">
+            <t t-set="section" t-value="'certification'"/>
+            <t t-set="section_content">
+
+                <!-- ── Notification Banner ── -->
+                <t t-if="cert_notification">
+                    <div t-attf-class="alert alert-{{cert_notification['type']}} alert-dismissible fade show shadow-sm mb-4"
+                         role="alert" style="border-left:5px solid;border-radius:8px;">
+                        <t t-if="cert_notification['type'] == 'warning'">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3" style="font-size:28px;">&#x23F3;</div>
+                                <div class="flex-grow-1">
+                                    <h5 class="alert-heading mb-1">Certification Pending Review</h5>
+                                    <p class="mb-1">
+                                        <t t-out="cert_notification['message']"/>
+                                    </p>
+                                    <hr class="my-2"/>
+                                    <small class="text-muted"><i class="fa fa-info-circle me-1"></i>Reference:
+                                        <strong t-esc="cert_notification['request_name']"/> &#x2014; HR will notify you
+                                        once reviewed.
+                                    </small>
+                                </div>
+                            </div>
+                        </t>
+                        <t t-if="cert_notification['type'] == 'success'">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3" style="font-size:28px;">&#x2705;</div>
+                                <div class="flex-grow-1">
+                                    <h5 class="alert-heading mb-1">Certification Update Approved</h5>
+                                    <p class="mb-1">
+                                        <t t-out="cert_notification['message']"/>
+                                    </p>
+                                    <t t-if="cert_notification.get('skill_name')">
+                                        <p class="mb-1">Certificate:
+                                            <strong t-esc="cert_notification['skill_name']"/>
+                                        </p>
+                                    </t>
+                                    <hr class="my-2"/>
+                                    <small class="text-muted"><i class="fa fa-info-circle me-1"></i>Reference:
+                                        <strong t-esc="cert_notification['request_name']"/>
+                                    </small>
+                                </div>
+                            </div>
+                        </t>
+                        <t t-if="cert_notification['type'] == 'danger'">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3" style="font-size:28px;">&#x274C;</div>
+                                <div class="flex-grow-1">
+                                    <h5 class="alert-heading mb-1">Certification Request Rejected</h5>
+                                    <p class="mb-1">
+                                        <t t-out="cert_notification['message']"/>
+                                    </p>
+                                    <div class="p-2 mt-2 rounded"
+                                         style="background:rgba(220,53,69,0.1);border-left:3px solid #dc3545;">
+                                        <strong>Rejection Reason:</strong>
+                                        <span t-esc="cert_notification['reason']"/>
+                                    </div>
+                                    <t t-if="cert_notification.get('skill_name')">
+                                        <p class="mt-2 mb-0">Certificate:
+                                            <strong t-esc="cert_notification['skill_name']"/>
+                                        </p>
+                                    </t>
+                                    <hr class="my-2"/>
+                                    <small class="text-muted"><i class="fa fa-info-circle me-1"></i>Reference:
+                                        <strong t-esc="cert_notification['request_name']"/> &#x2014; Please correct and
+                                        resubmit.
+                                    </small>
+                                </div>
+                            </div>
+                        </t>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+                    </div>
+                </t>
+
+                <div id="certMessageContainer" style="display:none; margin-bottom:16px;">
+                    <div id="certSuccessMessage" class="alert alert-success alert-dismissible fade" role="alert"
+                         style="display:none;">
+                        <i class="fa fa-check-circle me-2"></i>
+                        <span id="certSuccessText"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div id="certErrorMessage" class="alert alert-danger alert-dismissible fade" role="alert"
+                         style="display:none;">
+                        <i class="fa fa-exclamation-triangle me-2"></i>
+                        <span id="certErrorText"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+
+                <!-- ── Pending HR Approval Table ── -->
+                <t t-if="pending_cert_changes">
+                    <div class="card mb-4 shadow-sm border-warning" id="pendingCertCard">
+                        <div class="card-header d-flex align-items-center gap-2"
+                             style="background:#fff8e1; border-bottom:1px solid #ffe082;">
+                            <i class="fa fa-clock-o text-warning" style="font-size:16px;"></i>
+                            <h5 class="mb-0" style="color:#856404;">Pending HR Approval</h5>
+                            <span class="badge bg-warning text-dark ms-2" style="font-size:12px;">
+                                <t t-esc="len(pending_cert_changes)"/>
+                                request(s)
+                            </span>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table mb-0">
+                                <thead style="background:#fffde7;">
+                                    <tr>
+                                        <th style="padding:11px 18px;font-size:12px;color:#856404;text-transform:uppercase;">Reference</th>
+                                        <th style="padding:11px 18px;font-size:12px;color:#856404;text-transform:uppercase;">Certificate</th>
+                                        <th style="padding:11px 18px;font-size:12px;color:#856404;text-transform:uppercase;">Attachment</th>
+                                        <th style="padding:11px 18px;font-size:12px;color:#856404;text-transform:uppercase;">From</th>
+                                        <th style="padding:11px 18px;font-size:12px;color:#856404;text-transform:uppercase;">To</th>
+                                        <th style="padding:11px 18px;font-size:12px;color:#856404;text-transform:uppercase;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="pending_cert_changes" t-as="pcc">
+                                        <tr style="background:#fffef5;">
+                                            <td style="padding:12px 18px;vertical-align:middle;font-size:13px;">
+                                                <span class="text-muted fw-semibold"><t t-esc="pcc['pcr_name']"/></span>
+                                            </td>
+                                            <td style="padding:12px 18px;vertical-align:middle;font-size:14px;font-weight:600;">
+                                                <t t-esc="pcc['skill_name']"/>
+                                            </td>
+                                            <td style="padding:12px 18px;vertical-align:middle;font-size:13px;">
+                                                <t t-if="pcc['pcr_attachment']">
+                                                    <a t-attf-href="/portal/attachment/preview/#{pcc['pcr_attachment'].id}"
+                                                       target="_blank"
+                                                       style="color:#1a73e8;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                                                        <i class="fa fa-file-o"></i>
+                                                        <t t-esc="pcc['pcr_attachment'].name"/>
+                                                    </a>
+                                                </t>
+                                                <t t-elif="pcc['attachment_name']">
+                                                    <span class="text-muted">
+                                                        <i class="fa fa-file-o me-1"></i>
+                                                        <t t-esc="pcc['attachment_name']"/>
+                                                    </span>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="text-muted">&#x2014;</span>
+                                                </t>
+                                            </td>
+                                            <td style="padding:12px 18px;vertical-align:middle;font-size:13px;">
+                                                <t t-if="pcc['valid_from']"><t t-esc="pcc['valid_from']"/></t>
+                                                <t t-else="">&#x2014;</t>
+                                            </td>
+                                            <td style="padding:12px 18px;vertical-align:middle;font-size:13px;">
+                                                <t t-if="pcc['valid_to']"><t t-esc="pcc['valid_to']"/></t>
+                                                <t t-else=""><span class="text-muted">Indefinite</span></t>
+                                            </td>
+                                            <td style="padding:12px 18px;vertical-align:middle;">
+                                                <span class="badge rounded-pill"
+                                                      style="background:#fff3cd;color:#856404;border:1px solid #ffe082;font-size:12px;padding:5px 10px;">
+                                                    <i class="fa fa-hourglass-half me-1"></i>Awaiting HR Review
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer"
+                             style="background:#fffde7;border-top:1px solid #ffe082;padding:10px 18px;">
+                            <small class="text-muted"><i class="fa fa-info-circle me-1"></i>These changes are awaiting
+                                HR approval and will appear in your certifications once approved.
+                            </small>
+                        </div>
+                    </div>
+                </t>
+
+                <!-- ── Approved Certifications Table ── -->
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fa fa-certificate text-primary me-2"></i>Certifications</h5>
+                        <button type="button" class="btn btn-success" id="openAddModal"
+                                style="display:none;font-weight:600;background:#2C5B32;border-color:#2C5B32;color:white;">
+                            <i class="fa fa-plus me-1"></i>Add Certificate
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="padding:13px 18px;font-size:13px;color:#555;">Certificate Name</th>
+                                    <th style="padding:13px 18px;font-size:13px;color:#555;">Attachments</th>
+                                    <th style="padding:13px 18px;font-size:13px;color:#555;">From</th>
+                                    <th style="padding:13px 18px;font-size:13px;color:#555;">To</th>
+                                    <th id="certActionHeader" style="display:none;padding:13px 18px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="certTableBody">
+                                <t t-foreach="certifications" t-as="cert">
+                                    <tr t-att-data-id="cert.id"
+                                        t-att-data-skill-name="cert.skill_id.name"
+                                        t-att-data-from="cert.valid_from.strftime('%Y-%m-%d') if cert.valid_from else ''"
+                                        t-att-data-to="cert.valid_to.strftime('%Y-%m-%d') if cert.valid_to else ''">
+                                        <td style="padding:13px 18px;vertical-align:middle;font-size:14px;" class="col-skill-name">
+                                            <t t-esc="cert.skill_id.name"/>
+                                        </td>
+
+                                        <!-- ══ FIX: Use cert_attachments_map instead of cert.certificate_attachment_ids ══ -->
+                                        <td style="padding:13px 18px;vertical-align:middle;" class="col-attachments">
+                                            <t t-set="cert_atts" t-value="cert_attachments_map.get(cert.id, [])"/>
+                                            <t t-if="cert_atts">
+                                                <t t-foreach="cert_atts" t-as="att">
+                                                    <a t-attf-href="/web/content/#{att.id}?download=true"
+                                                       target="_blank"
+                                                       class="me-2"
+                                                       style="color:#1a73e8;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                                                        <i class="fa fa-paperclip"></i>
+                                                        <t t-esc="att.name"/>
+                                                    </a>
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="text-muted" style="font-size:13px;">&#x2014;</span>
+                                            </t>
+                                        </td>
+
+                                        <td style="padding:13px 18px;vertical-align:middle;font-size:14px;" class="col-from">
+                                            <t t-if="cert.valid_from">
+                                                <t t-esc="cert.valid_from.strftime('%d %b %Y')"/>
+                                            </t>
+                                            <t t-else="">&#x2014;</t>
+                                        </td>
+                                        <td style="padding:13px 18px;vertical-align:middle;font-size:14px;" class="col-to">
+                                            <t t-if="cert.valid_to">
+                                                <t t-esc="cert.valid_to.strftime('%d %b %Y')"/>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="text-muted">Indefinite</span>
+                                            </t>
+                                        </td>
+                                        <td class="cert-action-col"
+                                            style="display:none;padding:13px 18px;vertical-align:middle;text-align:right;white-space:nowrap;">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-warning ess-btn-edit-cert me-1"
+                                                    t-att-data-id="cert.id" title="Edit">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger ess-btn-delete-cert"
+                                                    t-att-data-id="cert.id" title="Delete">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </t>
+                                <t t-if="not certifications">
+                                    <tr id="certEmptyRow">
+                                        <td colspan="5" class="text-center text-muted py-4">No approved certifications yet.
+                                            <span id="certEmptyHint" style="display:none;">Click <strong>Add Certificate</strong> above.</span>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <div id="certViewActions">
+                            <p class="text-muted mb-3">Last updated:
+                                <strong id="certLastUpdated">
+                                    <t t-esc="employee.write_date.strftime('%d %b, %Y at %I:%M %p') if employee.write_date else 'Never'"/>
+                                </strong>
+                            </p>
+                            <button type="button" class="btn btn-outline-primary" id="certEditBtn"
+                                    style="font-size:14px;padding:8px 20px;font-weight:600;">
+                                <i class="fa fa-edit me-1"></i>Edit Certifications
+                            </button>
+                        </div>
+                        <div id="certFormActions" style="display:none;">
+                            <div id="certPendingBadge" style="display:none; margin-bottom:12px;">
+                                <span class="badge bg-warning text-dark" style="font-size:13px;padding:6px 12px;">
+                                    <i class="fa fa-clock-o me-1"></i>
+                                    <span id="certPendingCount">0</span>
+                                    pending change(s) &#x2014; not yet submitted
+                                </span>
+                            </div>
+                            <div class="alert alert-warning text-start mb-3"
+                                 style="border-left:4px solid #ffc107;border-radius:6px;">
+                                <div class="form-check d-flex align-items-start gap-2">
+                                    <input type="checkbox" id="certDisclaimer" class="form-check-input mt-1"/>
+                                    <label class="form-check-label" for="certDisclaimer" style="font-size:0.875rem;">
+                                        <strong>Employee Disclaimer</strong>
+                                        &#x2013; I hereby confirm that the information updated by me is accurate and
+                                        complete to the best of my knowledge. I agree to keep my data updated and
+                                        consent to use of such information for employment administration and legal
+                                        compliances.
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary me-2" id="certCancelBtn"
+                                    style="background:#E74C2D;border-color:#E74C2D;color:white;">
+                                <i class="fa fa-times me-1"></i>Cancel
+                            </button>
+                            <button type="button" id="certDoneBtn" class="btn btn-primary" disabled="disabled"
+                                    style="opacity:0.6;font-weight:600;font-size:14px;padding:8px 20px;">
+                                <i class="fa fa-paper-plane me-1"></i>Submit for HR Approval
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADD MODAL -->
+                <div class="ess-modal-overlay" id="addModal" style="display:none;">
+                    <div class="ess-modal">
+                        <div class="ess-modal-header">
+                            <h5 class="mb-0 fw-bold">Add Certification</h5>
+                            <button type="button" class="btn-close" id="closeAddModal"></button>
+                        </div>
+                        <div class="ess-modal-body">
+                            <form id="addCertForm" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Certificate Name <span class="text-danger">*</span></label>
+                                    <select name="skill_id" id="addSkillSelect" class="form-select" required="required">
+                                        <option value="">&#x2014; Select Certificate &#x2014;</option>
+                                        <t t-foreach="certificate_skills" t-as="skill">
+                                            <option t-att-value="skill.id" t-att-data-name="skill.name">
+                                                <t t-esc="skill.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Attachment <small class="text-muted fw-normal">(JPG / PDF / Word)</small></label>
+                                    <div class="ess-attach-box">
+                                        <div class="ess-attach-info">
+                                            <i class="fa fa-paperclip text-muted me-2"></i>
+                                            <span id="addAttachLabel" class="text-muted" style="font-size:13px;">Nothing attached.</span>
+                                        </div>
+                                        <label class="ess-attach-trigger mb-0">
+                                            <i class="fa fa-paperclip me-1"></i>Attach file
+                                            <input type="file" name="attachment_file" id="addFileInput"
+                                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" style="display:none;"/>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="form-label fw-semibold">From</label>
+                                        <input type="date" name="valid_from" id="addValidFrom" class="form-control"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label fw-semibold">To <small class="text-muted fw-normal">(blank = Indefinite)</small></label>
+                                        <input type="date" name="valid_to" id="addValidTo" class="form-control"/>
+                                    </div>
+                                </div>
+                                <div class="mt-3 pt-3" style="border-top:1px solid #eee;display:flex;gap:10px;">
+                                    <button type="submit" class="btn btn-primary"><i class="fa fa-plus me-1"></i>Stage Change</button>
+                                    <button type="button" class="btn btn-secondary" id="closeAddModal2"
+                                            style="background:#E74C2D;border-color:#E74C2D;color:white;">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EDIT MODAL -->
+                <div class="ess-modal-overlay" id="editModal" style="display:none;">
+                    <div class="ess-modal">
+                        <div class="ess-modal-header">
+                            <h5 class="mb-0 fw-bold">Edit Certification</h5>
+                            <button type="button" class="btn-close" id="closeEditModal"></button>
+                        </div>
+                        <div class="ess-modal-body">
+                            <form id="editCertForm" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="skill_record_id" id="editSkillRecordId"/>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Certificate Name</label>
+                                    <input type="text" id="editSkillName" class="form-control bg-light" readonly="readonly"/>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Add / Replace Attachment <small class="text-muted fw-normal">(optional)</small></label>
+                                    <div class="ess-attach-box">
+                                        <div class="ess-attach-info">
+                                            <i class="fa fa-paperclip text-muted me-2"></i>
+                                            <span id="editAttachLabel" class="text-muted" style="font-size:13px;">Choose a file to add or replace.</span>
+                                        </div>
+                                        <label class="ess-attach-trigger mb-0">
+                                            <i class="fa fa-paperclip me-1"></i>Attach file
+                                            <input type="file" name="attachment_file" id="editFileInput"
+                                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" style="display:none;"/>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="form-label fw-semibold">From</label>
+                                        <input type="date" name="valid_from" class="form-control" id="editValidFrom"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label fw-semibold">To</label>
+                                        <input type="date" name="valid_to" class="form-control" id="editValidTo"/>
+                                    </div>
+                                </div>
+                                <div class="mt-3 pt-3" style="border-top:1px solid #eee;display:flex;gap:10px;">
+                                    <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i>Stage Update</button>
+                                    <button type="button" class="btn btn-secondary" id="closeEditModal2">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    .ess-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;}
+                    .ess-modal{background:#fff;border-radius:12px;width:520px;max-width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;}
+                    .ess-modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px 16px;border-bottom:1px solid #eee;}
+                    .ess-modal-body{padding:20px 24px 20px;}
+                    .ess-attach-box{border:1.5px dashed #d0d0d0;border-radius:8px;padding:10px 14px;background:#fafafa;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;}
+                    .ess-attach-info{display:flex;align-items:center;flex:1;min-width:0;}
+                    .ess-attach-trigger{display:inline-flex;align-items:center;gap:5px;color:#0d6efd;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;padding:4px 10px;border:1px solid #b3d4fc;border-radius:6px;background:#e8f0fe;}
+                    .ess-attach-trigger:hover{background:#d0e4ff;}
+                    tr.cert-staged-add{background:#f0fff4 !important;}
+                    tr.cert-staged-edit{background:#fff8e1 !important;}
+                    tr.cert-staged-delete{background:#fff0f0 !important;opacity:0.6;text-decoration:line-through;}
+                    .cert-staged-badge{font-size:11px;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:600;}
+                    .badge-staged-add{background:#d4edda;color:#155724;}
+                    .badge-staged-edit{background:#fff3cd;color:#856404;}
+                    .badge-staged-delete{background:#f8d7da;color:#721c24;}
+                </style>
+
+                <script>
+                    //<![CDATA[
+        (function(){
+        document.addEventListener('DOMContentLoaded', function(){
+
+            var BASE_URL      = '/my/employee/certification';
+            var STORAGE_KEY   = 'ess_cert_pending';
+            var csrfToken     = '';
+            var pendingChanges = [];
+            var pendingFiles   = {};
+            var tempIdCounter  = -1;
+
+            var csrfEl = document.querySelector('input[name="csrf_token"]');
+            if (csrfEl) csrfToken = csrfEl.value;
+
+            function loadFromStorage() {
+                try {
+                    var stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+                    if (!stored || !stored.changes || stored.changes.length === 0) return;
+                    stored.changes.forEach(function(c) {
+                        if (c.type === 'delete') {
+                            pendingChanges.push(c);
+                            var r = getRow(c.rowId);
+                            if (r) {
+                                r.classList.add('cert-staged-delete');
+                                addRowBadge(r, 'delete');
+                                r.querySelector('.cert-action-col').innerHTML =
+                                    '<button type="button" class="btn btn-sm btn-outline-secondary ess-btn-undo-delete" data-id="'+c.rowId+'" title="Undo"><i class="fa fa-undo me-1"></i>Undo</button>';
+                                bindUndoOnRow(r);
+                            }
+                        } else if (c.type === 'add' && c.payload) {
+                            pendingChanges.push(c);
+                            var tbody = document.getElementById('certTableBody');
+                            var emptyRow = document.getElementById('certEmptyRow');
+                            if (emptyRow) emptyRow.remove();
+                            var tr = document.createElement('tr');
+                            tr.setAttribute('data-id', c.rowId);
+                            tr.setAttribute('data-skill-name', c.payload.skillName || '');
+                            tr.setAttribute('data-from', c.payload.validFrom || '');
+                            tr.setAttribute('data-to',   c.payload.validTo   || '');
+                            tr.classList.add('cert-staged-add');
+                            tr.innerHTML =
+                                '<td style="padding:13px 18px;vertical-align:middle;font-size:14px;" class="col-skill-name">' + escHtml(c.payload.skillName) + '<span class="cert-staged-badge badge-staged-add">New</span></td>' +
+                                '<td style="padding:13px 18px;vertical-align:middle;" class="col-attachments"><span class="text-muted" style="font-size:13px;">&mdash;</span></td>' +
+                                '<td style="padding:13px 18px;vertical-align:middle;font-size:14px;" class="col-from">' + (c.payload.validFrom ? formatDate(c.payload.validFrom) : '&mdash;') + '</td>' +
+                                '<td style="padding:13px 18px;vertical-align:middle;font-size:14px;" class="col-to">' + (c.payload.validTo ? formatDate(c.payload.validTo) : '<span class="text-muted">Indefinite</span>') + '</td>' +
+                                '<td class="cert-action-col" style="display:none;padding:13px 18px;vertical-align:middle;text-align:right;">' +
+                                '<button type="button" class="btn btn-sm btn-outline-danger ess-btn-delete-cert" data-id="' + c.rowId + '"><i class="fa fa-trash"></i></button></td>';
+                            if (tbody) { tbody.appendChild(tr); bindDeleteOnRow(tr); }
+                        } else if (c.type === 'edit' && c.rowId && c.payload) {
+                            pendingChanges.push(c);
+                            var r = getRow(c.rowId);
+                            if (r) {
+                                r.setAttribute('data-from', c.payload.validFrom || '');
+                                r.setAttribute('data-to',   c.payload.validTo   || '');
+                                r.querySelector('.col-from').textContent = c.payload.validFrom ? formatDate(c.payload.validFrom) : '&mdash;';
+                                r.querySelector('.col-to').innerHTML = c.payload.validTo ? formatDate(c.payload.validTo) : '<span class="text-muted">Indefinite</span>';
+                                r.classList.add('cert-staged-edit');
+                                addRowBadge(r, 'edit');
+                            }
+                        }
+                    });
+                    if (pendingChanges.length > 0) { enableEditMode(); }
+                } catch(e) {}
+            }
+
+            function saveToStorage() {
+                var toStore = pendingChanges.filter(function(c) {
+                    return c.type === 'delete' ||
+                           (c.type === 'edit'  && c.displayData) ||
+                           (c.type === 'add'   && c.displayData);
+                }).map(function(c) {
+                    if (c.type === 'delete') {
+                        return { type: 'delete', rowId: c.rowId, payload: {} };
+                    } else if (c.type === 'add') {
+                        return { type: 'add', rowId: c.rowId, payload: {
+                            skillId:   (c.displayData.skillId   || ''),
+                            skillName: (c.displayData.skillName || ''),
+                            validFrom: (c.displayData.validFrom || ''),
+                            validTo:   (c.displayData.validTo   || ''),
+                        }};
+                    } else {
+                        return { type: 'edit', rowId: c.rowId, payload: {
+                            validFrom: (c.displayData.validFrom || ''),
+                            validTo:   (c.displayData.validTo   || ''),
+                        }};
+                    }
+                });
+                try {
+                    if (toStore.length > 0) {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify({ changes: toStore }));
+                    } else {
+                        localStorage.removeItem(STORAGE_KEY);
+                    }
+                } catch(e) {}
+            }
+
+            window.essSaveBeforeNav = function() { saveToStorage(); };
+            window.essHasUnsavedChanges = function() { return pendingChanges.length > 0; };
+
+            window.essClearLocalStage = function() {
+                pendingChanges = []; pendingFiles = {};
+                localStorage.removeItem(STORAGE_KEY);
+                document.querySelectorAll('#certTableBody tr.cert-staged-add').forEach(function(r){ r.remove(); });
+                document.querySelectorAll('#certTableBody tr.cert-staged-edit, #certTableBody tr.cert-staged-delete').forEach(function(r){
+                    r.classList.remove('cert-staged-edit', 'cert-staged-delete');
+                    var badge = r.querySelector('.cert-staged-badge'); if(badge) badge.remove();
+                });
+                disableEditMode();
+            };
+
+            (function(){
+                var el = document.getElementById('certLastUpdated');
+                if (!el) return;
+                var raw = (el.textContent||'').trim().replace(/\u00a0/g,' ');
+                if (!raw || raw === 'Never') return;
+                try {
+                    var m = raw.match(/(\d{1,2})\s+(\w+),?\s+(\d{4})\s+at\s+(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                    if (!m) return;
+                    var months={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+                    var hr=parseInt(m[4],10), isPM=m[6].toUpperCase()==='PM';
+                    if(isPM&&hr<12)hr+=12; if(!isPM&&hr===12)hr=0;
+                    var dt=new Date(Date.UTC(parseInt(m[3],10),months[m[2].toLowerCase().substring(0,3)],parseInt(m[1],10),hr,parseInt(m[5],10)));
+                    if(!isNaN(dt.getTime()))
+                        el.textContent=dt.toLocaleString(undefined,{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});
+                } catch(e){}
+            })();
+
+            function showMsg(text, type) {
+                var c=document.getElementById('certMessageContainer');
+                var s=document.getElementById('certSuccessMessage');
+                var er=document.getElementById('certErrorMessage');
+                s.style.display='none'; s.classList.remove('show');
+                er.style.display='none'; er.classList.remove('show');
+                if(type==='success'||type==='info'){
+                    document.getElementById('certSuccessText').textContent=text;
+                    s.style.display='block'; s.classList.add('show');
+                } else {
+                    document.getElementById('certErrorText').textContent=text;
+                    er.style.display='block'; er.classList.add('show');
+                }
+                c.style.display='block';
+                c.scrollIntoView({behavior:'smooth'});
+                setTimeout(function(){s.classList.remove('show');er.classList.remove('show');},6000);
+            }
+
+            function formatDate(val){
+                if(!val) return '';
+                var p=val.split('-'); if(p.length!==3) return val;
+                var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                return parseInt(p[2],10)+' '+months[parseInt(p[1],10)-1]+' '+p[0];
+            }
+
+            function getRow(rowId){ return document.querySelector('#certTableBody tr[data-id="'+rowId+'"]'); }
+            function clearRowBadge(row){ var b=row.querySelector('.cert-staged-badge'); if(b) b.remove(); }
+
+            function addRowBadge(row,type){
+                clearRowBadge(row);
+                var labels={add:'New',edit:'Edited',delete:'To Delete'};
+                var classes={add:'badge-staged-add',edit:'badge-staged-edit',delete:'badge-staged-delete'};
+                var span=document.createElement('span');
+                span.className='cert-staged-badge '+classes[type];
+                span.textContent=labels[type];
+                row.querySelector('.col-skill-name').appendChild(span);
+            }
+
+            function escHtml(str){ return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+            function openModal(id){document.getElementById(id).style.display='flex';}
+            function closeModal(id){document.getElementById(id).style.display='none';}
+
+<!--            var hasPendingHR = !!document.getElementById('pendingCertCard');-->
+            var hasPendingHR = true; // Editing permanently disabled — certifications are now read-only
+<!--            (function lockIfPending(){-->
+<!--                var editBtn = document.getElementById('certEditBtn');-->
+<!--                if (hasPendingHR && editBtn) {-->
+<!--                    editBtn.disabled = true;-->
+<!--                    editBtn.innerHTML = '<i class="fa fa-lock me-1"></i>Pending HR Review';-->
+<!--                    editBtn.classList.remove('btn-outline-primary');-->
+<!--                    editBtn.classList.add('btn-warning');-->
+<!--                    editBtn.style.cursor = 'not-allowed';-->
+<!--                    var addBtn = document.getElementById('openAddModal');-->
+<!--                    if (addBtn) { addBtn.style.display = 'none'; }-->
+<!--                }-->
+<!--            })();-->
+
+                (function lockIfPending(){
+                var editBtn = document.getElementById('certEditBtn');
+                if (hasPendingHR && editBtn) {
+                    editBtn.style.display = 'none';
+                    var addBtn = document.getElementById('openAddModal');
+                    if (addBtn) { addBtn.style.display = 'none'; }
+                }
+                })();
+
+            document.getElementById('addFileInput').addEventListener('change',function(){
+                var l=document.getElementById('addAttachLabel');
+                l.textContent=this.files[0]?this.files[0].name:'Nothing attached.';
+                l.style.color=this.files[0]?'#333':'';
+            });
+            document.getElementById('editFileInput').addEventListener('change',function(){
+                var l=document.getElementById('editAttachLabel');
+                l.textContent=this.files[0]?this.files[0].name:'Choose a file to add or replace.';
+                l.style.color=this.files[0]?'#333':'';
+            });
+
+            document.getElementById('openAddModal').addEventListener('click',function(){
+                document.getElementById('addCertForm').reset();
+                document.getElementById('addAttachLabel').textContent='Nothing attached.';
+                document.getElementById('addAttachLabel').style.color='';
+                openModal('addModal');
+            });
+            document.getElementById('closeAddModal').addEventListener('click',function(){closeModal('addModal');});
+            document.getElementById('closeAddModal2').addEventListener('click',function(){closeModal('addModal');});
+            document.getElementById('addModal').addEventListener('click',function(e){if(e.target===this)closeModal('addModal');});
+
+            document.getElementById('addCertForm').addEventListener('submit',function(e){
+                e.preventDefault(); e.stopPropagation();
+                var select=document.getElementById('addSkillSelect');
+                var skillId=select.value;
+                var skillName=select.options[select.selectedIndex]?select.options[select.selectedIndex].text:'';
+                var validFrom=document.getElementById('addValidFrom').value;
+                var validTo=document.getElementById('addValidTo').value;
+                var fileInput=document.getElementById('addFileInput');
+                var fileObj=fileInput.files[0]||null;
+                var fileName=fileObj?fileObj.name:'';
+                if(!skillId){showMsg('Please select a Certificate Name.','error');return;}
+                var tempId=tempIdCounter--;
+                var changeObj={type:'add',rowId:tempId,displayData:{skillId:skillId,skillName:skillName,validFrom:validFrom,validTo:validTo,fileName:fileName}};
+                pendingChanges.push(changeObj);
+                if(fileObj){ pendingFiles[tempId]=fileObj; }
+                var tbody=document.getElementById('certTableBody');
+                var emptyRow=document.getElementById('certEmptyRow'); if(emptyRow) emptyRow.remove();
+                var tr=document.createElement('tr');
+                tr.setAttribute('data-id',tempId); tr.setAttribute('data-skill-name',skillName);
+                tr.setAttribute('data-from',validFrom); tr.setAttribute('data-to',validTo);
+                tr.classList.add('cert-staged-add');
+                tr.innerHTML=
+                    '<td style="padding:13px 18px;vertical-align:middle;font-size:14px;" class="col-skill-name">'+escHtml(skillName)+'<span class="cert-staged-badge badge-staged-add">New</span></td>'+
+                    '<td style="padding:13px 18px;vertical-align:middle;" class="col-attachments">'+(fileName?'<span style="color:#555;font-size:13px;"><i class="fa fa-file-o me-1"></i>'+escHtml(fileName)+'</span>':'<span class="text-muted">&mdash;</span>')+'</td>'+
+                    '<td style="padding:13px 18px;vertical-align:middle;font-size:14px;" class="col-from">'+(validFrom?formatDate(validFrom):'&mdash;')+'</td>'+
+                    '<td style="padding:13px 18px;vertical-align:middle;font-size:14px;" class="col-to">'+(validTo?formatDate(validTo):'<span class="text-muted">Indefinite</span>')+'</td>'+
+                    '<td class="cert-action-col" style="padding:13px 18px;vertical-align:middle;text-align:right;white-space:nowrap;">'+
+                        '<button type="button" class="btn btn-sm btn-outline-danger ess-btn-delete-cert" data-id="'+tempId+'"><i class="fa fa-trash"></i></button>'+
+                    '</td>';
+                tbody.appendChild(tr);
+                bindDeleteOnRow(tr);
+                saveToStorage();
+                updateCertBadge();
+                closeModal('addModal');
+                showMsg('Certification staged. Click "Submit for HR Approval" when done.','info');
+            });
+
+            function bindEditButtons(){
+                document.querySelectorAll('.ess-btn-edit-cert').forEach(function(btn){
+                    btn.addEventListener('click',function(){
+                        var rowId=this.dataset.id; var row=getRow(rowId); if(!row) return;
+                        document.getElementById('editSkillRecordId').value=rowId;
+                        document.getElementById('editSkillName').value=row.dataset.skillName||'';
+                        document.getElementById('editValidFrom').value=row.dataset.from||'';
+                        document.getElementById('editValidTo').value=row.dataset.to||'';
+                        document.getElementById('editAttachLabel').textContent='Choose a file to add or replace.';
+                        document.getElementById('editAttachLabel').style.color='';
+                        document.getElementById('editFileInput').value='';
+                        openModal('editModal');
+                    });
+                });
+            }
+            bindEditButtons();
+            document.getElementById('closeEditModal').addEventListener('click',function(){closeModal('editModal');});
+            document.getElementById('closeEditModal2').addEventListener('click',function(){closeModal('editModal');});
+            document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal('editModal');});
+
+            document.getElementById('editCertForm').addEventListener('submit',function(e){
+                e.preventDefault(); e.stopPropagation();
+                var rowId=document.getElementById('editSkillRecordId').value;
+                var validFrom=document.getElementById('editValidFrom').value;
+                var validTo=document.getElementById('editValidTo').value;
+                var fileInput=document.getElementById('editFileInput');
+                var fileObj=fileInput.files[0]||null;
+                var fileName=fileObj?fileObj.name:'';
+                pendingChanges=pendingChanges.filter(function(c){return !(c.rowId==rowId&&c.type==='edit');});
+                pendingChanges.push({type:'edit',rowId:rowId,displayData:{validFrom:validFrom,validTo:validTo,fileName:fileName}});
+                if(fileObj){ pendingFiles[rowId]=fileObj; } else { delete pendingFiles[rowId]; }
+                var row=getRow(rowId);
+                if(row){
+                    row.setAttribute('data-from',validFrom); row.setAttribute('data-to',validTo);
+                    row.querySelector('.col-from').textContent=validFrom?formatDate(validFrom):'&mdash;';
+                    row.querySelector('.col-to').innerHTML=validTo?formatDate(validTo):'<span class="text-muted">Indefinite</span>';
+                    if(fileName) row.querySelector('.col-attachments').innerHTML='<span style="color:#555;font-size:13px;"><i class="fa fa-file-o me-1"></i>'+escHtml(fileName)+' <small class="text-muted">(pending)</small></span>';
+                    if(!row.classList.contains('cert-staged-add')){row.classList.add('cert-staged-edit');addRowBadge(row,'edit');}
+                }
+                saveToStorage();
+                updateCertBadge();
+                closeModal('editModal');
+                showMsg('Edit staged. Click "Submit for HR Approval" when done.','info');
+            });
+
+            function bindDeleteOnRow(row){
+                var btn=row.querySelector('.ess-btn-delete-cert'); if(!btn) return;
+                btn.addEventListener('click',function(){
+                    var rowId=this.dataset.id; var isTemp=parseInt(rowId,10)<0;
+                    if(!confirm('Remove this certification?')) return;
+                    if(isTemp){
+                        pendingChanges=pendingChanges.filter(function(c){return c.rowId!=rowId;});
+                        delete pendingFiles[rowId];
+                        var r=getRow(rowId); if(r) r.remove();
+                    } else {
+                        pendingChanges=pendingChanges.filter(function(c){return !(c.rowId==rowId&&c.type==='edit');});
+                        pendingChanges=pendingChanges.filter(function(c){return !(c.rowId==rowId&&c.type==='delete');});
+                        pendingChanges.push({type:'delete',rowId:rowId,displayData:{}});
+                        var r=getRow(rowId);
+                        if(r){
+                            r.classList.remove('cert-staged-edit'); r.classList.add('cert-staged-delete');
+                            addRowBadge(r,'delete');
+                            r.querySelector('.cert-action-col').innerHTML='<button type="button" class="btn btn-sm btn-outline-secondary ess-btn-undo-delete" data-id="'+rowId+'" title="Undo"><i class="fa fa-undo me-1"></i>Undo</button>';
+                            bindUndoOnRow(r);
+                        }
+                    }
+                    saveToStorage();
+                    updateCertBadge();
+                });
+            }
+
+            function bindUndoOnRow(row){
+                var btn=row.querySelector('.ess-btn-undo-delete'); if(!btn) return;
+                btn.addEventListener('click',function(){
+                    var rowId=this.dataset.id;
+                    pendingChanges=pendingChanges.filter(function(c){return !(c.rowId==rowId&&c.type==='delete');});
+                    var r=getRow(rowId);
+                    if(r){
+                        r.classList.remove('cert-staged-delete'); clearRowBadge(r);
+                        r.querySelector('.cert-action-col').innerHTML=
+                            '<button type="button" class="btn btn-sm btn-outline-warning ess-btn-edit-cert me-1" data-id="'+rowId+'"><i class="fa fa-pencil"></i></button>'+
+                            '<button type="button" class="btn btn-sm btn-outline-danger ess-btn-delete-cert" data-id="'+rowId+'"><i class="fa fa-trash"></i></button>';
+                        bindEditButtons(); bindDeleteOnRow(r);
+                    }
+                    saveToStorage(); updateCertBadge(); showMsg('Undo successful.','info');
+                });
+            }
+
+            document.querySelectorAll('#certTableBody tr[data-id]').forEach(function(row){bindDeleteOnRow(row);});
+
+            function enableEditMode(){
+                if (hasPendingHR) { return; }
+                document.getElementById('openAddModal').style.display='inline-flex';
+                document.getElementById('certActionHeader').style.display='';
+                document.querySelectorAll('.cert-action-col').forEach(function(td){td.style.display='';});
+                var h=document.getElementById('certEmptyHint'); if(h) h.style.display='';
+                document.getElementById('certViewActions').style.display='none';
+                document.getElementById('certFormActions').style.display='block';
+                var certDisc2=document.getElementById('certDisclaimer'); if(certDisc2) certDisc2.checked=false;
+                var certDoneBtn2=document.getElementById('certDoneBtn'); if(certDoneBtn2){ certDoneBtn2.disabled=true; certDoneBtn2.style.opacity='0.6'; }
+                updateCertBadge();
+            }
+
+            function disableEditMode(){
+                document.getElementById('openAddModal').style.display='none';
+                document.getElementById('certActionHeader').style.display='none';
+                document.querySelectorAll('.cert-action-col').forEach(function(td){td.style.display='none';});
+                var h=document.getElementById('certEmptyHint'); if(h) h.style.display='none';
+                document.getElementById('certViewActions').style.display='block';
+                document.getElementById('certFormActions').style.display='none';
+            }
+
+            document.getElementById('certEditBtn').addEventListener('click',function(){ if(this.disabled) return; enableEditMode(); });
+
+            document.getElementById('certCancelBtn').addEventListener('click',function(){
+                if(pendingChanges.length>0){if(!confirm('Discard all certification changes?')) return;}
+                pendingChanges=[]; pendingFiles={}; localStorage.removeItem(STORAGE_KEY);
+                disableEditMode(); location.reload();
+            });
+
+            var certDisc = document.getElementById('certDisclaimer');
+            if(certDisc){
+                certDisc.addEventListener('change', function(){
+                    var btn=document.getElementById('certDoneBtn');
+                    if(btn){ btn.disabled=!this.checked; btn.style.opacity=this.checked?'1':'0.6'; }
+                });
+            }
+
+            function updateCertBadge(){
+                var badge=document.getElementById('certPendingBadge');
+                var count=document.getElementById('certPendingCount');
+                if(!badge||!count) return;
+                if(pendingChanges.length>0){count.textContent=pendingChanges.length;badge.style.display='block';}
+                else badge.style.display='none';
+            }
+
+            var certDoneBtn = document.getElementById('certDoneBtn');
+            if(certDoneBtn){
+                certDoneBtn.addEventListener('click', function(){
+                    if(pendingChanges.length===0){disableEditMode();return;}
+
+                    var btn=this;
+                    btn.disabled=true;
+                    btn.innerHTML='<i class="fa fa-spinner fa-spin me-1"></i>Submitting...';
+                    if(certDisc) certDisc.disabled=true;
+                    document.getElementById('certCancelBtn').disabled=true;
+                    document.getElementById('openAddModal').style.display='none';
+                    document.querySelectorAll('.cert-action-col').forEach(function(td){td.style.display='none';});
+
+                    var fd = new FormData();
+                    fd.append('csrf_token', csrfToken);
+                    fd.append('action', 'batch_certifications');
+
+                    var batchMeta = pendingChanges.map(function(c){
+                        if(c.type === 'add'){
+                            return {
+                                type:      'add',
+                                rowId:     String(c.rowId),
+                                skillId:   c.displayData.skillId,
+                                skillName: c.displayData.skillName,
+                                validFrom: c.displayData.validFrom || '',
+                                validTo:   c.displayData.validTo   || '',
+                                hasFile:   !!pendingFiles[c.rowId],
+                            };
+                        } else if(c.type === 'edit'){
+                            return {
+                                type:       'edit',
+                                rowId:      String(c.rowId),
+                                validFrom:  c.displayData.validFrom || '',
+                                validTo:    c.displayData.validTo   || '',
+                                hasFile:    !!pendingFiles[c.rowId],
+                            };
+                        } else {
+                            return { type: 'delete', rowId: String(c.rowId) };
+                        }
+                    });
+                    fd.append('batch_changes', JSON.stringify(batchMeta));
+
+                    Object.keys(pendingFiles).forEach(function(rowId){
+                        var fileObj = pendingFiles[rowId];
+                        if(fileObj){ fd.append('file_' + rowId, fileObj, fileObj.name); }
+                    });
+
+                    fetch(BASE_URL, {method:'POST', body:fd})
+                        .then(function(r){ return r.json(); })
+                        .then(function(d){
+                            if(d.success){
+                                pendingChanges=[]; pendingFiles={};
+                                try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+                                var overlay=document.createElement('div');
+                                overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;';
+                                overlay.innerHTML='<div style="text-align:center;padding:32px;background:white;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.12);max-width:420px;">'+
+                                    '<div style="font-size:52px;margin-bottom:14px;">&#x2705;</div>'+
+                                    '<h4 style="color:#155724;font-weight:700;margin-bottom:10px;">Certifications Submitted!</h4>'+
+                                    '<p style="color:#555;margin-bottom:12px;">Your certification changes have been sent to HR for approval.</p>'+
+                                    '<p style="color:#888;font-size:13px;"><i class="fa fa-refresh fa-spin me-1"></i>Reloading...</p>'+
+                                    '<div style="height:4px;background:#e0e0e0;border-radius:4px;overflow:hidden;width:180px;margin:12px auto 0;">'+
+                                    '<div id="cert-prog" style="height:100%;width:0%;background:#0d6efd;border-radius:4px;transition:width 1.3s linear;"></div></div>'+
+                                    '</div>';
+                                document.body.appendChild(overlay);
+                                setTimeout(function(){ var p=document.getElementById('cert-prog'); if(p) p.style.width='100%'; },50);
+                                setTimeout(function(){ location.reload(); },1500);
+                            } else {
+                                showMsg('Error: '+(d.error||'Submission failed'),'error');
+                                btn.disabled=false;
+                                btn.innerHTML='<i class="fa fa-paper-plane me-1"></i>Submit for HR Approval';
+                                if(certDisc) certDisc.disabled=false;
+                                document.getElementById('certCancelBtn').disabled=false;
+                            }
+                        })
+                        .catch(function(){
+                            showMsg('Network error. Please try again.','error');
+                            btn.disabled=false;
+                            btn.innerHTML='<i class="fa fa-paper-plane me-1"></i>Submit for HR Approval';
+                            if(certDisc) certDisc.disabled=false;
+                            document.getElementById('certCancelBtn').disabled=false;
+                        });
+                });
+            }
+
+            loadFromStorage();
+
+        });
+        })();
+        //]]>
+                </script>
+
+            </t>
+        </t>
+    </template>
+</odoo>

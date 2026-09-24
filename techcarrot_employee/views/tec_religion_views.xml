@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="techcarrot_tec_religion_tree_view" model="ir.ui.view">
+            <field name="name">tec.religion.tree.view</field>
+            <field name="model">tec.religion</field>
+            <field name="arch" type="xml">
+                <list string="Religion" editable="top">
+                    <field name="name"/>
+                </list>
+            </field>
+        </record>
+
+    <record id="tec_religion_action" model="ir.actions.act_window">
+        <field name="name">Religion</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">tec.religion</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No religion found. Let's create one!
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+            id="menu_tec_religion"
+            name="Religion"
+            action="tec_religion_action"
+            parent="hr.menu_human_resources_configuration"
+            sequence="25"/>
+</odoo>

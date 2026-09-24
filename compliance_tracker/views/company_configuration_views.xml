@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_company_master_tree" model="ir.ui.view">
+            <field name="name">compliance.company.master.tree</field>
+            <field name="model">compliance.company.master</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="name"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_company_master_form" model="ir.ui.view">
+            <field name="name">compliance.company.master.form</field>
+            <field name="model">compliance.company.master</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_company_master" model="ir.actions.act_window">
+            <field name="name">Company Master</field>
+            <field name="res_model">compliance.company.master</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+
+        <record id="view_location_master_tree" model="ir.ui.view">
+            <field name="name">compliance.location.master.tree</field>
+            <field name="model">compliance.location.master</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="name"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_location_master_form" model="ir.ui.view">
+            <field name="name">compliance.location.master.form</field>
+            <field name="model">compliance.location.master</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_location_master" model="ir.actions.act_window">
+            <field name="name">Location Master</field>
+            <field name="res_model">compliance.location.master</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+    </data>
+</odoo>

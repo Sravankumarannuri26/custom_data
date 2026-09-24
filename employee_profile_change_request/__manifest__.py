@@ -1,0 +1,31 @@
+# -*- coding: utf-8 -*-
+{
+    'name': 'Employee Profile Change Request',
+    'version': '19.0.1.0.0',
+    'category': 'Human Resources',
+    'summary': 'Portal profile changes with HR approval workflow and email notifications',
+    'author': 'Your Company',
+    'depends': [
+        'hr',
+        'mail',
+        'portal',
+        'employee_self_service_portal',
+    ],
+    'data': [
+        'security/hr_profile_change_groups.xml',
+        'security/ir.model.access.csv',
+        'security/security_record_rules.xml',
+        'data/sequence_data.xml',
+        'data/mail_template_data.xml',
+        # 'views/email_templates.xml',
+        'views/tec_religion.xml',
+        'views/report_approved_requests.xml',
+        'views/hr_profile_change_request_wizard_views.xml',
+        'views/hr_profile_change_request_views.xml',
+    ],
+    'post_init_hook': 'post_init_hook',
+    'installable': True,
+    'auto_install': False,
+    'application': True,
+    'license': 'LGPL-3',
+}

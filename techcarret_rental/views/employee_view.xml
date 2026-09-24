@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_employee_form_techcarret_view" model="ir.ui.view">
+        <field name="name">hr.employee.form</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+<!--            sriman changed from public to work_information-->
+            <xpath expr="//page[@name='work_information']" position="after">
+                <page string="Work Entry" name="work_entry">
+                    <field name="work_entry_ids" mode="list" readonly="1" force_save="1">
+                        <list editable="top">
+                            <field name="import_id" column_invisible="1"/>
+                            <field name="month"/>
+                            <field name="year"/>
+                            <field name="rental_sale_id"/>
+                            <field name="percent"/>
+                            <field name="worked_days"/>
+                            <field name="analytic_account_id" column_invisible="1"/>
+                            <field name="state" column_invisible="1"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

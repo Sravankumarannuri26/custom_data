@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Portal page for approvers (Line Manager / IT Manager) who only have
+        portal access and cannot use the backend Helpdesk approval views.
+        Lists tickets pending this user's decision, with Approve/Reject actions,
+        plus separate Approved and Rejected tabs showing their decision history.
+        HR approval remains backend-only and is not exposed here.
+    -->
+    <template id="portal_it_ticket_approvals" name="IT Helpdesk: Portal Approvals">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal_wrap">
+                <div class="container mt-4 mb-5">
+
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="mb-3">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="/my/ess">
+                                    <i class="fa fa-tachometer"/>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active">IT Ticket Approvals</li>
+                        </ol>
+                    </nav>
+
+                    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                        <div>
+                            <h2 class="mb-1" style="font-weight:700;">
+                                <i class="fa fa-gavel text-primary me-2"/>IT Ticket Approvals
+                            </h2>
+                            <p class="text-muted mb-0">Review and act on IT support tickets awaiting your decision.</p>
+                        </div>
+                    </div>
+
+                    <t t-if="success_message">
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fa fa-check-circle me-2"/>
+                            <t t-esc="success_message"/>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </t>
+                    <t t-if="error">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fa fa-exclamation-triangle me-2"/>
+                            <t t-esc="error_message or 'Something went wrong. Please try again.'"/>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </t>
+
+                    <!-- Filter tabs -->
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <a href="/my/it-approvals?filterby=pending"
+                           t-attf-class="btn btn-sm #{filterby == 'pending' and 'btn-primary' or 'btn-outline-secondary'}">
+                            Pending
+                        </a>
+                        <a href="/my/it-approvals?filterby=approved"
+                           t-attf-class="btn btn-sm #{filterby == 'approved' and 'btn-primary' or 'btn-outline-secondary'}">
+                            Approved
+                        </a>
+                        <a href="/my/it-approvals?filterby=rejected"
+                           t-attf-class="btn btn-sm #{filterby == 'rejected' and 'btn-primary' or 'btn-outline-secondary'}">
+                            Rejected
+                        </a>
+                    </div>
+
+                    <t t-if="tickets">
+                        <div class="card shadow-sm" style="border-radius:12px;overflow:hidden;">
+                            <div class="table-responsive">
+                                <table class="table mb-0">
+                                    <thead style="background:#fafbfc;">
+                                        <tr>
+                                            <th>Ticket</th>
+                                            <th>Employee</th>
+                                            <th>Type</th>
+                                            <th>Priority</th>
+                                            <th>Submitted</th>
+                                            <th>Status</th>
+                                            <th>Remarks</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="tickets" t-as="tk">
+                                            <tr>
+                                                <td>
+                                                    <a href="#" class="fw-bold text-decoration-none"
+                                                       data-bs-toggle="collapse"
+                                                       t-attf-data-bs-target="#details-{{tk.id}}">
+                                                        <i class="fa fa-chevron-right me-1" style="font-size:10px;"/>
+                                                        <t t-esc="tk.name"/>
+                                                    </a>
+                                                    <div class="text-muted" style="font-size:12px;">
+                                                        <t t-esc="tk.subject or ''"/>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="tk.employee_id.name"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="tk.ticket_type_id.name"/>
+                                                </td>
+                                                <td>
+                                                    <t t-set="pm"
+                                                       t-value="{'0':'Low','1':'Normal','2':'High','3':'Urgent'}"/>
+                                                    <t t-set="pc"
+                                                       t-value="{'0':'secondary','1':'primary','2':'warning','3':'danger'}"/>
+                                                    <span t-attf-class="badge bg-{{ pc.get(tk.priority,'secondary') }}">
+                                                        <t t-esc="pm.get(tk.priority, tk.priority)"/>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="tk.submitted_date.strftime('%d/%m/%Y') if tk.submitted_date else '—'"/>
+                                                </td>
+                                                <td>
+                                                    <t t-set="badge_map" t-value="{
+                                                        'manager_approval': ('warning', 'Pending Line Manager'),
+                                                        'hr_approval':      ('warning', 'Pending HR'),
+                                                        'it_approval':      ('warning', 'Pending IT Manager'),
+                                                        'assigned':         ('primary', 'Assigned to IT'),
+                                                        'in_progress':      ('info',    'In Progress'),
+                                                        'done':             ('success', 'Completed'),
+                                                        'rejected':         ('danger',  'Rejected'),
+                                                    }"/>
+                                                    <t t-set="bi"
+                                                       t-value="badge_map.get(tk.state, ('secondary', tk.state))"/>
+                                                    <span t-attf-class="badge bg-{{ bi[0] }}">
+                                                        <t t-esc="bi[1]"/>
+                                                    </span>
+                                                </td>
+                                                <td style="max-width:220px;font-size:12px;color:#4a5568;">
+                                                    <t t-if="tk.state == 'rejected' and tk.rejection_reason">
+                                                        <t t-esc="tk.rejection_reason"/>
+                                                    </t>
+                                                    <t t-elif="tk.state == 'it_approval' and tk.manager_remarks">
+                                                        <strong>LM:</strong>
+                                                        <t t-esc="tk.manager_remarks"/>
+                                                    </t>
+                                                    <t t-elif="tk.state == 'hr_approval' and tk.manager_remarks">
+                                                        <strong>LM:</strong>
+                                                        <t t-esc="tk.manager_remarks"/>
+                                                    </t>
+                                                    <t t-elif="tk.it_manager_remarks">
+                                                        <strong>IT:</strong>
+                                                        <t t-esc="tk.it_manager_remarks"/>
+                                                    </t>
+                                                    <t t-elif="tk.manager_remarks">
+                                                        <strong>LM:</strong>
+                                                        <t t-esc="tk.manager_remarks"/>
+                                                    </t>
+                                                    <t t-else="">—</t>
+                                                </td>
+                                                <t t-if="filterby == 'pending'">
+                                                    <td>
+                                                        <div class="d-flex gap-2 flex-wrap">
+                                                            <button type="button"
+                                                                    class="btn btn-sm btn-outline-secondary"
+                                                                    data-bs-toggle="collapse"
+                                                                    t-attf-data-bs-target="#details-{{tk.id}}">
+                                                                <i class="fa fa-eye me-1"/>Details
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-success"
+                                                                    data-bs-toggle="modal"
+                                                                    t-attf-data-bs-target="#approveModalList-{{tk.id}}">
+                                                                <i class="fa fa-check me-1"/>Approve
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-danger"
+                                                                    data-bs-toggle="modal"
+                                                                    t-attf-data-bs-target="#rejectModalList-{{tk.id}}">
+                                                                <i class="fa fa-times me-1"/>Reject
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </t>
+                                                <t t-else="">
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                                data-bs-toggle="collapse"
+                                                                t-attf-data-bs-target="#details-{{tk.id}}">
+                                                            <i class="fa fa-eye me-1"/>Details
+                                                        </button>
+                                                    </td>
+                                                </t>
+                                            </tr>
+                                            <tr t-attf-id="details-{{tk.id}}" class="collapse">
+                                                <td colspan="8" style="background:#fafbfc;">
+                                                    <div class="p-3">
+                                                        <div class="row g-3 mb-2">
+                                                            <div class="col-md-3">
+                                                                <small class="text-muted d-block">Subject</small>
+                                                                <strong>
+                                                                    <t t-esc="tk.subject or '—'"/>
+                                                                </strong>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <small class="text-muted d-block">Category /
+                                                                    Sub-Category
+                                                                </small>
+                                                                <strong>
+                                                                    <t t-esc="tk.ticket_type_id.category_id.name if tk.ticket_type_id.category_id else '—'"/>
+                                                                    <t t-if="tk.ticket_type_id">/
+                                                                        <t t-esc="tk.ticket_type_id.name"/>
+                                                                    </t>
+                                                                </strong>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <small class="text-muted d-block">Submitted Date</small>
+                                                                <strong>
+                                                                    <t t-esc="tk.submitted_date.strftime('%d-%m-%Y') if tk.submitted_date else '—'"/>
+                                                                </strong>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <small class="text-muted d-block">Required By</small>
+                                                                <strong>
+                                                                    <t t-esc="tk.required_date.strftime('%d-%m-%Y') if tk.required_date else '—'"/>
+                                                                </strong>
+                                                            </div>
+                                                        </div>
+
+                                                        <small class="text-muted d-block mb-1 fw-bold">Description
+                                                        </small>
+                                                        <div class="border rounded p-2 mb-2 bg-white"
+                                                             style="font-size:13px;">
+                                                            <t t-out="tk.description or 'No description provided.'"/>
+                                                        </div>
+
+                                                        <t t-set="tk_attachments"
+                                                           t-value="request.env['ir.attachment'].sudo().search([('res_model','=','it.ticket'),('res_id','=',tk.id)])"/>
+                                                        <t t-if="tk_attachments">
+                                                            <small class="text-muted d-block mb-1 fw-bold">
+                                                                Attachment
+                                                                <t t-if="len(tk_attachments) != 1">s</t>
+                                                                (<t t-esc="len(tk_attachments)"/>)
+                                                            </small>
+                                                            <t t-foreach="tk_attachments" t-as="att">
+                                                                <t t-if="not att.access_token">
+                                                                    <t t-set="dummy"
+                                                                       t-value="att.generate_access_token()"/>
+                                                                </t>
+                                                                <a t-attf-href="/web/content/#{att.id}?access_token=#{att.access_token}&amp;download=true"
+                                                                   class="btn btn-sm btn-outline-primary me-1 mb-1"
+                                                                   target="_blank">
+                                                                    <i class="fa fa-download me-1"/>
+                                                                    <t t-esc="att.name"/>
+                                                                </a>
+                                                            </t>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <small class="text-muted">No attachments.</small>
+                                                        </t>
+
+                                                        <div class="mt-2">
+                                                            <a t-attf-href="/my/tickets/#{tk.id}" class="small">
+                                                                Open full ticket page →
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Modals (one pair per row) -->
+                        <t t-if="filterby == 'pending'">
+                            <t t-foreach="tickets" t-as="tk">
+
+                                <div t-attf-id="approveModalList-{{tk.id}}" class="modal fade" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form t-attf-action="/my/tickets/#{tk.id}/portal-approve" method="POST">
+                                                <input type="hidden" name="csrf_token"
+                                                       t-att-value="request.csrf_token()"/>
+                                                <input type="hidden" name="redirect_to"
+                                                       value="/my/it-approvals?success=approved"/>
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Approve Ticket</h5>
+                                                    <button type="button" class="btn-close"
+                                                            data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Are you sure you want to approve
+                                                        <strong>
+                                                            <t t-esc="tk.name"/>
+                                                        </strong>
+                                                        ?
+                                                    </p>
+                                                    <label class="form-label">Comment (optional)</label>
+                                                    <textarea name="comment" class="form-control" rows="3"
+                                                              placeholder="Add a comment for the record..."/>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                            data-bs-dismiss="modal">Cancel
+                                                    </button>
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="fa fa-check me-1"/>Confirm Approve
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div t-attf-id="rejectModalList-{{tk.id}}" class="modal fade" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form t-attf-action="/my/tickets/#{tk.id}/portal-reject" method="POST">
+                                                <input type="hidden" name="csrf_token"
+                                                       t-att-value="request.csrf_token()"/>
+                                                <input type="hidden" name="redirect_to"
+                                                       value="/my/it-approvals?success=rejected"/>
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Reject Ticket</h5>
+                                                    <button type="button" class="btn-close"
+                                                            data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Please provide a reason for rejecting
+                                                        <strong>
+                                                            <t t-esc="tk.name"/>
+                                                        </strong>
+                                                        .
+                                                    </p>
+                                                    <label class="form-label">Rejection Reason
+                                                        <span class="text-danger">*</span>
+                                                    </label>
+                                                    <textarea name="rejection_reason" class="form-control" rows="3"
+                                                              required="required"
+                                                              placeholder="Explain why this request is being rejected..."/>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                            data-bs-dismiss="modal">Cancel
+                                                    </button>
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="fa fa-times me-1"/>Confirm Reject
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </t>
+                        </t>
+                    </t>
+                    <t t-else="">
+                        <div class="text-center py-5">
+                            <i class="fa fa-inbox fa-3x text-muted mb-3"/>
+                            <h5 class="text-muted">No requests in this view</h5>
+                        </div>
+                    </t>
+                </div>
+            </div>
+
+            <!-- Prevent double-submit: hide/disable the Submit button the moment
+                any form on this page (Approve/Reject) is submitted -->
+            <script>
+                document.addEventListener('submit', function (ev) {
+                var btn = ev.target.querySelector('button[type="submit"]');
+                if (btn) {
+                btn.disabled = true;
+                btn.style.display = 'none';
+                }
+                }, true);
+            </script>
+        </t>
+    </template>
+</odoo>

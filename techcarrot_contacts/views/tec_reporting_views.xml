@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="techcarrot_reporting_to_tree_view" model="ir.ui.view">
+            <field name="name">reporting.to.tree.view</field>
+            <field name="model">tec.reporting</field>
+            <field name="arch" type="xml">
+                <list string="Reporting To" editable="top">
+                    <field name="name"/>
+                </list>
+            </field>
+        </record>
+
+    <record id="reporting_to_action" model="ir.actions.act_window">
+        <field name="name">Reporting To</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">tec.reporting</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Reporting To found. Let's create one!
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+            id="menu_reporting_to"
+            name="Reporting To"
+            action="reporting_to_action"
+            parent="contacts.res_partner_menu_config"
+            sequence="6"/>
+</odoo>

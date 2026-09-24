@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="techcarrot_employee_practice_tree_view" model="ir.ui.view">
+            <field name="name">employee.practice.tree.view</field>
+            <field name="model">employee.practice</field>
+            <field name="arch" type="xml">
+                <list string="Practice" editable="top">
+                    <field name="name"/>
+                </list>
+            </field>
+        </record>
+
+    <record id="employee_practice_action" model="ir.actions.act_window">
+        <field name="name">Practice</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">employee.practice</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Practice found. Let's create one!
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+            id="menu_employee_practice"
+            name="Practice"
+            action="employee_practice_action"
+            parent="hr.menu_human_resources_configuration"
+            sequence="25"/>
+</odoo>

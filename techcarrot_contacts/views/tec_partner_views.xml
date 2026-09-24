@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="techcarrot_partner_inherit_form_view" model="ir.ui.view">
+        <field name="name">tec.partner.form</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet/group/group[1]/div" position="after">
+                <field name="avg_time_spent"/>
+                <field name="department"/>
+                <field name="home_country_address"/>
+                <field name="referrer" widget="url"/>
+                <field name="secondary_email"/>
+                <field name="tec_title"/>
+            </xpath>
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="partner_dob"/>
+                <field name="reporting_to_id"/>
+                <field name="role_id" options="{'no_open': True, 'no_create': True}"/>
+                <field name="mapping_to_id" options="{'no_create': True}"/>
+            </xpath>
+
+<!--            mobile field added by sriman    -->
+
+            <xpath expr="//div[field[@name='phone']]" position="after">
+                <div class="d-flex align-items-baseline w-md-50">
+                    <i class="fa fa-fw me-1 fa-mobile text-primary" title="Mobile"/>
+                    <field name="mobile" class="w-100" placeholder="Mobile" widget="phone"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='function']" position="before">
+                <field name="first_name"/>
+                <field name="last_name"/>
+                <field name="customer_code" required="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

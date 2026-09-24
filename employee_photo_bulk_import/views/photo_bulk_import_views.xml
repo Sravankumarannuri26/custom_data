@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_employee_photo_bulk_import_form" model="ir.ui.view">
+        <field name="name">employee.photo.bulk.import.form</field>
+        <field name="model">employee.photo.bulk.import</field>
+        <field name="arch" type="xml">
+            <form string="Bulk Import Employee Photos">
+                <group>
+                    <field name="match_field"/>
+                    <field name="zip_files" widget="many2many_binary"/>
+                </group>
+                <field name="result_log" placeholder="Results will appear here after import..." readonly="1"/>
+                <footer>
+                    <button name="action_import_photos" type="object"
+                            string="Import Photos" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_employee_photo_bulk_import" model="ir.actions.act_window">
+        <field name="name">Bulk Import Employee Photos</field>
+        <field name="res_model">employee.photo.bulk.import</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_employee_photo_bulk_import"
+              name="Bulk Import Photos"
+              parent="hr.menu_hr_root"
+              action="action_employee_photo_bulk_import"
+              sequence="100"/>
+
+</odoo>

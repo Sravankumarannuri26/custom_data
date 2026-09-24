@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <record id="view_hr_payslip_line_tree_inherit_multi_currency" model="ir.ui.view">
+            <field name="name">hr.payslip.line.tree.inherit.multi.currency</field>
+            <field name="model">hr.payslip.line</field>
+            <field name="priority">15</field>
+            <field name="inherit_id" ref="hr_payroll.view_hr_payslip_line_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='amount']" position="replace">
+                    <field name="amount" widget="monetary"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

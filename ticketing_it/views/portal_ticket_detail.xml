@@ -1,0 +1,766 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Standalone portal ticket detail — rendered directly by
+        ticketing_it/controllers/main.py overriding /my/tickets/<id>.
+        No xpath inheritance needed, so no ESS portal structure dependency.
+
+        Workflow levels:
+          0 = IT Support only
+          1 = Line Manager → IT Support
+          2 = Line Manager → IT Manager → IT Support
+          3 = Line Manager → HR → IT Support
+    -->
+    <template id="portal_ticket_detail_it" name="IT Helpdesk: Ticket Detail">
+        <t t-call="portal.portal_layout">
+
+            <div class="o_portal_wrap it-ticket-detail">
+                <style>
+                    .it-ticket-detail {
+                        --brand-green:  #1B5E3A;
+                        --brand-orange: #E8542E;
+                        --brand-navy:   #E8542E;
+                    }
+                    /* Rebrand every Bootstrap utility used on this page down to the 3 approved colors */
+                    .it-ticket-detail .bg-primary,
+                    .it-ticket-detail .bg-secondary,
+                    .it-ticket-detail .bg-info      { background-color: var(--brand-navy) !important; }
+                    .it-ticket-detail .text-primary,
+                    .it-ticket-detail .text-info     { color: var(--brand-navy) !important; }
+                    .it-ticket-detail .border-primary { border-color: var(--brand-navy) !important; }
+
+                    .it-ticket-detail .bg-success  { background-color: var(--brand-green) !important; }
+                    .it-ticket-detail .text-success { color: var(--brand-green) !important; }
+                    .it-ticket-detail .border-success { border-color: var(--brand-green) !important; }
+
+                    .it-ticket-detail .bg-warning,
+                    .it-ticket-detail .bg-danger   { background-color: var(--brand-orange) !important; }
+                    .it-ticket-detail .text-warning,
+                    .it-ticket-detail .text-danger  { color: var(--brand-orange) !important; }
+                    .it-ticket-detail .border-warning,
+                    .it-ticket-detail .border-danger { border-color: var(--brand-orange) !important; }
+                    .it-ticket-detail .badge.bg-warning,
+                    .it-ticket-detail .badge.bg-danger { color: #fff !important; }
+
+                    .it-ticket-detail .btn-primary, .it-ticket-detail .btn-info, .it-ticket-detail .btn-secondary {
+                        background-color: var(--brand-navy) !important; border-color: var(--brand-navy) !important; color:#fff !important;
+                    }
+                    .it-ticket-detail .btn-success {
+                        background-color: var(--brand-green) !important; border-color: var(--brand-green) !important;
+                    }
+                    .it-ticket-detail .btn-warning, .it-ticket-detail .btn-danger {
+                        background-color: var(--brand-orange) !important; border-color: var(--brand-orange) !important; color:#fff !important;
+                    }
+                    .it-ticket-detail .btn-outline-primary, .it-ticket-detail .btn-outline-secondary {
+                        color: var(--brand-navy) !important; border-color: var(--brand-navy) !important;
+                    }
+                    .it-ticket-detail .btn-outline-primary:hover, .it-ticket-detail .btn-outline-secondary:hover {
+                        background-color: var(--brand-navy) !important; color:#fff !important;
+                    }
+                </style>
+                <div class="container mt-4 mb-5">
+
+                    <t t-if="error">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fa fa-exclamation-triangle me-2"/>
+                            <t t-esc="error_message or 'Something went wrong. Please try again.'"/>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </t>
+
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="mb-3">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="/my/tickets">My Tickets</a>
+                            </li>
+                            <li class="breadcrumb-item active">
+                                <t t-esc="ticket.name"/>
+                            </li>
+                        </ol>
+                    </nav>
+
+                    <!-- Header banner: title + status -->
+                    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3 p-4 rounded-4"
+                         style="background:linear-gradient(90deg,#1B5E3A,#E8542E); box-shadow:0 6px 18px rgba(27,94,58,0.25);">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle"
+                                 style="width:48px;height:48px;background:rgba(255,255,255,0.18);">
+                                <i class="fa fa-ticket text-white"/>
+                            </div>
+                            <h3 class="mb-0 text-white" style="font-weight:700;">
+                                <t t-esc="ticket.name"/>
+                            </h3>
+                        </div>
+                        <t t-set="badge_map" t-value="{
+                            'draft':            ('secondary', 'Draft'),
+                            'manager_approval': ('warning',   'Pending Line Manager'),
+                            'hr_approval':      ('warning',   'Pending HR'),
+                            'it_approval':      ('warning',   'Pending IT Manager'),
+                            'assigned':         ('primary',   'Assigned to IT'),
+                            'in_progress':      ('info',      'In Progress'),
+                            'done':             ('success',   'Completed'),
+                            'rejected':         ('danger',    'Rejected'),
+                        }"/>
+                        <t t-set="bi" t-value="badge_map.get(ticket.state, ('secondary', ticket.state))"/>
+                        <span t-attf-class="badge bg-{{ bi[0] }} fs-6 px-3 py-2"
+                              style="background:rgba(255,255,255,0.22) !important; color:#fff !important;">
+                            <t t-esc="bi[1]"/>
+                        </span>
+                    </div>
+
+                    <div class="row g-4">
+
+                        <!-- ══ LEFT: Ticket Details ════════════════════════ -->
+                        <div class="col-lg-7">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-primary text-white">
+                                    <i class="fa fa-info-circle me-2"/>
+                                    <strong>Ticket Details</strong>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">Subject</small>
+                                        <strong style="font-size:15px;">
+                                            <t t-esc="ticket.subject or '—'"/>
+                                        </strong>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Category</small>
+                                            <strong>
+                                                <t t-if="ticket.ticket_type_id.category_id">
+                                                    <t t-esc="ticket.ticket_type_id.category_id.name"/>
+                                                </t>
+                                                <t t-else="">—</t>
+                                            </strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Sub-Category</small>
+                                            <strong>
+                                                <t t-esc="ticket.ticket_type_id.name or '—'"/>
+                                            </strong>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Priority</small>
+                                            <t t-set="pm" t-value="{'0':'Low','1':'Normal','2':'High','3':'Urgent'}"/>
+                                            <t t-set="pc"
+                                               t-value="{'0':'secondary','1':'primary','2':'warning','3':'danger'}"/>
+                                            <span t-attf-class="badge bg-{{ pc.get(ticket.priority,'secondary') }}">
+                                                <t t-esc="pm.get(ticket.priority, ticket.priority)"/>
+                                            </span>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Submitted Date</small>
+                                            <strong>
+                                                <t t-if="ticket.submitted_date">
+                                                    <t t-esc="ticket.submitted_date.strftime('%d-%m-%Y')"/>
+                                                </t>
+                                                <t t-else="">—</t>
+                                            </strong>
+                                        </div>
+                                    </div>
+                                    <t t-if="ticket.required_date">
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <small class="text-muted d-block">Required By</small>
+                                                <strong>
+                                                    <t t-esc="ticket.required_date.strftime('%d-%m-%Y')"/>
+                                                </strong>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <div class="mt-3">
+                                        <small class="text-muted d-block mb-1">Description</small>
+                                        <div class="border rounded p-3 bg-light">
+                                            <t t-out="ticket.description or '—'"/>
+                                        </div>
+                                    </div>
+
+                                    <t t-if="ticket_attachments">
+                                        <div class="mt-3">
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="fa fa-paperclip me-1"/>Attachment
+                                                <t t-if="len(ticket_attachments) > 1">s</t>
+                                            </small>
+                                            <t t-foreach="ticket_attachments" t-as="att">
+                                                <div class="d-flex align-items-center justify-content-between border rounded p-2 mb-1">
+                                                    <span class="text-truncate me-2" style="max-width:70%;">
+                                                        <i class="fa fa-file-o me-1 text-muted"/>
+                                                        <t t-esc="att.name"/>
+                                                    </span>
+                                                    <a t-attf-href="/web/content/#{att.id}?access_token=#{att.access_token}&amp;download=true"
+                                                       class="btn btn-sm btn-outline-primary" target="_blank">
+                                                        <i class="fa fa-download me-1"/>Download
+                                                    </a>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </t>
+
+                                    <!-- Approval remarks — shown to the next approver in the
+                                         chain and anyone else viewing the ticket -->
+                                    <t t-if="ticket.manager_remarks">
+                                        <div class="mt-3">
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="fa fa-comment-o me-1"/>Line Manager Remarks
+                                            </small>
+                                            <div class="border rounded p-3 bg-light">
+                                                <t t-out="ticket.manager_remarks"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <t t-if="ticket.it_manager_remarks">
+                                        <div class="mt-3">
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="fa fa-comment-o me-1"/>IT Manager Remarks
+                                            </small>
+                                            <div class="border rounded p-3 bg-light">
+                                                <t t-out="ticket.it_manager_remarks"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <t t-if="ticket.state == 'rejected' and ticket.rejection_reason">
+                                        <div class="mt-3">
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="fa fa-comment-o me-1"/>Rejection Reason
+                                            </small>
+                                            <div class="border rounded p-3 bg-light">
+                                                <t t-out="ticket.rejection_reason"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ══ RIGHT: Assigned To + Progress ═════════════ -->
+                        <div class="col-lg-5">
+
+                            <!-- Assigned To card -->
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header bg-success text-white">
+                                    <i class="fa fa-users me-2"/>
+                                    <strong>Assigned To</strong>
+                                </div>
+                                <div class="card-body p-0">
+                                    <table class="table table-sm mb-0">
+                                        <tbody>
+
+                                            <!-- Line Manager: levels 1,2,3 only -->
+                                            <t t-if="ticket.workflow_level in ('1','2','3') and ticket.line_manager_id">
+                                                <tr>
+                                                    <td class="text-muted ps-3" style="width:50%;">
+                                                        <i class="fa fa-user-tie me-1"/>
+                                                        Line Manager
+                                                        <t t-if="ticket.state == 'manager_approval'">
+                                                            <span class="badge bg-warning text-dark ms-1">⏳ Pending
+                                                            </span>
+                                                        </t>
+                                                        <t t-elif="ticket.manager_approval_date">
+                                                            <span class="badge bg-success ms-1">✔ Approved</span>
+                                                        </t>
+                                                    </td>
+                                                    <td class="fw-semibold pe-3">
+                                                        <t t-esc="ticket.line_manager_id.name"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+
+                                            <!-- HR: level 3 only -->
+                                            <t t-if="ticket.workflow_level == '3' and ticket.hr_approver_id">
+                                                <tr>
+                                                    <td class="text-muted ps-3">
+                                                        <i class="fa fa-id-badge me-1"/>
+                                                        HR
+                                                        <t t-if="ticket.state == 'hr_approval'">
+                                                            <span class="badge bg-warning text-dark ms-1">⏳ Pending
+                                                            </span>
+                                                        </t>
+                                                        <t t-elif="ticket.hr_approval_date">
+                                                            <span class="badge bg-success ms-1">✔ Approved</span>
+                                                        </t>
+                                                    </td>
+                                                    <td class="fw-semibold pe-3">
+                                                        <t t-esc="ticket.hr_approver_id.name"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+
+                                            <!-- IT Manager: level 2 only -->
+                                            <t t-if="ticket.workflow_level == '2' and ticket.it_manager_id">
+                                                <tr>
+                                                    <td class="text-muted ps-3">
+                                                        <i class="fa fa-shield me-1"/>
+                                                        IT Manager
+                                                        <t t-if="ticket.state == 'it_approval'">
+                                                            <span class="badge bg-warning text-dark ms-1">⏳ Pending
+                                                            </span>
+                                                        </t>
+                                                        <t t-elif="ticket.it_approval_date">
+                                                            <span class="badge bg-success ms-1">✔ Approved</span>
+                                                        </t>
+                                                    </td>
+                                                    <td class="fw-semibold pe-3">
+                                                        <t t-esc="ticket.it_manager_id.name"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+
+                                            <!-- IT Support: always shown -->
+                                            <tr>
+                                                <td class="text-muted ps-3">
+                                                    <i class="fa fa-wrench me-1"/>
+                                                    IT Support
+                                                    <t t-if="ticket.state in ('assigned','in_progress','done') and ticket.assigned_to_id">
+                                                        <span class="badge bg-success ms-1">✔ Assigned</span>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span class="badge bg-secondary ms-1">Pending</span>
+                                                    </t>
+                                                </td>
+                                                <td class="fw-semibold pe-3">
+                                                    <t t-if="ticket.assigned_to_id">
+                                                        <t t-esc="ticket.assigned_to_id.name"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span class="text-muted">—</span>
+                                                    </t>
+                                                </td>
+                                            </tr>
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Approve / Reject card — only shown to the user who is
+                                 currently the pending approver for this ticket -->
+                            <t t-if="can_approve or can_reject">
+                                <div class="card shadow-sm mb-4 border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <i class="fa fa-gavel me-2"/>
+                                        <strong>Your Approval Is Needed</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-3" style="font-size:14px;">
+                                            This ticket is waiting for your decision. You can approve it to move
+                                            the request forward, or reject it with a reason.
+                                        </p>
+                                        <div class="d-flex gap-2 flex-wrap">
+
+                                            <!-- Approve -->
+                                            <button type="button" class="btn btn-success px-4"
+                                                    data-bs-toggle="modal"
+                                                    t-attf-data-bs-target="#approveModal-{{ticket.id}}">
+                                                <i class="fa fa-check me-1"/>Approve
+                                            </button>
+
+                                            <!-- Reject -->
+                                            <button type="button" class="btn btn-danger px-4"
+                                                    data-bs-toggle="modal"
+                                                    t-attf-data-bs-target="#rejectModal-{{ticket.id}}">
+                                                <i class="fa fa-times me-1"/>Reject
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Approve modal -->
+                                <div t-attf-id="approveModal-{{ticket.id}}" class="modal fade" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form t-attf-action="/my/tickets/#{ticket.id}/portal-approve" method="POST">
+                                                <input type="hidden" name="csrf_token"
+                                                       t-att-value="request.csrf_token()"/>
+                                                <input type="hidden" name="redirect_to"
+                                                       t-attf-value="/my/tickets/#{ticket.id}"/>
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Approve Ticket</h5>
+                                                    <button type="button" class="btn-close"
+                                                            data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Are you sure you want to approve
+                                                        <strong>
+                                                            <t t-esc="ticket.name"/>
+                                                        </strong>
+                                                        ?
+                                                    </p>
+                                                    <label class="form-label">Comment (optional)</label>
+                                                    <textarea name="comment" class="form-control" rows="3"
+                                                              placeholder="Add a comment for the record..."/>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                            data-bs-dismiss="modal">Cancel
+                                                    </button>
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="fa fa-check me-1"/>Confirm Approve
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Reject modal -->
+                                <div t-attf-id="rejectModal-{{ticket.id}}" class="modal fade" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form t-attf-action="/my/tickets/#{ticket.id}/portal-reject" method="POST">
+                                                <input type="hidden" name="csrf_token"
+                                                       t-att-value="request.csrf_token()"/>
+                                                <input type="hidden" name="redirect_to"
+                                                       t-attf-value="/my/tickets/#{ticket.id}"/>
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Reject Ticket</h5>
+                                                    <button type="button" class="btn-close"
+                                                            data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Please provide a reason for rejecting
+                                                        <strong>
+                                                            <t t-esc="ticket.name"/>
+                                                        </strong>
+                                                        .
+                                                    </p>
+                                                    <label class="form-label">Rejection Reason
+                                                        <span class="text-danger">*</span>
+                                                    </label>
+                                                    <textarea name="rejection_reason" class="form-control" rows="3"
+                                                              required="required"
+                                                              placeholder="Explain why this request is being rejected..."/>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                            data-bs-dismiss="modal">Cancel
+                                                    </button>
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="fa fa-times me-1"/>Confirm Reject
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+
+                            <!-- Start Work / Mark Done card — only shown to the portal
+                                 IT Support user this ticket is currently assigned to -->
+                            <t t-if="can_start_work or can_mark_done">
+                                <div class="card shadow-sm mb-4 border-warning">
+                                    <div class="card-header bg-warning text-white">
+                                        <i class="fa fa-wrench me-2"/>
+                                        <strong>IT Support Action</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-3" style="font-size:14px;">
+                                            This ticket is assigned to you.
+                                        </p>
+                                        <div class="d-flex gap-2 flex-wrap">
+
+                                            <t t-if="can_start_work">
+                                                <form t-attf-action="/my/tickets/#{ticket.id}/portal-start-work"
+                                                      method="POST">
+                                                    <input type="hidden" name="csrf_token"
+                                                           t-att-value="request.csrf_token()"/>
+                                                    <button type="submit" class="btn btn-primary px-4">
+                                                        <i class="fa fa-play me-1"/>Start Work
+                                                    </button>
+                                                </form>
+                                            </t>
+
+                                            <t t-if="can_mark_done">
+                                                <form t-attf-action="/my/tickets/#{ticket.id}/portal-mark-done"
+                                                      method="POST">
+                                                    <input type="hidden" name="csrf_token"
+                                                           t-att-value="request.csrf_token()"/>
+                                                    <button type="submit" class="btn btn-success px-4">
+                                                        <i class="fa fa-check me-1"/>Mark Done
+                                                    </button>
+                                                </form>
+                                            </t>
+
+                                            <!-- Reject — lets the assigned IT Support user send the
+                                                 ticket back with a remark instead of working it -->
+                                            <button type="button" class="btn btn-danger px-4"
+                                                    data-bs-toggle="modal"
+                                                    t-attf-data-bs-target="#itRejectModal-{{ticket.id}}">
+                                                <i class="fa fa-times me-1"/>Reject
+                                            </button>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- IT Support reject modal -->
+                                <div t-attf-id="itRejectModal-{{ticket.id}}" class="modal fade" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form t-attf-action="/my/tickets/#{ticket.id}/portal-it-reject" method="POST">
+                                                <input type="hidden" name="csrf_token"
+                                                       t-att-value="request.csrf_token()"/>
+                                                <input type="hidden" name="redirect_to"
+                                                       t-attf-value="/my/tickets/#{ticket.id}"/>
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Reject Ticket</h5>
+                                                    <button type="button" class="btn-close"
+                                                            data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Please provide a remark for rejecting
+                                                        <strong>
+                                                            <t t-esc="ticket.name"/>
+                                                        </strong>
+                                                        .
+                                                    </p>
+                                                    <label class="form-label">Remarks
+                                                        <span class="text-danger">*</span>
+                                                    </label>
+                                                    <textarea name="it_rejection_remarks" class="form-control" rows="3"
+                                                              required="required"
+                                                              placeholder="Explain why IT Support is rejecting this ticket..."/>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                            data-bs-dismiss="modal">Cancel
+                                                    </button>
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="fa fa-times me-1"/>Confirm Reject
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+
+                            <!-- Ticket Progress card -->
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-secondary text-white">
+                                    <i class="fa fa-list-ol me-2"/>
+                                    <strong>Ticket Progress</strong>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled mb-0" style="line-height:2.5;">
+
+                                        <!-- Submitted — always green -->
+                                        <li class="d-flex align-items-center gap-2">
+                                            <i class="fa fa-check-circle text-success fa-lg"/>
+                                            <span class="fw-semibold">Submitted</span>
+                                            <t t-if="ticket.submitted_date">
+                                                <small class="text-muted">(<t
+                                                        t-esc="ticket.submitted_date.strftime('%d-%m-%Y')"/>)
+                                                </small>
+                                            </t>
+                                        </li>
+
+                                        <!-- Line Manager Review: levels 1,2,3 -->
+                                        <t t-if="ticket.workflow_level in ('1','2','3')">
+                                            <li class="d-flex align-items-center gap-2">
+                                                <t t-if="ticket.state == 'manager_approval'">
+                                                    <i class="fa fa-hourglass-half text-warning fa-lg"/>
+                                                    <span class="fw-bold text-warning">Line Manager Review
+                                                        <span class="badge bg-warning text-dark ms-1"
+                                                              style="font-size:0.75em;">Waiting
+                                                        </span>
+                                                    </span>
+                                                    <t t-if="ticket.line_manager_id">
+                                                        <small class="text-muted">—
+                                                            <b>
+                                                                <t t-esc="ticket.line_manager_id.name"/>
+                                                            </b>
+                                                        </small>
+                                                    </t>
+                                                </t>
+                                                <t t-elif="ticket.manager_approval_date">
+                                                    <i class="fa fa-check-circle text-success fa-lg"/>
+                                                    <span>Line Manager Review</span>
+                                                    <t t-if="ticket.line_manager_id">
+                                                        <small class="text-muted">—
+                                                            <t t-esc="ticket.line_manager_id.name"/>
+                                                            (
+                                                            <t t-esc="ticket.manager_approval_date.strftime('%d-%m-%Y')"/>
+                                                            )
+                                                        </small>
+                                                    </t>
+                                                </t>
+                                                <t t-else="">
+                                                    <i class="fa fa-circle-o text-muted fa-lg"/>
+                                                    <span class="text-muted">Line Manager Review</span>
+                                                </t>
+                                            </li>
+                                        </t>
+
+                                        <!-- HR Review: level 3 only -->
+                                        <t t-if="ticket.workflow_level == '3'">
+                                            <li class="d-flex align-items-center gap-2">
+                                                <t t-if="ticket.state == 'hr_approval'">
+                                                    <i class="fa fa-hourglass-half text-warning fa-lg"/>
+                                                    <span class="fw-bold text-warning">HR Review
+                                                        <span class="badge bg-warning text-dark ms-1"
+                                                              style="font-size:0.75em;">Waiting
+                                                        </span>
+                                                    </span>
+                                                    <t t-if="ticket.hr_approver_id">
+                                                        <small class="text-muted">—
+                                                            <b>
+                                                                <t t-esc="ticket.hr_approver_id.name"/>
+                                                            </b>
+                                                        </small>
+                                                    </t>
+                                                </t>
+                                                <t t-elif="ticket.hr_approval_date">
+                                                    <i class="fa fa-check-circle text-success fa-lg"/>
+                                                    <span>HR Review</span>
+                                                    <t t-if="ticket.hr_approver_id">
+                                                        <small class="text-muted">—
+                                                            <t t-esc="ticket.hr_approver_id.name"/>
+                                                            (<t t-esc="ticket.hr_approval_date.strftime('%d-%m-%Y')"/>)
+                                                        </small>
+                                                    </t>
+                                                </t>
+                                                <t t-else="">
+                                                    <i class="fa fa-circle-o text-muted fa-lg"/>
+                                                    <span class="text-muted">HR Review</span>
+                                                </t>
+                                            </li>
+                                        </t>
+
+                                        <!-- IT Manager Review: level 2 only -->
+                                        <t t-if="ticket.workflow_level == '2'">
+                                            <li class="d-flex align-items-center gap-2">
+                                                <t t-if="ticket.state == 'it_approval'">
+                                                    <i class="fa fa-hourglass-half text-warning fa-lg"/>
+                                                    <span class="fw-bold text-warning">IT Manager Review
+                                                        <span class="badge bg-warning text-dark ms-1"
+                                                              style="font-size:0.75em;">Waiting
+                                                        </span>
+                                                    </span>
+                                                    <t t-if="ticket.it_manager_id">
+                                                        <small class="text-muted">—
+                                                            <b>
+                                                                <t t-esc="ticket.it_manager_id.name"/>
+                                                            </b>
+                                                        </small>
+                                                    </t>
+                                                </t>
+                                                <t t-elif="ticket.it_approval_date">
+                                                    <i class="fa fa-check-circle text-success fa-lg"/>
+                                                    <span>IT Manager Review</span>
+                                                    <t t-if="ticket.it_manager_id">
+                                                        <small class="text-muted">—
+                                                            <t t-esc="ticket.it_manager_id.name"/>
+                                                            (<t t-esc="ticket.it_approval_date.strftime('%d-%m-%Y')"/>)
+                                                        </small>
+                                                    </t>
+                                                </t>
+                                                <t t-else="">
+                                                    <i class="fa fa-circle-o text-muted fa-lg"/>
+                                                    <span class="text-muted">IT Manager Review</span>
+                                                </t>
+                                            </li>
+                                        </t>
+
+                                        <!-- Assigned to IT -->
+                                        <li class="d-flex align-items-center gap-2">
+                                            <t t-if="ticket.state in ('assigned','in_progress','done')">
+                                                <i class="fa fa-check-circle text-success fa-lg"/>
+                                                <span>Assigned to IT</span>
+                                                <t t-if="ticket.assigned_to_id">
+                                                    <small class="text-muted">—
+                                                        <t t-esc="ticket.assigned_to_id.name"/>
+                                                    </small>
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                <i class="fa fa-circle-o text-muted fa-lg"/>
+                                                <span class="text-muted">Assigned to IT</span>
+                                            </t>
+                                        </li>
+
+                                        <!-- In Progress -->
+                                        <li class="d-flex align-items-center gap-2">
+                                            <t t-if="ticket.state in ('in_progress','done')">
+                                                <i class="fa fa-check-circle text-success fa-lg"/>
+                                                <span>In Progress</span>
+                                            </t>
+                                            <t t-elif="ticket.state == 'assigned'">
+                                                <i class="fa fa-hourglass-half text-info fa-lg"/>
+                                                <span class="fw-bold text-info">In Progress
+                                                    <span class="badge bg-info text-white ms-1"
+                                                          style="font-size:0.75em;">Waiting for IT
+                                                    </span>
+                                                </span>
+                                                <t t-if="ticket.assigned_to_id">
+                                                    <small class="text-muted">—
+                                                        <t t-esc="ticket.assigned_to_id.name"/>
+                                                        has not started
+                                                    </small>
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                <i class="fa fa-circle-o text-muted fa-lg"/>
+                                                <span class="text-muted">In Progress</span>
+                                            </t>
+                                        </li>
+
+                                        <!-- Completed / Rejected -->
+                                        <li class="d-flex align-items-center gap-2">
+                                            <t t-if="ticket.state == 'done'">
+                                                <i class="fa fa-check-circle text-success fa-lg"/>
+                                                <span class="fw-bold text-success">Completed</span>
+                                                <t t-if="ticket.done_date">
+                                                    <small class="text-muted">(<t
+                                                            t-esc="ticket.done_date.strftime('%d-%m-%Y')"/>)
+                                                    </small>
+                                                </t>
+                                            </t>
+                                            <t t-elif="ticket.state == 'rejected'">
+                                                <i class="fa fa-times-circle text-danger fa-lg"/>
+                                                <span class="fw-bold text-danger">Rejected</span>
+                                                <t t-if="ticket.rejected_by_id">
+                                                    <small class="text-muted">— by
+                                                        <t t-esc="ticket.rejected_by_id.name"/>
+                                                    </small>
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                <i class="fa fa-circle-o text-muted fa-lg"/>
+                                                <span class="text-muted">Completed</span>
+                                            </t>
+                                        </li>
+
+                                    </ul>
+                                </div>
+                            </div>
+
+                        </div><!-- /col-lg-5 -->
+                    </div><!-- /row -->
+
+                    <!-- Back button -->
+                    <div class="text-center mt-4">
+                        <a href="/my/tickets" class="btn btn-outline-secondary">
+                            <i class="fa fa-arrow-left me-1"/>
+                            Back to My Tickets
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('submit', function (ev) {
+                var btn = ev.target.querySelector('button[type="submit"]');
+                if (btn) {
+                btn.disabled = true;
+                btn.style.display = 'none';
+                }
+                }, true);
+            </script>
+        </t>
+    </template>
+</odoo>

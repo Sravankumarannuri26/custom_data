@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="techcarrot_employee_relationship_tree_view" model="ir.ui.view">
+            <field name="name">employee.relationship.tree.view</field>
+            <field name="model">employee.relationship</field>
+            <field name="arch" type="xml">
+                <list string="Employee Relationship" editable="top">
+                    <field name="name"/>
+                </list>
+            </field>
+        </record>
+
+    <record id="employee_relationship_action" model="ir.actions.act_window">
+        <field name="name">Employee Relationship</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">employee.relationship</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No employee relationship found. Let's create one!
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+            id="menu_employee_relationship"
+            name="Employee Relationship"
+            action="employee_relationship_action"
+            parent="hr.menu_human_resources_configuration"
+            sequence="25"/>
+</odoo>

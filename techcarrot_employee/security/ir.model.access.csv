@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_employee_relationship,employee.relationship,model_employee_relationship,base.group_user,1,1,1,1
+access_employment_status,employment.status,model_employment_status,base.group_user,1,1,1,1
+access_language_master,language.master,model_language_master,base.group_user,1,1,1,1
+access_exit_type,exit.type,model_exit_type,base.group_user,1,1,1,1
+access_exit_reason,exit.reason,model_exit_reason,base.group_user,1,1,1,1
+access_tec_religion,tec.religion,model_tec_religion,base.group_user,1,1,1,1
+access_employee_practice,employee.practice,model_employee_practice,base.group_user,1,1,1,1
+access_sub_practice,sub.practice,model_sub_practice,base.group_user,1,1,1,1
+access_employee_category,employee.category,model_employee_category,base.group_user,1,1,1,1

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="techcarrot_role_tree_view" model="ir.ui.view">
+            <field name="name">role.tree.view</field>
+            <field name="model">tec.role</field>
+            <field name="arch" type="xml">
+                <list string="Role" editable="top">
+                    <field name="name"/>
+                </list>
+            </field>
+        </record>
+
+    <record id="tec_role_action" model="ir.actions.act_window">
+        <field name="name">Role</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">tec.role</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Role found. Let's create one!
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+            id="menu_role"
+            name="Role"
+            action="tec_role_action"
+            parent="contacts.res_partner_menu_config"
+            sequence="6"/>
+</odoo>

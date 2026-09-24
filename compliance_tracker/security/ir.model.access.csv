@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_task_user,task.user,model_compliance_task,group_tccomplianceuser,1,0,0,0
+access_task_admin,task.admin,model_compliance_task,group_tccomplianceadmin,1,1,1,1
+access_project_user,project.user,model_compliance_project,group_tccomplianceuser,1,0,0,0
+access_project_admin,project.admin,model_compliance_project,group_tccomplianceadmin,1,1,1,1
+access_company_user,company.user,model_compliance_company_master,group_tccomplianceuser,1,0,0,0
+access_company_admin,company.admin,model_compliance_company_master,group_tccomplianceadmin,1,1,1,1
+access_location_user,location.user,model_compliance_location_master,group_tccomplianceuser,1,0,0,0
+access_location_admin,location.admin,model_compliance_location_master,group_tccomplianceadmin,1,1,1,1
+access_project_tag_user,project.tag.user,model_compliance_project_tag,group_tccomplianceuser,1,0,0,0
+access_project_tag_admin,project.tag.admin,model_compliance_project_tag,group_tccomplianceadmin,1,1,1,1
+access_stage_user,stage.user,model_compliance_task_stage,group_tccomplianceuser,1,0,0,0
+access_stage_admin,stage.admin,model_compliance_task_stage,group_tccomplianceadmin,1,1,1,1
+access_project_stage_user,project.stage.user,model_compliance_project_stage,group_tccomplianceuser,1,0,0,0
+access_project_stage_admin,project.stage.admin,model_compliance_project_stage,group_tccomplianceadmin,1,1,1,1

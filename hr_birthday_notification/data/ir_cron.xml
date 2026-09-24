@@ -1,0 +1,15 @@
+<odoo>
+    <record id="ir_cron_birthday_notification" model="ir.cron">
+        <field name="name">HR Birthday Notifications</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_send_birthday_notifications()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <!-- Odoo servers run on UTC. Dubai is UTC+4 with no DST, so 03:00 UTC
+             is always 07:00 Asia/Dubai. Computed as "tomorrow at 03:00 UTC"
+             at install time instead of a fixed calendar date. -->
+        <field name="nextcall" eval="(DateTime.today() + timedelta(days=1)).strftime('%Y-%m-%d 03:00:00')"/>
+        <field name="active">True</field>
+    </record>
+</odoo>

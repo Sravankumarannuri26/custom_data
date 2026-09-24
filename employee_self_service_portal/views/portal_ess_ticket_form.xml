@@ -1,0 +1,836 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        UPDATED portal_ess_ticket_form
+        - Category dropdown (step 1) filters Sub-Category dropdown (step 2)
+        - Replaces the old flat ticket_type_id select
+        - All other fields unchanged
+    -->
+    <template id="portal_ess_ticket_form" name="ESS - Create IT Ticket">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal container my-4">
+
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/ess">
+                                <i class="fa fa-tachometer"/>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">Create IT Ticket</li>
+                    </ol>
+                </nav>
+
+                <!-- Header -->
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-8">
+                        <h2 class="mb-1">
+                            <i class="fa fa-ticket text-danger me-2"/>
+                            Create IT Support Ticket
+                        </h2>
+                        <p class="text-muted mb-0">
+                            Submit a new IT support request. Our team will review and respond shortly.
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="/my/tickets" class="btn btn-outline-secondary btn-sm">
+                            <i class="fa fa-list"/>
+                            View My Tickets
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <t t-if="error">
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <t t-if="error_msg">
+                            <t t-esc="error_msg"/>
+                        </t>
+                        <t t-else="">Failed to create ticket. Please check the form and try again.</t>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"/>
+                    </div>
+                </t>
+
+                <!-- Line Manager Notice (informational only — does not block submission) -->
+                <t t-if="not line_manager">
+                    <div class="alert alert-info mb-4" role="alert">
+                        <i class="fa fa-info-circle me-2"/>
+                        <strong>No line manager on record.</strong>
+                        Your employee profile doesn't have a line manager set, so this ticket will
+                        skip that step and be routed automatically to the next approver in the workflow.
+                    </div>
+                </t>
+
+                <!-- Ticket Form Card -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header text-white py-3"
+                         style="background: linear-gradient(135deg, #2D6A4F 0%, #E8450A 100%); border-radius: 8px 8px 0 0;">
+                        <h5 class="mb-0" style="font-size:18px; font-weight:700;">
+                            <i class="fa fa-plus-circle me-2"/>New IT Support Request
+                        </h5>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <form action="/my/ess/tickets/submit" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                            <div class="row g-3">
+
+                                <!-- ── STEP 1: Category ── -->
+                                <div class="col-md-6">
+                                    <label for="category_id" class="form-label fw-bold">
+                                        Category
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select id="tc_category_select" class="form-select" required="required"
+                                            onchange="tcFilterSubcategory(this.value)">
+                                        <option value="">-- Select Category --</option>
+                                        <t t-foreach="ticket_categories" t-as="cat">
+                                            <option t-att-value="cat.id">
+                                                <t t-esc="cat.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+
+                                <!-- ── STEP 2: Sub-Category (filtered by category) ── -->
+                                <div class="col-md-6">
+                                    <label for="ticket_type_id" class="form-label fw-bold">
+                                        Sub-Category
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="ticket_type_id" id="ticket_type_id"
+                                            class="form-select" required="required">
+                                        <option value="">-- Select Sub-Category --</option>
+                                        <t t-foreach="ticket_types" t-as="tp">
+                                            <option t-att-value="tp.id"
+                                                    t-att-data-category="tp.category_id.id if tp.category_id else 0">
+                                                <t t-esc="tp.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                    <div class="form-text" id="tc_subcat_hint" style="display:none; color:#E8450A;">
+                                        Please select a category first.
+                                    </div>
+                                </div>
+
+                                <!-- Priority -->
+                                <div class="col-md-6">
+                                    <label for="priority" class="form-label fw-bold">
+                                        Priority
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="priority" id="priority" class="form-select" required="required">
+                                        <option value="0">🟢 Low</option>
+                                        <option value="1" selected="selected">🔵 Normal</option>
+                                        <option value="2">🟠 High</option>
+                                        <option value="3">🔴 Urgent</option>
+                                    </select>
+                                </div>
+
+                                <!-- Required By Date -->
+                                <div class="col-md-6">
+                                    <label for="required_date" class="form-label fw-bold">
+                                        Required By Date
+                                        <span class="text-muted fw-normal">(Optional)</span>
+                                    </label>
+                                    <input type="date" name="required_date" id="required_date" class="form-control"/>
+                                    <div class="form-text">Leave blank if not time-sensitive.</div>
+                                </div>
+
+                                <!-- Subject -->
+                                <div class="col-12">
+                                    <label for="subject" class="form-label fw-bold">
+                                        Subject
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" name="subject" id="subject" class="form-control"
+                                           placeholder="Brief description of the issue (e.g. Cannot access email)"
+                                           required="required" maxlength="100"/>
+                                    <div class="form-text">Keep it short and clear (max 100 characters).</div>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="col-12">
+                                    <label for="description" class="form-label fw-bold">
+                                        Description
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea name="description" id="description" class="form-control" rows="5"
+                                              placeholder="Describe the issue in detail:&#10;- What happened?&#10;- When did it start?&#10;- What steps did you try?"
+                                              required="required" maxlength="1000"/>
+                                    <div class="form-text">Please provide as much detail as possible (max 1000
+                                        characters).
+                                    </div>
+                                </div>
+
+                                <!-- Attachment -->
+                                <div class="col-12">
+                                    <label for="attachment" class="form-label fw-bold">
+                                        Attach File
+                                        <span class="text-muted fw-normal">(Optional)</span>
+                                    </label>
+                                    <input type="file" name="attachment" id="attachment" class="form-control"
+                                           accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.txt"/>
+                                    <div class="form-text">You may attach screenshots or supporting documents.</div>
+                                </div>
+
+                                <!-- Employee Info (read-only) -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Submitted By</label>
+                                    <div class="form-control bg-light" style="cursor:not-allowed;">
+                                        <i class="fa fa-user text-muted me-2"/>
+                                        <t t-esc="employee.name"/>
+                                        <small class="text-muted ms-2">
+                                            (<t t-esc="employee.job_id.name or 'Employee'"/>)
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Line Manager (read-only) -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fa fa-sitemap text-muted me-1"/>
+                                        Line Manager
+                                        <small class="text-muted fw-normal ms-1">(approves this ticket)</small>
+                                    </label>
+                                    <t t-if="line_manager">
+                                        <input type="hidden" name="line_manager_id" t-att-value="line_manager.id"/>
+                                        <div class="form-control bg-light d-flex align-items-center"
+                                             style="cursor:not-allowed;">
+                                            <i class="fa fa-user-circle text-primary me-2"/>
+                                            <span>
+                                                <t t-esc="line_manager.name"/>
+                                            </span>
+                                        </div>
+                                        <div class="form-text text-success">
+                                            <i class="fa fa-check-circle me-1"/>
+                                            This ticket will first be sent to your line manager for approval.
+                                        </div>
+                                    </t>
+                                    <t t-else="">
+                                        <div class="form-control bg-light d-flex align-items-center"
+                                             style="cursor:not-allowed;">
+                                            <i class="fa fa-arrow-right text-muted me-2"/>
+                                            <span class="text-muted">None — auto-routed to next approver</span>
+                                        </div>
+                                        <div class="form-text text-muted">
+                                            <i class="fa fa-info-circle me-1"/>
+                                            This ticket will skip the Line Manager step and go straight
+                                            to whoever's next in the workflow.
+                                        </div>
+                                    </t>
+                                </div>
+
+                                <!-- Submit Buttons -->
+                                <div class="col-12 pt-2">
+                                    <hr class="my-3"/>
+                                    <div class="d-flex gap-3">
+                                        <button type="submit" class="btn btn-lg px-4 text-white fw-bold"
+                                                style="background:linear-gradient(135deg,#2D6A4F,#E8450A);border:none;font-size:16px;">
+                                            <i class="fa fa-paper-plane me-2"/>Submit Ticket
+                                        </button>
+                                        <a href="/my/ess" class="btn btn-outline-secondary btn-lg px-4">
+                                            <i class="fa fa-times me-2"/>Cancel
+                                        </a>
+                                    </div>
+                                </div>
+
+                            </div><!-- /row -->
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Category → Sub-Category Filter Script -->
+                <script type="text/javascript">
+                    <![CDATA[
+                    // Disable past dates on "Required By Date" — today is the earliest selectable day
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var dateInput = document.getElementById('required_date');
+                        if (dateInput) {
+                            var today = new Date();
+                            var yyyy = today.getFullYear();
+                            var mm = String(today.getMonth() + 1).padStart(2, '0');
+                            var dd = String(today.getDate()).padStart(2, '0');
+                            dateInput.setAttribute('min', yyyy + '-' + mm + '-' + dd);
+                        }
+                    });
+
+                    // Build a map of category_id → [option elements]
+                    var tcSubcatOptions = {};
+                    var tcAllOptions = [];
+
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var subSelect = document.getElementById('ticket_type_id');
+                        var opts = subSelect.querySelectorAll('option[data-category]');
+
+                        opts.forEach(function (opt) {
+                            var catId = opt.getAttribute('data-category');
+                            if (!tcSubcatOptions[catId]) {
+                                tcSubcatOptions[catId] = [];
+                            }
+                            tcSubcatOptions[catId].push({
+                                value: opt.value,
+                                text: opt.textContent.trim(),
+                                catId: catId
+                            });
+                            tcAllOptions.push({
+                                value: opt.value,
+                                text: opt.textContent.trim(),
+                                catId: catId
+                            });
+                        });
+
+                        // Initially show placeholder only
+                        tcFilterSubcategory('');
+                    });
+
+                    function tcFilterSubcategory(catId) {
+                        var subSelect = document.getElementById('ticket_type_id');
+                        var hint = document.getElementById('tc_subcat_hint');
+
+                        // Clear current options
+                        subSelect.innerHTML = '';
+
+                        if (!catId) {
+                            // No category selected — show placeholder, hint
+                            var ph = document.createElement('option');
+                            ph.value = '';
+                            ph.textContent = '-- Select Sub-Category --';
+                            subSelect.appendChild(ph);
+                            if (hint) hint.style.display = 'block';
+                            return;
+                        }
+
+                        if (hint) hint.style.display = 'none';
+
+                        // Add placeholder
+                        var ph = document.createElement('option');
+                        ph.value = '';
+                        ph.textContent = '-- Select Sub-Category --';
+                        subSelect.appendChild(ph);
+
+                        // Add matching options
+                        var matches = tcSubcatOptions[catId] || [];
+                        matches.forEach(function (item) {
+                            var opt = document.createElement('option');
+                            opt.value = item.value;
+                            opt.textContent = item.text;
+                            subSelect.appendChild(opt);
+                        });
+
+                        // Auto-select if only one option
+                        if (matches.length === 1) {
+                            subSelect.value = matches[0].value;
+                        }
+                    }
+                ]]>
+                </script>
+
+            </div>
+        </t>
+    </template>
+
+
+    <!-- Ticket List and Detail templates remain unchanged -->
+    <template id="portal_my_tickets" name="My IT Tickets">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal container my-4">
+                <style>
+                    .tc-filter-btn { padding:16px 32px!important; font-size:17px!important; font-weight:700!important;
+                    border-radius:8px!important; border:none!important; background-color:#E8450A!important;
+                    color:white!important; text-decoration:none!important; margin:4px!important;
+                    display:inline-block!important; transition:all 0.2s ease!important; }
+                    .tc-filter-btn:hover { background-color:#2D6A4F!important; color:white!important;
+                    transform:translateY(-1px)!important; }
+                    .tc-filter-btn.tc-active { background-color:#2D6A4F!important; color:white!important; box-shadow:0
+                    4px 12px rgba(45,106,79,0.4)!important; }
+                    .tc-badge { font-size:13px!important; font-weight:700!important; padding:6px 12px!important;
+                    border-radius:6px!important; letter-spacing:0.3px!important; }
+                    .tc-label { font-size:13px!important; font-weight:600!important; padding:5px 10px!important;
+                    border-radius:5px!important; }
+                    .tc-view-btn { font-size:13px!important; font-weight:600!important; padding:9px 20px!important;
+                    border:2px solid #E8450A!important; color:#E8450A!important; border-radius:6px!important;
+                    background:white!important; transition:all 0.2s ease!important; max-width:180px!important;
+                    margin:0 auto!important; white-space:nowrap!important; }
+                    .tc-view-btn:hover { background:#E8450A!important; color:white!important; }
+                    .tc-ticket-card {
+                    border-top:4px solid #2D6A4F!important;
+                    border-right:4px solid #2D6A4F!important;
+                    border-bottom:4px solid #2D6A4F!important;
+                    border-left:4px solid #2D6A4F!important;
+                    transition:box-shadow 0.2s ease!important;
+                    margin-bottom:24px!important;
+                    }
+                    .tc-ticket-card:hover { box-shadow:0 6px 20px rgba(0,0,0,0.12)!important; }
+                    .tc-subject-text { word-break:break-word!important; overflow-wrap:break-word!important;
+                    white-space:normal!important; line-height:1.4!important; }
+                </style>
+
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/ess">
+                                <i class="fa fa-tachometer"/>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">My IT Tickets</li>
+                    </ol>
+                </nav>
+
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-8">
+                        <h2 class="mb-1">
+                            <i class="fa fa-ticket me-2" style="color:#E8450A;"/>
+                            My IT Support Tickets
+                        </h2>
+                        <p class="text-muted mb-0">View and track all your IT support requests</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="/my/ess/tickets/new" class="btn text-white fw-bold px-4"
+                           style="background:linear-gradient(135deg,#2D6A4F,#E8450A);border:none;">
+                            <i class="fa fa-plus"/>
+                            Create New Ticket
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body py-4">
+                        <div class="d-flex flex-wrap justify-content-center gap-3">
+                            <t t-foreach="searchbar_filters.items()" t-as="filter_item">
+                                <t t-set="filter_key" t-value="filter_item[0]"/>
+                                <t t-set="filter_val" t-value="filter_item[1]"/>
+                                <a t-att-href="'/my/tickets?filterby=' + filter_key"
+                                   t-attf-class="tc-filter-btn #{filterby == filter_key and 'tc-active' or ''}">
+                                    <t t-esc="filter_val['label']"/>
+                                </a>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tickets Grid -->
+                <t t-if="tickets">
+                    <div class="row">
+                        <t t-foreach="tickets" t-as="ticket">
+                            <div class="col-md-6 mb-4">
+                                <div class="card border-0 shadow-sm h-100 tc-ticket-card">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h5 class="mb-1" style="font-size:16px;font-weight:700;">
+                                                    <a t-attf-href="/my/tickets/{{ticket.id}}"
+                                                       class="text-decoration-none" style="color:#1B2A4A;">
+                                                        <t t-esc="ticket.name"/>
+                                                    </a>
+                                                </h5>
+                                                <!-- Show Category > Sub-Category -->
+                                                <p class="text-muted mb-0" style="font-size:13px;">
+                                                    <t t-if="ticket.ticket_type_id.category_id">
+                                                        <strong>
+                                                            <t t-esc="ticket.ticket_type_id.category_id.name"/>
+                                                        </strong>
+                                                        →
+                                                        <t t-esc="ticket.ticket_type_id.name"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="ticket.ticket_type_id.name"/>
+                                                    </t>
+                                                </p>
+                                                <p class="text-muted mb-0 tc-subject-text" style="font-size:13px;">
+                                                    <t t-esc="ticket.subject"/>
+                                                </p>
+                                            </div>
+                                            <span class="tc-badge"
+                                                  t-attf-style="background-color:#{
+                                                      '#2D6A4F' if ticket.state == 'done' else
+                                                      '#c0392b' if ticket.state == 'rejected' else
+                                                      '#E8450A' if ticket.state in ['manager_approval','it_approval'] else
+                                                      '#2980b9' if ticket.state in ['assigned','in_progress'] else
+                                                      '#7f8c8d'};color:white;">
+                                                <t t-esc="dict(ticket._fields['state'].selection).get(ticket.state)"/>
+                                            </span>
+                                        </div>
+
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <small class="text-muted d-block mb-1" style="font-size:12px;">
+                                                    Priority:
+                                                </small>
+                                                <span class="tc-label"
+                                                      t-attf-style="background-color:#{
+                                                          '#c0392b' if ticket.priority == '3' else
+                                                          '#E8450A' if ticket.priority == '2' else
+                                                          '#2D6A4F' if ticket.priority == '1' else
+                                                          '#7f8c8d'};color:white;">
+                                                    <t t-esc="dict(ticket._fields['priority'].selection).get(ticket.priority)"/>
+                                                </span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block mb-1" style="font-size:12px;">
+                                                    Created:
+                                                </small>
+                                                <span style="font-size:14px;">
+                                                    <i class="fa fa-clock-o me-1" style="color:#E8450A;"/>
+                                                    <span class="tc-local-time"
+                                                          t-att-data-utc="ticket.create_date and ticket.create_date.isoformat() + 'Z'">
+                                                        <t t-esc="ticket.create_date.strftime('%Y-%m-%d %H:%M') if ticket.create_date else ''"/>
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center">
+                                            <a t-attf-href="/my/tickets/{{ticket.id}}" class="btn tc-view-btn">
+                                                <i class="fa fa-eye me-1"/>
+                                                View Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+
+                <!-- Empty State -->
+                <t t-else="">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center py-5">
+                            <i class="fa fa-ticket fa-3x text-muted mb-3"/>
+                            <h4 class="text-muted mb-3">No Tickets Found</h4>
+                            <p class="text-muted mb-4">You haven't created any IT support tickets yet.</p>
+                            <a href="/my/ess/tickets/new" class="btn text-white fw-bold px-4"
+                               style="background:linear-gradient(135deg,#2D6A4F,#E8450A);border:none;">
+                                <i class="fa fa-plus"/>
+                                Create Your First Ticket
+                            </a>
+                        </div>
+                    </div>
+                </t>
+
+                <!-- Convert "Created:" timestamps from UTC to the viewer's own device timezone -->
+                <script type="text/javascript">
+                    <![CDATA[
+                    (function () {
+                        function tcConvertLocalTimes() {
+                            document.querySelectorAll('.tc-local-time').forEach(function (el) {
+                                try {
+                                    var utc = el.getAttribute('data-utc');
+                                    if (!utc) return;
+                                    var d = new Date(utc);
+                                    if (isNaN(d.getTime())) return;
+                                    var pad = function (n) { return String(n).padStart(2, '0'); };
+                                    var formatted = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
+                                        + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+                                    el.textContent = formatted;
+                                } catch (e) {
+                                    // Don't let one bad element block the rest from converting
+                                    console.error('tc-local-time conversion failed for element', el, e);
+                                }
+                            });
+                        }
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', tcConvertLocalTimes);
+                        } else {
+                            // DOM already parsed (e.g. script loaded late) — run immediately
+                            tcConvertLocalTimes();
+                        }
+                    })();
+                    ]]>
+                </script>
+            </div>
+        </t>
+    </template>
+
+
+    <!-- Single Ticket Detail -->
+    <template id="portal_my_ticket_detail" name="IT Ticket Detail">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal container my-4">
+
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/ess">
+                                <i class="fa fa-tachometer"/>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="/my/tickets">
+                                <i class="fa fa-ticket"/>
+                                My Tickets
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" t-esc="ticket.name"/>
+                    </ol>
+                </nav>
+
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-8">
+                        <h2 class="mb-1">
+                            <i class="fa fa-ticket me-2" style="color:#E8450A;"/>
+                            <t t-esc="ticket.name"/>
+                        </h2>
+                        <p class="text-muted mb-0" t-esc="ticket.subject"/>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="tc-badge fs-6 px-3 py-2"
+                              t-attf-style="background-color:#{
+                                  '#2D6A4F' if ticket.state == 'done' else
+                                  '#c0392b' if ticket.state == 'rejected' else
+                                  '#E8450A' if ticket.state in ['manager_approval','it_approval'] else
+                                  '#2980b9' if ticket.state in ['assigned','in_progress'] else
+                                  '#7f8c8d'};color:white;font-size:15px!important;font-weight:700;padding:10px 20px;border-radius:8px;">
+                            <t t-esc="dict(ticket._fields['state'].selection).get(ticket.state)"/>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm mb-4" style="border-left:4px solid #2D6A4F!important;">
+                            <div class="card-header bg-transparent border-0 py-3">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-info-circle me-2" style="color:#E8450A;"/>
+                                    Ticket Details
+                                </h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Category</label>
+                                        <p class="mb-0 fw-bold" style="font-size:15px;">
+                                            <t t-if="ticket.ticket_type_id.category_id">
+                                                <t t-esc="ticket.ticket_type_id.category_id.name"/>
+                                            </t>
+                                            <t t-else="">—</t>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Sub-Category</label>
+                                        <p class="mb-0 fw-bold" style="font-size:15px;">
+                                            <t t-esc="ticket.ticket_type_id.name or 'N/A'"/>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Priority</label>
+                                        <p class="mb-0">
+                                            <span class="tc-label"
+                                                  t-attf-style="background-color:#{
+                                                      '#c0392b' if ticket.priority == '3' else
+                                                      '#E8450A' if ticket.priority == '2' else
+                                                      '#2D6A4F' if ticket.priority == '1' else
+                                                      '#7f8c8d'};color:white;">
+                                                <t t-esc="dict(ticket._fields['priority'].selection).get(ticket.priority)"/>
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Submitted Date</label>
+                                        <p class="mb-0" style="font-size:14px;">
+                                            <i class="fa fa-calendar me-1" style="color:#2D6A4F;"/>
+                                            <t t-if="ticket.submitted_date">
+                                                <span class="tc-local-time"
+                                                      t-att-data-utc="ticket.submitted_date.isoformat() + 'Z'">
+                                                    <t t-esc="ticket.submitted_date.strftime('%Y-%m-%d %H:%M')"/>
+                                                </span>
+                                            </t>
+                                            <t t-else="">Not submitted yet</t>
+                                        </p>
+                                    </div>
+                                    <t t-if="ticket.required_date">
+                                        <div class="col-md-6">
+                                            <label class="text-muted small">Required By</label>
+                                            <p class="mb-0" style="font-size:14px;">
+                                                <i class="fa fa-clock-o me-1" style="color:#E8450A;"/>
+                                                <t t-esc="ticket.required_date.strftime('%Y-%m-%d')"/>
+                                            </p>
+                                        </div>
+                                    </t>
+                                    <div class="col-12">
+                                        <label class="text-muted small">Description</label>
+                                        <div class="border rounded p-3 bg-light">
+                                            <t t-raw="ticket.description"/>
+                                        </div>
+                                    </div>
+                                    <t t-if="ticket_attachments">
+                                        <div class="col-12 mt-3">
+                                            <label class="text-muted small">Attachments</label>
+                                            <ul class="list-group">
+                                                <t t-foreach="ticket_attachments" t-as="att">
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span>
+                                                            <i class="fa fa-paperclip me-2"/>
+                                                            <t t-esc="att.name"/>
+                                                        </span>
+                                                        <a t-att-href="'/web/content/%s?download=true' % att.id"
+                                                           class="btn btn-sm btn-outline-primary">Download
+                                                        </a>
+                                                    </li>
+                                                </t>
+                                            </ul>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rejection Reason -->
+                        <t t-if="ticket.state == 'rejected' and ticket.rejection_reason">
+                            <div class="card shadow-sm mb-4" style="border-left:4px solid #c0392b;">
+                                <div class="card-header text-white py-3" style="background-color:#c0392b;">
+                                    <h5 class="mb-0">
+                                        <i class="fa fa-times-circle me-2"/>Rejection Reason
+                                    </h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="mb-0" style="font-size:15px;">
+                                        <t t-esc="ticket.rejection_reason"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm mb-4" style="border-left:4px solid #E8450A!important;">
+                            <div class="card-header bg-transparent border-0 py-3">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-users me-2" style="color:#E8450A;"/>Assigned To
+                                </h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <t t-if="ticket.line_manager_id">
+                                    <p class="mb-2" style="font-size:14px;">
+                                        <strong>Line Manager:</strong>
+                                        <br/>
+                                        <i class="fa fa-user me-1" style="color:#2D6A4F;"/>
+                                        <t t-esc="ticket.line_manager_id.name"/>
+                                    </p>
+                                </t>
+                                <t t-if="ticket.it_manager_id">
+                                    <p class="mb-2" style="font-size:14px;">
+                                        <strong>IT Manager:</strong>
+                                        <br/>
+                                        <i class="fa fa-user me-1" style="color:#E8450A;"/>
+                                        <t t-esc="ticket.it_manager_id.name"/>
+                                    </p>
+                                </t>
+                                <t t-if="ticket.assigned_to_id">
+                                    <p class="mb-0" style="font-size:14px;">
+                                        <strong>IT Team Member:</strong>
+                                        <br/>
+                                        <i class="fa fa-user me-1" style="color:#2D6A4F;"/>
+                                        <t t-esc="ticket.assigned_to_id.name"/>
+                                    </p>
+                                </t>
+                                <t t-if="not ticket.line_manager_id and not ticket.it_manager_id and not ticket.assigned_to_id">
+                                    <p class="text-muted mb-0">Not yet assigned</p>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Workflow Progress -->
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-transparent border-0 py-3">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-tasks me-2" style="color:#2D6A4F;"/>Ticket Progress
+                                </h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <t t-if="ticket.workflow_level == '0'" t-set="states_list" t-value="[
+    ('draft', 'Submitted'),
+    ('assigned', 'Assigned to IT'),
+    ('in_progress', 'In Progress'),
+    ('done', 'Completed'),
+]"/>
+                                <t t-if="ticket.workflow_level == '1'" t-set="states_list" t-value="[
+    ('draft', 'Submitted'),
+    ('manager_approval', 'Line Manager Review'),
+    ('assigned', 'Assigned to IT'),
+    ('in_progress', 'In Progress'),
+    ('done', 'Completed'),
+]"/>
+                                <t t-if="ticket.workflow_level == '2'" t-set="states_list" t-value="[
+    ('draft', 'Submitted'),
+    ('manager_approval', 'Line Manager Review'),
+    ('it_approval', 'IT Manager Review'),
+    ('assigned', 'Assigned to IT'),
+    ('in_progress', 'In Progress'),
+    ('done', 'Completed'),
+]"/>
+                                <ul class="list-unstyled mb-0">
+                                    <t t-foreach="states_list" t-as="st">
+                                        <li class="mb-2 d-flex align-items-center">
+                                            <i t-attf-class="fa me-2 #{
+                                                'fa-check-circle text-success' if ticket.state == st[0]
+                                                else 'fa-circle-o text-muted'}"/>
+                                            <span t-attf-class="#{
+                                                'fw-bold text-success' if ticket.state == st[0]
+                                                else 'text-muted' if ticket.state == 'rejected'
+                                                else ''}">
+                                                <t t-esc="st[1]"/>
+                                            </span>
+                                        </li>
+                                    </t>
+                                    <!-- Rejected state -->
+                                    <t t-if="ticket.state == 'rejected'">
+                                        <li class="mb-2 d-flex align-items-center">
+                                            <i class="fa fa-times-circle text-danger me-2"/>
+                                            <span class="fw-bold text-danger">Rejected</span>
+                                        </li>
+                                    </t>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="/my/tickets" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="fa fa-arrow-left me-2"/>Back to My Tickets
+                    </a>
+                </div>
+
+                <!-- Convert timestamps from UTC to the viewer's own device timezone -->
+                <script type="text/javascript">
+                    <![CDATA[
+                    (function () {
+                        function tcConvertLocalTimes() {
+                            document.querySelectorAll('.tc-local-time').forEach(function (el) {
+                                try {
+                                    var utc = el.getAttribute('data-utc');
+                                    if (!utc) return;
+                                    var d = new Date(utc);
+                                    if (isNaN(d.getTime())) return;
+                                    var pad = function (n) { return String(n).padStart(2, '0'); };
+                                    var formatted = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
+                                        + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+                                    el.textContent = formatted;
+                                } catch (e) {
+                                    console.error('tc-local-time conversion failed for element', el, e);
+                                }
+                            });
+                        }
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', tcConvertLocalTimes);
+                        } else {
+                            tcConvertLocalTimes();
+                        }
+                    })();
+                    ]]>
+                </script>
+            </div>
+        </t>
+    </template>
+
+</odoo>

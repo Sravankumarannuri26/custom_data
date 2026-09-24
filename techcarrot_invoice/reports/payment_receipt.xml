@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         CUSTOM PAPERFORMAT — tight margins so there's no large
+         reserved gap at the top/bottom of the page.
+         Default Odoo paperformat margin_top is often 40mm, which is
+         exactly what causes the big empty space above your logo. 
+         ============================================================ -->
+    <record id="paperformat_payment_receipt_custom" model="report.paperformat">
+        <field name="name">Payment Receipt Custom</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="disable_shrinking" eval="False"/>
+        <field name="dpi">90</field>
+    </record>
+
+    <!-- Attach it to your report action -->
+    <record id="account.action_report_payment_receipt" model="ir.actions.report">
+        <field name="report_name">techcarrot_invoice.report_payment_receipt_custom_document</field>
+        <field name="report_file">techcarrot_invoice.report_payment_receipt_custom_document</field>
+        <field name="paperformat_id" ref="paperformat_payment_receipt_custom"/>
+    </record>
+
+        <template id="report_payment_receipt_custom_document">
+        <t t-call="web.html_container">
+
+            <t t-foreach="docs" t-as="o">
+                <t t-call="techcarrot_invoice.report_payment_receipt_custom_page"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- ============================================================
+         PAGE TEMPLATE — rebuilt with table layout (no Bootstrap
+         row/col grid), explicit border removal.
+         ============================================================ -->
+    <template id="report_payment_receipt_custom_page">
+        <t t-set="o" t-value="o.with_context(lang=lang)"/>
+        <t t-set="values" t-value="o._get_payment_receipt_report_values()"/>
+        <t t-set="company" t-value="o.company_id"/>
+
+        <style>
+            .no-border-table,
+            .no-border-table td,
+            .no-border-table th,
+            .no-border-table tr {
+                border: none !important;
+                border-style: hidden !important;
+                outline: none !important;
+            }
+        </style>
+
+        <div style="font-family: Arial, sans-serif; font-size: 13px; color: #333;
+                    margin: 0; padding: 0; width: 100%;">
+
+            <!-- ==================== HEADER: table layout, no grid ==================== -->
+            <table class="no-border-table" style="width: 100%; border-collapse: collapse; margin: 0;">
+                <tr>
+                    <td style="vertical-align: top; width: 50%; padding: 0;">
+                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)"
+                             style="max-height: 55px; max-width: 200px; display: block;"/>
+                    </td>
+                    <td style="vertical-align: top; width: 50%; text-align: right; padding: 0;">
+                        <strong style="font-size: 18px;" t-field="company.name"/><br/>
+                        <span t-field="company.street"/>
+                        <t t-if="company.street2">, <span t-field="company.street2"/></t><br/>
+                        <span t-field="company.city"/>
+                        <t t-if="company.state_id">, <span t-field="company.state_id.name"/></t><br/>
+                        <span t-if="company.country_id" t-field="company.country_id.name"/><br/>
+                        <t t-if="company.vat">TRN <span t-field="company.vat"/></t>
+                    </td>
+                </tr>
+            </table>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 10px 0 15px 0;"/>
+
+            <!-- ==================== TITLE ==================== -->
+            <h3 style="text-align: center; margin: 15px 0 25px 0; letter-spacing: 1px;">
+                PAYMENT RECEIPT
+            </h3>
+
+            <!-- ==================== DETAILS + AMOUNT BOX (table layout) ==================== -->
+            <table class="no-border-table" style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+                <tr>
+                    <!-- LEFT: details, borderless -->
+                    <td style="vertical-align: top; width: 58%; padding: 0;">
+                        <table class="no-border-table" style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 5px 0; color: #888; width: 45%;">Payment Date</td>
+                                <td style="padding: 5px 0;"><strong t-field="o.date"/></td>
+                            </tr>
+                            <tr t-if="o.memo">
+                                <td style="padding: 5px 0; color: #888;">Reference Number</td>
+                                <td style="padding: 5px 0;"><strong t-field="o.memo"/></td>
+                            </tr>
+                            <tr t-if="o.payment_method_id">
+                                <td style="padding: 5px 0; color: #888;">Payment Mode</td>
+                                <td style="padding: 5px 0;"><strong t-field="o.payment_method_id.name"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; color: #888;">Receipt #</td>
+                                <td style="padding: 5px 0;"><strong t-field="o.name"/></td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td style="width: 4%;"/>
+                    <!-- RIGHT: amount box -->
+                    <td style="vertical-align: top; width: 38%; padding: 0;">
+                        <table class="no-border-table" style="width: 100%; border-collapse: collapse;
+                                       background: #6aa84f; border-radius: 4px;">
+                            <tr>
+                                <td style="color: #fff; text-align: center; padding: 16px;">
+                                    <div style="font-size: 13px;">Amount Received</div>
+                                    <div style="font-size: 22px; font-weight: bold; margin-top: 4px;">
+
+    <span t-out="'{:,.2f}'.format(o.amount)"/>
+
+    <span t-if="o.currency_id and o.currency_id.symbol">
+        <t t-out="o.currency_id.symbol"/>
+    </span>
+
+</div>
+<!--                                    <div style="font-size: 22px; font-weight: bold; margin-top: 4px;">-->
+<!--                                        <span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}">50 USD</span>-->
+<!--                                        <span t-field="o.amount"-->
+<!--                                              t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>-->
+<!--                                    </div>-->
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- ==================== RECEIVED FROM / PAID TO ==================== -->
+            <div style="margin-bottom: 15px;" t-if="o.partner_id">
+                <div style="color: #888; margin-bottom: 4px;">
+                    <t t-if="o.partner_type == 'customer'">Received From</t>
+                    <t t-else="">Paid To</t>
+                </div>
+                <strong t-field="o.partner_id.name"/><br/>
+                <span t-field="o.partner_id.street"/>
+                <t t-if="o.partner_id.street2">, <span t-field="o.partner_id.street2"/></t><br/>
+                <span t-field="o.partner_id.city"/><br/>
+                <span t-if="o.partner_id.country_id" t-field="o.partner_id.country_id.name"/><br/>
+                <t t-if="o.partner_id.vat">TRN <span t-field="o.partner_id.vat"/></t>
+            </div>
+            <hr style="border: none; border-top: 1px solid #ddd; margin-bottom: 15px;"/>
+
+            <!-- ==================== PAYMENT FOR TABLE (borderless) ==================== -->
+            <div t-if="values['display_invoices']">
+                <h5 style="margin-bottom: 8px;">Payment for</h5>
+                <t t-set="invoices" t-value="o.reconciled_invoice_ids or o.reconciled_bill_ids"/>
+                <table class="no-border-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border: none !important; border-style: hidden !important;
+                                   border-bottom: 1px solid #ddd !important;">
+                            <th style="text-align: left; padding: 5px 0;">Invoice Number</th>
+                            <th style="text-align: left; padding: 5px 0;">Invoice Date</th>
+                            <th style="text-align: right; padding: 5px 0;">Invoice Amount</th>
+                            <th style="text-align: right; padding: 5px 0;">Payment Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="invoices" t-as="inv">
+                            <t t-if="inv.move_type != 'entry'">
+                                <t t-set="paid_amount"
+                                   t-value="sum(-par[1] for par in inv._get_reconciled_invoices_partials()[0])"/>
+                                <tr>
+                                    <td style="padding: 5px 0;"><span t-field="inv.name"/></td>
+                                    <td style="padding: 5px 0;"><span t-field="inv.invoice_date"/></td>
+                                    <td style="text-align: right; padding: 5px 0;">
+<!--                                        <span t-field="inv.amount_total"-->
+<!--                                              t-options="{'widget': 'monetary', 'display_currency': inv.currency_id}"/>-->
+                                        <span t-out="'{:,.2f}'.format(inv.amount_total)"/>
+
+    <span t-if="inv.currency_id and inv.currency_id.symbol">
+        <t t-out="inv.currency_id.symbol"/>
+    </span>
+                                    </td>
+                                    <td style="text-align: right; padding: 5px 0;">
+<!--                                        <span t-out="paid_amount"-->
+<!--                                              t-options="{'widget': 'monetary', 'display_currency': inv.currency_id}"/>-->
+                                        <span t-out="'{:,.2f}'.format(paid_amount)"/>
+
+    <span t-if="inv.currency_id and inv.currency_id.symbol">
+        <t t-out="inv.currency_id.symbol"/>
+    </span>
+                                    </td>
+                                </tr>
+                            </t>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </template>
+
+</odoo>
+
+
+<!--<?xml version="1.0" encoding="utf-8"?>-->
+<!--<odoo>-->
+
+<!--    <record id="paperformat_payment_receipt_custom" model="report.paperformat">-->
+<!--        <field name="name">Payment Receipt Custom</field>-->
+
+
+<!--            <field name="default" eval="False" />-->
+<!--            <field name="format">A4</field>-->
+<!--            <field name="page_height">0</field>-->
+<!--            <field name="page_width">0</field>-->
+<!--            <field name="orientation">Portrait</field>-->
+<!--            <field name="margin_top">10</field>-->
+<!--            <field name="margin_bottom">10</field>-->
+<!--            <field name="margin_left">10</field>-->
+<!--            <field name="margin_right">10</field>-->
+<!--            <field name="header_line" eval="False" />-->
+<!--            <field name="header_spacing">0</field>-->
+<!--            <field name="dpi">80</field>-->
+<!--&lt;!&ndash;            <field name="css_margins" eval="True" />&ndash;&gt;-->
+<!--    </record>-->
+
+<!--    &lt;!&ndash; ============================================================-->
+<!--         Override the EXISTING "Payment Receipt" action-->
+<!--         (the one shown in your screenshot: model account.payment,-->
+<!--         template account.report_payment_receipt).-->
+<!--         Re-using the same xml id updates that record in place —-->
+<!--         it does NOT create a duplicate action/button.-->
+<!--         ============================================================ &ndash;&gt;-->
+<!--    <record id="account.action_report_payment_receipt" model="ir.actions.report">-->
+<!--        <field name="report_name">techcarrot_invoice.report_payment_receipt_custom_document</field>-->
+<!--        <field name="report_file">techcarrot_invoice.report_payment_receipt_custom_document</field>-->
+<!--        <field name="paperformat_id" ref="paperformat_payment_receipt_custom"/>-->
+<!--    </record>-->
+
+<!--    &lt;!&ndash; ============================================================-->
+<!--         Your new standalone container + page templates-->
+<!--         (same as before — unchanged)-->
+<!--         ============================================================ &ndash;&gt;-->
+<!--    <template id="report_payment_receipt_custom_document">-->
+<!--        <t t-call="web.html_container">-->
+
+<!--            <t t-foreach="docs" t-as="o">-->
+<!--                <t t-call="techcarrot_invoice.report_payment_receipt_custom_page"/>-->
+<!--            </t>-->
+<!--        </t>-->
+<!--    </template>-->
+<!--    <template id="report_payment_receipt_custom_page">-->
+<!--        <t t-set="o" t-value="o.with_context(lang=lang)"/>-->
+<!--        <t t-set="values" t-value="o._get_payment_receipt_report_values()"/>-->
+<!--        <t t-set="company" t-value="o.company_id"/>-->
+
+<!--&lt;!&ndash;        <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" style="font-family: Arial, sans-serif; font-size: 13px; color: #333;">&ndash;&gt;-->
+<!--        <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"-->
+<!--     style="-->
+<!--         font-family: Arial, sans-serif;-->
+<!--         font-size: 13px;-->
+<!--         color: #333;-->
+
+<!--     ">-->
+
+<!--            &lt;!&ndash; ==================== HEADER: table layout, no grid ==================== &ndash;&gt;-->
+<!--            <table style="width: 100%; border: none; border-collapse: collapse; margin: 0;">-->
+<!--                <tr>-->
+<!--                    <td style="border: none; vertical-align: top; width: 50%; padding: 0;">-->
+<!--                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)"-->
+<!--                             style="max-height: 55px; max-width: 200px; display: block;"/>-->
+<!--                    </td>-->
+<!--                    <td style="border: none; vertical-align: top; width: 50%; text-align: right; padding: 0;">-->
+<!--                        <strong style="font-size: 14px;" t-field="company.name"/><br/>-->
+<!--                        <span t-field="company.street"/>-->
+<!--                        <t t-if="company.street2">, <span t-field="company.street2"/></t><br/>-->
+<!--                        <span t-field="company.city"/>-->
+<!--                        <t t-if="company.state_id">, <span t-field="company.state_id.name"/></t><br/>-->
+<!--                        <span t-if="company.country_id" t-field="company.country_id.name"/><br/>-->
+<!--                        <t t-if="company.vat">TRN <span t-field="company.vat"/></t>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--            </table>-->
+<!--            <hr style="border: none; border-top: 1px solid #ddd; margin: 10px 0 15px 0;"/>-->
+
+<!--            &lt;!&ndash; ==================== TITLE ==================== &ndash;&gt;-->
+<!--            <h3 style="text-align: center; margin: 15px 0 25px 0; letter-spacing: 1px;">-->
+<!--                PAYMENT RECEIPT-->
+<!--            </h3>-->
+
+<!--            &lt;!&ndash; ==================== DETAILS + AMOUNT BOX (table layout) ==================== &ndash;&gt;-->
+<!--            <table style="width: 100%; border: none; border-collapse: collapse; margin-bottom: 25px;">-->
+<!--                <tr>-->
+<!--                    &lt;!&ndash; LEFT: details, borderless &ndash;&gt;-->
+<!--                    <td style="border: none; vertical-align: top; width: 58%; padding: 0;">-->
+<!--                        <table style="width: 100%; border: none; border-collapse: collapse;">-->
+<!--                            <tr>-->
+<!--                                <td style="border: none; padding: 5px 0; color: #888; width: 45%;">Payment Date</td>-->
+<!--                                <td style="border: none; padding: 5px 0;"><strong t-field="o.date"/></td>-->
+<!--                            </tr>-->
+<!--                            <tr t-if="o.memo">-->
+<!--                                <td style="border: none; padding: 5px 0; color: #888;">Reference Number</td>-->
+<!--                                <td style="border: none; padding: 5px 0;"><strong t-field="o.memo"/></td>-->
+<!--                            </tr>-->
+<!--                            <tr t-if="o.payment_method_id">-->
+<!--                                <td style="border: none; padding: 5px 0; color: #888;">Payment Mode</td>-->
+<!--                                <td style="border: none; padding: 5px 0;"><strong t-field="o.payment_method_id.name"/></td>-->
+<!--                            </tr>-->
+<!--                            <tr>-->
+<!--                                <td style="border: none; padding: 5px 0; color: #888;">Receipt #</td>-->
+<!--                                <td style="border: none; padding: 5px 0;"><strong t-field="o.name"/></td>-->
+<!--                            </tr>-->
+<!--                        </table>-->
+<!--                    </td>-->
+<!--                    <td style="width: 4%; border: none;"/>-->
+<!--                    &lt;!&ndash; RIGHT: amount box &ndash;&gt;-->
+<!--                    <td style="border: none; vertical-align: top; width: 38%; padding: 0;">-->
+<!--                        <table style="width: 100%; border: none; border-collapse: collapse;-->
+<!--                                       background: #6aa84f; border-radius: 4px;">-->
+<!--                            <tr>-->
+<!--                                <td style="border: none; color: #fff; text-align: center; padding: 16px;">-->
+<!--                                    <div style="font-size: 13px;">Amount Received</div>-->
+<!--                                    <div style="font-size: 22px; font-weight: bold; margin-top: 4px;">-->
+<!--                                        <span t-field="o.amount"-->
+<!--                                              t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>-->
+<!--                                    </div>-->
+<!--                                </td>-->
+<!--                            </tr>-->
+<!--                        </table>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--            </table>-->
+
+<!--            &lt;!&ndash; ==================== RECEIVED FROM / PAID TO ==================== &ndash;&gt;-->
+<!--            <div style="margin-bottom: 15px;" t-if="o.partner_id">-->
+<!--                <div style="color: #888; margin-bottom: 4px;">-->
+<!--                    <t t-if="o.partner_type == 'customer'">Received From</t>-->
+<!--                    <t t-else="">Paid To</t>-->
+<!--                </div>-->
+<!--                <strong t-field="o.partner_id.name"/><br/>-->
+<!--                <span t-field="o.partner_id.street"/>-->
+<!--                <t t-if="o.partner_id.street2">, <span t-field="o.partner_id.street2"/></t><br/>-->
+<!--                <span t-field="o.partner_id.city"/><br/>-->
+<!--                <span t-if="o.partner_id.country_id" t-field="o.partner_id.country_id.name"/><br/>-->
+<!--                <t t-if="o.partner_id.vat">TRN <span t-field="o.partner_id.vat"/></t>-->
+<!--            </div>-->
+<!--            <hr style="border: none; border-top: 1px solid #ddd; margin-bottom: 15px;"/>-->
+
+<!--            &lt;!&ndash; ==================== PAYMENT FOR TABLE (borderless) ==================== &ndash;&gt;-->
+<!--            <div t-if="values['display_invoices']">-->
+<!--                <h5 style="margin-bottom: 8px;">Payment for</h5>-->
+<!--                <t t-set="invoices" t-value="o.reconciled_invoice_ids or o.reconciled_bill_ids"/>-->
+<!--                <table style="width: 100%; border: none; border-collapse: collapse;">-->
+<!--                    <thead>-->
+<!--                        <tr style="border: none; border-bottom: 1px solid #ddd;">-->
+<!--                            <th style="border: none; text-align: left; padding: 5px 0;">Invoice Number</th>-->
+<!--                            <th style="border: none; text-align: left; padding: 5px 0;">Invoice Date</th>-->
+<!--                            <th style="border: none; text-align: right; padding: 5px 0;">Invoice Amount</th>-->
+<!--                            <th style="border: none; text-align: right; padding: 5px 0;">Payment Amount</th>-->
+<!--                        </tr>-->
+<!--                    </thead>-->
+<!--                    <tbody>-->
+<!--                        <t t-foreach="invoices" t-as="inv">-->
+<!--                            <t t-if="inv.move_type != 'entry'">-->
+<!--                                <t t-set="paid_amount"-->
+<!--                                   t-value="sum(-par[1] for par in inv._get_reconciled_invoices_partials()[0])"/>-->
+<!--                                <tr>-->
+<!--                                    <td style="border: none; padding: 5px 0;"><span t-field="inv.name"/></td>-->
+<!--                                    <td style="border: none; padding: 5px 0;"><span t-field="inv.invoice_date"/></td>-->
+<!--                                    <td style="border: none; text-align: right; padding: 5px 0;">-->
+<!--                                        <span t-field="inv.amount_total"-->
+<!--                                              t-options="{'widget': 'monetary', 'display_currency': inv.currency_id}"/>-->
+<!--                                    </td>-->
+<!--                                    <td style="border: none; text-align: right; padding: 5px 0;">-->
+<!--                                        <span t-out="paid_amount"-->
+<!--                                              t-options="{'widget': 'monetary', 'display_currency': inv.currency_id}"/>-->
+<!--                                    </td>-->
+<!--                                </tr>-->
+<!--                            </t>-->
+<!--                        </t>-->
+<!--                    </tbody>-->
+<!--                </table>-->
+<!--            </div>-->
+
+<!--        </div>-->
+<!--    </template>-->
+
+
+
+<!--</odoo>-->

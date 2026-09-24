@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Kanban View -->
+    <record id="view_ticket_solved_tickets_support_kanban" model="ir.ui.view">
+        <field name="name">it.ticket.solved.tickets.support.kanban</field>
+        <field name="model">it.ticket.report.solved</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_small_column" default_group_by="assigned_to_id">
+                <field name="name"/>
+                <field name="assigned_to_id"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click">
+                            <strong>
+                                <field name="name"/>
+                            </strong>
+                            <div>Assigned To:
+                                <field name="assigned_to_id"/>
+                            </div>
+                            <div>Status:
+                                <field name="state"/>
+                            </div>
+                            <div>Priority:
+                                <field name="priority" widget="priority"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    <!-- Graph View -->
+    <record id="view_ticket_solved_tickets_support_graph" model="ir.ui.view">
+        <field name="name">it.ticket.solved.tickets.support.graph</field>
+        <field name="model">it.ticket.report.solved</field>
+        <field name="arch" type="xml">
+            <graph string="Solved Tickets per IT Support" type="bar">
+                <field name="assigned_to_id" type="row"/>
+                <field name="id" type="measure"/>
+            </graph>
+        </field>
+    </record>
+</odoo>

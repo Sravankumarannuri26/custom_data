@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ar_aging_details_wizard_form" model="ir.ui.view">
+        <field name="name">ar.aging.details.wizard.form</field>
+        <field name="model">ar.aging.details.wizard</field>
+        <field name="arch" type="xml">
+            <form string="AR Aging Details by Invoice Due Date">
+                <group>
+                    <group>
+                        <field name="as_of_date"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                    </group>
+                    <group>
+                        <field name="partner_ids" widget="many2many_tags"/>
+                        <field name="include_credit_memos"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_export_xlsx"
+                            string="Export XLSX"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ar_aging_details_wizard" model="ir.actions.act_window">
+        <field name="name">AR Aging Details Export</field>
+        <field name="res_model">ar.aging.details.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- NOTE: menu placement varies a lot between Odoo Community and
+         Enterprise (Enterprise's "Reporting" menu lives in the
+         account_reports module, not core account). menu_finance is the
+         stable top-level Accounting app menu across versions - adjust
+         the parent below to wherever your Reporting submenu actually
+         lives once you check it on your instance. -->
+    <menuitem id="menu_ar_aging_details_wizard"
+              name="AR Aging Details Export"
+              action="action_ar_aging_details_wizard"
+              parent="account.menu_finance_reports"
+              sequence="50"/>
+
+</odoo>

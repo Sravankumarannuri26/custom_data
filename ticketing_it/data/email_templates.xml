@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- 1. Manager Approval -->
+        <record id="email_template_manager_approval" model="mail.template">
+            <field name="name">IT Ticket - Manager Approval</field>
+            <field name="model_id" ref="ticketing_it.model_it_ticket"/>
+            <field name="subject">Action Required: IT Ticket Approval</field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+                    <div style="background-color: #2c3e50; padding: 15px; border-radius: 5px;">
+                                    <h2 style="color: white; margin: 0;">IT Ticket - Approval Required</h2>
+                                </div>
+                    <p>Dear <strong><t t-esc="object.line_manager_id.name"/></strong>,</p>
+
+                    <p>An IT ticket requires your approval.</p>
+
+                    <table border="1" cellpadding="6" cellspacing="0" width="100%">
+                        <tr style="background-color: #f2f2f2;"><td><b>Ticket</b></td><td><t t-esc="object.name"/></td></tr>
+                        <tr><td><b>Subject</b></td><td><t t-esc="object.subject"/></td></tr>
+                        <tr style="background-color: #f2f2f2;"><td><b>Employee</b></td><td><t t-esc="object.employee_id.name"/></td></tr>
+                        <tr><td><b>Priority</b></td><td><t t-esc="object.priority"/></td></tr>
+                        <tr style="background-color: #f2f2f2;"><td><b>Required By</b></td>
+                            <td><t t-esc="object.required_date and object.required_date.strftime('%d-%m-%Y') or 'Not specified'"/></td>
+                        </tr>
+                    </table>
+
+                    <p>Please approve or reject this ticket.</p>
+                    <!-- ✅ BUTTON -->
+                    <t t-set="base_url" t-value="env['ir.config_parameter'].sudo().get_param('web.base.url')"/>
+
+                    <p style="text-align:center; margin-top:20px;">
+                        <a t-att-href="base_url + '/web#id=%s&model=it.ticket&view_type=form' % object.id"
+                           style="background-color:#2c3e50
+                           ; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">
+                            View Ticket
+                        </a>
+                    </p>
+                </div>
+            ]]></field>
+        </record>
+
+<!--        &lt;!&ndash; 2. Category Manager Approval &ndash;&gt;-->
+<!--        <record id="email_template_category_manager_approval" model="mail.template">-->
+<!--            <field name="name">IT Ticket - Category Manager Approval</field>-->
+<!--            <field name="model_id" ref="ticketing_it.model_it_ticket"/>-->
+<!--            <field name="subject">Action Required: IT Ticket Approval</field>-->
+<!--            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>-->
+
+<!--            <field name="body_html"><![CDATA[-->
+<!--                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">-->
+<!--                    <div style="background-color: #2c3e50; padding: 15px; border-radius: 5px;">-->
+<!--                                <h2 style="color: white; margin: 0;">IT Ticket - Approval Required</h2>-->
+<!--                            </div>-->
+<!--                    <p>Dear <strong><t t-esc="object.category_manager_id.name"/></strong>,</p>-->
+
+<!--                    <p>An IT ticket requires your approval.</p>-->
+
+<!--                    <table border="1" cellpadding="6" cellspacing="0" width="100%">-->
+<!--                        <tr style="background-color: #f2f2f2;"><td><b>Ticket</b></td><td><t t-esc="object.name"/></td></tr>-->
+<!--                        <tr><td><b>Subject</b></td><td><t t-esc="object.subject"/></td></tr>-->
+<!--                        <tr style="background-color: #f2f2f2;"><td><b>Employee</b></td><td><t t-esc="object.employee_id.name"/></td></tr>-->
+<!--                        <tr><td><b>Priority</b></td><td><t t-esc="object.priority"/></td></tr>-->
+<!--                        <tr style="background-color: #f2f2f2;"><td><b>Required By</b></td>-->
+<!--                            <td><t t-esc="object.required_date and object.required_date.strftime('%d-%m-%Y') or 'Not specified'"/></td>-->
+<!--                        </tr>-->
+<!--                    </table>-->
+
+<!--                    <p>Please approve or reject this ticket.</p>-->
+<!--                    <t t-set="base_url" t-value="env['ir.config_parameter'].sudo().get_param('web.base.url')"/>-->
+
+<!--                    <p style="text-align:center; margin-top:20px;">-->
+<!--                        <a t-att-href="base_url + '/web#id=%s&model=it.ticket&view_type=form' % object.id"-->
+<!--                           style="background-color:#2c3e50; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">-->
+<!--                            View Ticket-->
+<!--                        </a>-->
+<!--                    </p>-->
+<!--                </div>-->
+<!--            ]]></field>-->
+<!--        </record>-->
+
+
+        <!-- 3. IT Approval (Already Corrected Earlier) -->
+        <record id="email_template_it_approval" model="mail.template">
+            <field name="name">IT Ticket - IT Manager Approval Request</field>
+            <field name="model_id" ref="ticketing_it.model_it_ticket"/>
+            <field name="subject">IT Approval Required</field>
+
+            <field name="email_from"><![CDATA[{{ user.company_id.email or 'no-reply@example.com' }}]]></field>
+
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+
+                    <div style="background-color: #2980b9; padding: 15px; border-radius: 5px;">
+                        <h2 style="color: white; margin: 0;">IT Manager Approval Required</h2>
+                    </div>
+
+                    <p>Dear <strong>
+                        <t t-esc="object.it_manager_id.name"/>
+                    </strong>,</p>
+
+                    <p>
+                        An IT ticket has been approved by the line manager and now requires your approval.
+                    </p>
+
+                    <table border="1" cellpadding="6" cellspacing="0" width="100%" style="margin: 15px 0; border-collapse: collapse;">
+
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Ticket Number</strong></td>
+                            <td><t t-esc="object.name"/></td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Subject</strong></td>
+                            <td><t t-esc="object.subject"/></td>
+                        </tr>
+
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Raised By</strong></td>
+                            <td><t t-esc="object.employee_id.name"/></td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Priority</strong></td>
+                            <td><t t-esc="object.priority"/></td>
+                        </tr>
+
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Required By</strong></td>
+                            <td>
+                                <t t-esc="object.required_date and object.required_date.strftime('%d-%m-%Y') or 'Not specified'"/>
+                            </td>
+                        </tr>
+
+                    </table>
+
+                    <p>Please log in to approve or reject this ticket.</p>
+
+                    <br/>
+
+                    <p>Thank you,<br/>
+                        <t t-esc="user.company_id.name"/>
+                    </p>
+
+                    <p style="color: grey; font-size: 12px;">
+                        This is an automated notification. Please do not reply.
+                    </p>
+<!--                    <t t-set="base_url" t-value="env['ir.config_parameter'].sudo().get_param('web.base.url')"/>-->
+<!--                    <p style="text-align:center; margin-top:20px;">-->
+<!--                        <a t-att-href="base_url + '/web#id=%s&model=it.ticket&view_type=form' % object.id"-->
+<!--                           style="background-color:#2c3e50-->
+<!--                           ; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">-->
+<!--                            View Ticket-->
+<!--                        </a>-->
+<!--                    </p>-->
+                </div>
+            ]]></field>
+
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <!-- 4. Assigned - Employee -->
+        <record id="email_template_it_assigned" model="mail.template">
+            <field name="name">Ticket Assigned</field>
+            <field name="model_id" ref="ticketing_it.model_it_ticket"/>
+            <field name="subject">Ticket Approved</field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+                    <div style="background-color: #27ae60; padding: 15px; border-radius: 5px;">
+                                <h2 style="color: white; margin: 0;">Your Ticket Has Been Approved</h2>
+                            </div>
+                    <p>Dear <strong><t t-esc="object.employee_id.name"/></strong>,</p>
+
+                    <p>Your ticket has been approved and assigned to IT.</p>
+
+                    <table border="1" cellpadding="6">
+                        <tr><td><b>Ticket</b></td><td><t t-esc="object.name"/></td></tr>
+                        <tr><td><b>Status</b></td><td>Assigned</td></tr>
+                    </table>
+                    <t t-set="base_url" t-value="env['ir.config_parameter'].sudo().get_param('web.base.url')"/>
+                    <p style="text-align:center; margin-top:20px;">
+                        <a t-att-href="base_url + '/web#id=%s&model=it.ticket&view_type=form' % object.id"
+                           style="background-color:#2c3e50
+                           ; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">
+                            View Ticket
+                        </a>
+                    </p>
+                </div>
+            ]]></field>
+        </record>
+
+        <!-- 5. Rejection -->
+        <record id="email_template_rejection" model="mail.template">
+            <field name="name">Ticket Rejected</field>
+            <field name="model_id" ref="ticketing_it.model_it_ticket"/>
+            <field name="subject">Ticket Rejected</field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+                    <div style="background-color: #c0392b; padding: 15px; border-radius: 5px;">
+                                <h2 style="color: white; margin: 0;">Ticket Rejected</h2>
+                            </div>
+                    <p>Dear <strong><t t-esc="object.employee_id.name"/></strong>,</p>
+
+                    <p>Your ticket has been rejected.</p>
+
+                    <table border="1" cellpadding="6">
+                        <tr style="background-color: #f2f2f2;"><td><b>Rejected By</b></td><td><t t-esc="object.rejected_by_id.name"/></td></tr>
+                        <tr><td><b>Reason</b></td><td><t t-esc="object.rejection_reason or 'N/A'"/></td></tr>
+                    </table>
+                </div>
+            ]]></field>
+        </record>
+
+        <!-- 6. Done -->
+        <record id="email_template_done" model="mail.template">
+            <field name="name">Ticket Done</field>
+            <field name="model_id" ref="ticketing_it.model_it_ticket"/>
+            <field name="subject">Ticket Completed</field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+                    <div style="background-color: #27ae60; padding: 15px; border-radius: 5px;">
+                                <h2 style="color: white; margin: 0;">Your Ticket Is Resolved</h2>
+                            </div>
+                    <p>Dear <strong><t t-esc="object.employee_id.name"/></strong>,</p>
+
+                    <p>Your ticket has been completed.</p>
+
+                    <table border="1" cellpadding="6">
+                        <tr style="background-color: #f2f2f2;"><td><b>Completed On</b></td>
+                            <td><t t-esc="object.done_date and object.done_date.strftime('%d-%m-%Y %H:%M')"/></td>
+                        </tr>
+                    </table>
+                </div>
+            ]]></field>
+        </record>
+
+        <!-- 7. Access End - Assignee -->
+        <record id="email_template_access_end_assignee" model="mail.template">
+            <field name="name">Access End - Assignee</field>
+            <field name="model_id" ref="ticketing_it.model_it_ticket"/>
+            <field name="subject">Access Expired</field>
+
+            <field name="body_html"><![CDATA[
+                <p>Dear <strong><t t-esc="object.assigned_to_id.name"/></strong>,</p>
+                <p>Access for ticket <b><t t-esc="object.name"/></b> has expired.</p>
+                <p>Expiry: <t t-esc="object.access_finish_date"/></p>
+            ]]></field>
+        </record>
+
+        <!-- 8. Access End - Employee -->
+        <record id="email_template_access_end_employee" model="mail.template">
+            <field name="name">Access End - Employee</field>
+            <field name="model_id" ref="ticketing_it.model_it_ticket"/>
+            <field name="subject">Access Expired</field>
+
+            <field name="body_html"><![CDATA[
+                <p>Dear <strong><t t-esc="object.employee_id.name"/></strong>,</p>
+                <p>Your access for ticket <b><t t-esc="object.name"/></b> has expired.</p>
+                <p>Expiry: <t t-esc="object.access_finish_date"/></p>
+            ]]></field>
+        </record>
+
+        <record id="email_template_approval_reminder" model="mail.template">
+            <field name="name">IT Ticket - Approval Reminder</field>
+            <field name="model_id" ref="ticketing_it.model_it_ticket"/>
+            <field name="subject">Reminder: Ticket Awaiting Approval</field>
+
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+
+            <field name="body_html"><![CDATA[
+            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 700px;">
+
+                <div style="background-color: #e67e22; padding: 15px; border-radius: 5px;">
+                    <h2 style="color: white; margin: 0;">Approval Reminder</h2>
+                </div>
+
+                <p>Dear <strong><t t-esc="ctx.get('approver_name')"/></strong>,</p>
+
+                <p>
+                    This is a reminder that the following IT tickets are still awaiting your approval:
+                </p>
+
+                <table border="1" cellpadding="6" cellspacing="0" width="100%" style="margin-top:15px; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background-color:#f2f2f2;">
+                            <th>Ticket</th>
+                            <th>Subject</th>
+                            <th>Employee</th>
+                            <th>Submitted On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="ctx.get('tickets')" t-as="t">
+                            <tr>
+                                <td><t t-esc="t.name"/></td>
+                                <td><t t-esc="t.subject"/></td>
+                                <td><t t-esc="t.employee_id.name"/></td>
+                                <td>
+                                    <t t-esc="t.submitted_date and t.submitted_date.strftime('%d-%m-%Y %H:%M')"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <br/>
+
+                <p>Please take action as soon as possible.</p>
+
+<!--                &lt;!&ndash; BASE URL &ndash;&gt;-->
+<!--                <t t-set="base_url" t-value="env['ir.config_parameter'].sudo().get_param('web.base.url')"/>-->
+
+<!--                <p style="text-align:center; margin-top:20px;">-->
+<!--                    <a t-att-href="base_url + '/web#model=it.ticket&amp;view_type=list&amp;domain=%5B%28%27id%27%2C%27in%27%2C' + str(ctx.get('ticket_ids')) + '%29%5D'"-->
+<!--                       style="background-color:#2c3e50; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">-->
+<!--                        View Tickets-->
+<!--                    </a>-->
+<!--                </p>-->
+
+            </div>
+            ]]></field>
+        </record>
+    </data>
+</odoo>

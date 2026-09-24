@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+        <template id="report_payslip_custom" inherit_id="hr_payroll.report_payslip">
+            <xpath expr="//strong[@id='invalid_warning']" position="replace">
+                    <strong id="invalid_warning" class="d-none"><span t-out="is_invalid">This payslip is not validated. This is not a legal document.</span></strong>
+            </xpath>
+
+            <xpath expr="//td[@id='employee_infos']" position="replace">
+                <td id="employee_infos">
+                    <div id="employee_name">
+                        <strong class="me-2">Name:</strong>
+                        <span t-field="o.employee_id.legal_name"/>
+                    </div>
+                    <div id="employee_id">
+                        <strong class="me-2">ID:</strong>
+                        <span t-if="o.employee_id.identification_id" t-field="o.employee_id.identification_id"/>
+                        <span t-else="" style="color:#875A7B" class="fw-bold">No ID number on the employee !!!</span>
+                    </div>
+                    <div id="employee_email" t-if="o.employee_id.work_email">
+                        <strong class="me-2">Email:</strong>
+                        <span t-field="o.employee_id.work_email"/>
+                    </div>
+                    <div id="employee_job_title" t-if="o.employee_id.job_title">
+                        <strong class="me-2">Job Position:</strong>
+                        <span t-field="o.employee_id.job_title"/>
+                    </div>
+                </td>
+            </xpath>
+            <xpath expr="//td[@id='other_infos']" position="replace">
+                <td id="other_infos">
+                    <div id="employee_department" t-if="o.employee_id.department_id">
+                        <strong class="me-2">Department:</strong>
+                        <span t-field="o.employee_id.department_id"/>
+                    </div>
+                    <div id="pay_period">
+                        <strong class="me-2">Pay Period:</strong>
+                        <span t-if="o.date_from &lt; o.contract_id.date_start" t-field="o.contract_id.date_start"/>
+                        <span t-else="" t-field="o.date_from"/>
+                        -
+                        <span t-if="o.contract_id.date_end and o.date_to &gt; o.contract_id.date_end" t-field="o.contract_id.date_end"/>
+                        <span t-else="" t-field="o.date_to"/>
+                    </div>
+                    <div id="contract_start">
+                        <strong class="me-2">Date of Joining:</strong>
+                        <span t-field="o.employee_id.first_contract_date"/>
+                    </div>
+                    <div id="contract_type" t-if="o.contract_id.contract_type_id">
+                        <strong class="me-2">Contract Type:</strong>
+                        <span t-field="o.employee_id.contract_id.contract_type_id"/>
+                    </div>
+                </td>
+            </xpath>
+
+            <xpath expr="//h2[@id='payslip_name']" position="replace">
+                <t t-set="report_name" t-value="o._get_report_name()"/>
+                <h2 id="payslip_name"><span t-out="report_name">August 2023 Payslip</span></h2>
+            </xpath>
+            <xpath expr="//div[@id='worked_days_table']" position="replace">
+                <div id="worked_days_table" style="display: none;">
+                    <table class="table table-sm table-borderless">
+                        <thead class="o_black_border">
+                            <tr>
+                                <th id="work_days_header_name">Earnings</th>
+                                <th id="work_days_header_hours" class="text-end">Hours</th>
+                                <th id="work_days_header_days" class="text-end">Days</th>
+                                <th id="work_days_header_amount" class="text-end">Amount</th>
+                                <th id="work_days_header_ytd" t-if="o.ytd_computation" class="text-end">YTD</th>
+                            </tr>
+                        </thead>
+                        <tbody id="worked_days_lines">
+                            <t t-set="worked_days_lines" t-value="o.worked_days_line_ids.filtered(lambda worked_days: worked_days.code != 'OUT')"/>
+                                <span t-foreach="worked_days_lines" t-as="worked_days">
+                                    <tr style="color:none">
+                                        <td id="worked_days_name"><span t-field="worked_days.name"/></td>
+                                        <td id="worked_days_hours" class="text-end"><span t-out="round(worked_days.number_of_hours, 2)"/></td>
+                                        <td id="worked_days_days" class="text-end"><span t-out="round(worked_days.number_of_days, 2)"/></td>
+                                        <td id="worked_days_amount" class="text-end"><span t-out="worked_days.amount" digits="[42, 2]"
+                                            t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/></td>
+                                        <td id="worked_days_ytd" t-if="o.ytd_computation" class="text-end">
+                                            <span t-esc="worked_days.ytd"
+                                                t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                </span>
+                                <span>
+                                    <t t-set="line_style" t-value="'color:#875A7B;'"/>
+                                    <t t-set="line_class" t-value="'o_total o_border_bottom fw-bold'"/>
+                                    <tr style="color:none">
+                                        <td t-att-class="line_class" t-att-style="line_style">
+                                            <span>Total</span>
+                                        </td>
+                                        <td id="worked_days_total_hours" t-attf-class="#{line_class} text-end" t-att-style="line_style">
+                                            <span t-out="round(sum(worked_days_lines.mapped('number_of_hours')), 2)"/>
+                                        </td>
+                                        <td id="worked_days_total_days" t-attf-class="#{line_class} text-end" t-att-style="line_style">
+                                            <span t-out="round(sum(worked_days_lines.mapped('number_of_days')), 2)"/>
+                                        </td>
+                                        <td id="worked_days_total_amount" t-attf-class="#{line_class} text-end" t-att-style="line_style">
+                                            <span t-out="sum(worked_days_lines.mapped('amount'))" digits="[42, 2]"
+                                                t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/>
+                                        </td>
+                                        <td id="worked_days_total_ytd" t-if="o.ytd_computation" t-attf-class="#{line_class} text-end" t-att-style="line_style">
+                                            <span t-out="sum(worked_days_lines.mapped('ytd'))" digits="[42, 2]"
+                                                t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </span>
+                        </tbody>
+                    </table>
+                </div>
+            </xpath>
+            <xpath expr="//div[@id='payslip_lines_table']" position="replace">
+                <div id="payslip_lines_table" class="row">
+                    <t t-set="pay_line_ids" t-value="o.line_ids.filtered(lambda line: line.appears_on_payslip)"/>
+                    <t t-set="alw_line_ids" t-value="pay_line_ids.filtered(lambda l: l.category_id.code != 'DED')"/>
+                    <t t-set="ded_line_ids" t-value="pay_line_ids.filtered(lambda l: l.category_id.code == 'DED')"/>
+                    <t t-set="alw_amount" t-value="0"/>
+                    <t t-set="ded_amount" t-value="0"/>
+                    <t t-set="net_amount" t-value="0"/>
+                    <div class="col-6">
+                        <table class="table table-sm" style="border: 2px solid black;border-right: none;">
+                            <thead style="border: 2px solid black;">
+                                <tr>
+                                    <th class="text-center" colspan="2" id="line_header_name"><b>Earnings</b></th>
+                                </tr>
+                            </thead>
+                            <tbody id="payslip_lines">
+                                <span t-foreach="alw_line_ids" t-as="line">
+                                    <t t-if="line.category_id.code != 'NET'">
+                                        <tr id="line_display">
+                                            <td width="60%" id="payslip_line_name" style="padding-left: 5px;border-right: 1px solid black;"><span t-field="line.name"/></td>
+                                            <td width="40%" id="payslip_line_total" style="padding-right: 5px;border-right: 2px solid black;" class="text-end" >
+                                                <t t-set="amount_total" t-value="'{:,.2f}'.format(line.total)"/>
+                                                <b><span t-esc="amount_total"/> </b>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                        <t t-if="line.category_id.code != 'NET'">
+                                        <t t-set="alw_amount" t-value="alw_amount + line.total"/>
+                                    </t>
+                                </span>
+                                <tr style="border: 2px solid black;">
+                                    <td style="padding-left: 5px;border-right: 1px solid black;"><b>Total Earnings</b></td>
+                                    <td style="padding-right: 5px;" class="text-end">
+                                        <t t-set="alw_amount_format" t-value="'{:,.2f}'.format(alw_amount)"/>
+                                        <b><span t-esc="alw_amount_format"/> </b>
+                                    </td>
+                                </tr>
+                                <tr style="border: 1px solid white;">
+                                    <td style="border: 1px solid white;"><b></b></td>
+                                    <td style="border: 1px solid white;" class="text-center"><b>Net Salary</b> </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-6">
+                        <table class="table table-sm" style="border: 2px solid black;border-left: none;">
+                            <thead style="border: 2px solid black;border-left: none;">
+                                <tr>
+                                    <th class="text-center" colspan="2" id="line_header_name"><b>Deductions</b></th>
+                                </tr>
+                            </thead>
+                            <tbody id="payslip_lines">
+                                <span t-foreach="ded_line_ids" t-as="line">
+                                    <tr id="line_display">
+                                        <td width="60%" id="payslip_line_name"  style="padding-left: 5px;border-right: 1px solid black;"><span t-field="line.name"/></td>
+                                        <td width="40%" id="payslip_line_total" style="padding-right: 5px;" class="text-end" >
+                                            <t t-set="total" t-value="'{:,.2f}'.format(line.total)"/>
+                                            <b><span t-esc="total"/> </b>
+                                        </td>
+                                    </tr>
+                                    <t t-set="ded_amount" t-value="ded_amount + line.total"/>
+                                </span>
+                                <t t-set="alw_length" t-value="len(alw_line_ids)"/>
+                                <t t-set="ded_length" t-value="len(ded_line_ids)"/>
+                                <t t-set="final_length" t-value="alw_length - ded_length"/>
+                                <t t-foreach="range(final_length - 1)" t-as="ln">
+                                    <tr >
+                                        <td width="60%"  style="color: #ffffff;border-right: 1px solid black;" ><span t-esc="final_length"/> SKU</td>
+                                        <td width="40%"  style="color: #ffffff;" >SKU</td>
+                                    </tr>
+                                </t>
+                                <tr style="border: 2px solid black;border-left: none;">
+                                    <td width="60%" style="padding-left: 5px;border-right: 1px solid black;"><b>Total Deductions</b></td>
+                                    <td width="40%"  style="padding-right: 5px;" class="text-end">
+                                        <t t-set="ded_amount_format" t-value="'{:,.2f}'.format(ded_amount)"/>
+                                        <b><span t-esc="ded_amount_format"/> </b>
+                                    </td>
+                                </tr>
+                                <t t-set="net_amount" t-value="alw_amount - ded_amount"/>
+                                <tr style="border: 1px solid white;">
+                                    <td width="60%" style="border: 1px solid white;"><b></b></td>
+                                    <td width="40%" style="border: 2px solid black;padding-right: 5px;" class="text-end"><b><span t-field="o.net_wage"/></b> </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </xpath>
+            <xpath expr="//div[@id='to_pay']" position="after">
+                <br></br>
+                <br></br>
+                <span>This is a system generated document &amp; does not require a signature.</span>
+            </xpath>
+        </template>
+
+</odoo>

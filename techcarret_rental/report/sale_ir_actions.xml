@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+    <record id="paperformat_techcarret_sale" model="report.paperformat">
+        <field name="name">Techcarret Sale A4</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">8</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+    <!--    <field name="report_ids" eval="[(6, 0, [ref('account.account_invoices_without_payment'), ref('account.account_invoices')])]"/>-->
+        <field name="dpi">100</field>
+    </record>
+
+    <!--Generate the pdf report-->
+    <record id="action_generate_techcarrot_sale_report" model="ir.actions.report">
+        <field name="name">Techcarrot Order</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">techcarret_rental.report_techcarrot_sales</field>
+        <field name="report_file">techcarret_rental.report_techcarrot_sales</field>
+        <field name="print_report_name">'%s' % object.name</field>
+        <field name="paperformat_id" ref="techcarret_rental.paperformat_techcarret_sale"/>
+        <field name="binding_model_id" ref="sale.model_sale_order"/>
+    </record>
+
+</odoo>

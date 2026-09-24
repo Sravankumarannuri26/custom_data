@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Assignee Reminder -->
+        <record id="email_template_compliance_reminder_assignee" model="mail.template">
+            <field name="name">Compliance Task Reminder – Assignee</field>
+            <field name="model_id" ref="model_compliance_task"/>
+            <field name="email_from"><![CDATA[{{ user.company_id.email or 'no-reply@example.com' }}]]></field>
+            <field name="email_to"><![CDATA[{{ object.assignee_ids[:1].email }}]]></field>
+            <field name="subject">Compliance Task Reminder</field>
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; font-size: 13px; color: #374151;">
+                    <p>Dear <t t-esc="ctx.get('assignee_name')"/>,</p>
+                    <p>This is a reminder for your assigned compliance task:</p>
+
+                    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-top: 10px;">
+                        <thead style="background-color: #f5f5f5;">
+                            <tr>
+                                <th>Task</th>
+                                <th>Project</th>
+                                <th>Due On</th>
+                                <th>Status</th>
+                                <th>Days Remaining</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="ctx.get('tasks')" t-as="task">
+                                <tr>
+                                    <td><t t-esc="task['name']"/></td>
+                                    <td><t t-esc="task['project']"/></td>
+                                    <td><t t-esc="task['due_on']"/></td>
+                                    <td><t t-esc="task['status']"/></td>
+                                    <td><t t-esc="task['days_remaining']"/></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+
+                    <p style="margin-top: 15px;">
+                        Please ensure timely completion of this task.<br/>
+                        Regards,<br/>
+                        Compliance Team
+                    </p>
+
+                </div>
+            ]]></field>
+        </record>
+
+        <!-- Manager Overdue Alert -->
+        <record id="email_template_compliance_reminder_manager" model="mail.template">
+            <field name="name">Compliance Tasks – Overdue Manager Alert</field>
+            <field name="model_id" ref="model_compliance_task"/>
+            <field name="email_from"><![CDATA[{{ user.company_id.email or 'no-reply@example.com' }}]]></field>
+            <field name="email_to"><![CDATA[{{ object.assignee_ids[:1].email }}]]></field>
+            <field name="subject">Overdue Compliance Task Alert</field>
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; font-size: 13px; color: #374151;">
+                    <p>Dear <t t-esc="ctx.get('manager_name')"/>,</p>
+                    <p>The following compliance tasks assigned to your team are overdue and require your immediate attention.</p>
+
+                    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-top: 10px;">
+                        <thead style="background-color: #f5f5f5;">
+                            <tr>
+                                <th>Task</th>
+                                <th>Project</th>
+                                <th>Assignee</th>
+                                <th>Due On</th>
+                                <th>Days Overdue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="ctx.get('tasks')" t-as="task">
+                                <tr>
+                                    <td><t t-esc="task['name']"/></td>
+                                    <td><t t-esc="task['project']"/></td>
+                                    <td><t t-esc="task['assignees']"/></td>
+                                    <td><t t-esc="task['due_on']"/></td>
+                                    <td><t t-esc="task['days_overdue']"/></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+
+                    <p style="margin-top: 15px;">
+                        Please ensure that the concerned assignees take corrective action at the earliest to remain compliant.<br/>
+                        Regards,<br/>
+                        Compliance Team
+                    </p>
+                </div>
+            ]]></field>
+        </record>
+    </data>
+</odoo>

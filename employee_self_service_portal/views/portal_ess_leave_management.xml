@@ -1,0 +1,1869 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_my_leaves" name="ESS - My Leaves">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal container my-4">
+
+                <style>
+                    :root {
+                    --tc-green: #2C5B32;
+                    --tc-green-light: rgba(44, 91, 50, 0.10);
+                    --tc-green-mid: rgba(44, 91, 50, 0.20);
+                    --tc-saffron: #E74C2D;
+                    --tc-saffron-light: rgba(231, 76, 45, 0.10);
+                    --tc-blue: #2B2B6B;
+                    --tc-blue-light: rgba(43, 43, 107, 0.10);
+                    --tc-gradient: linear-gradient(135deg, #2C5B32 0%, #7a3010 50%, #E74C2D 100%);
+                    --tc-gradient-hover: linear-gradient(135deg, #1f4324 0%, #622808 50%, #c03520 100%);
+                    }
+
+
+                    .lv-balance-card {
+                    border-radius: 12px !important;
+                    border: 1px solid #e8edf2 !important;
+                    transition: box-shadow 0.2s ease, transform 0.2s ease !important;
+                    background: #ffffff !important;
+                    }
+                    .lv-balance-card:hover {
+                    box-shadow: 0 6px 20px rgba(0,0,0,0.10) !important;
+                    transform: translateY(-2px) !important;
+                    }
+                    .lv-balance-value {
+                    font-size: 34px !important;
+                    font-weight: 700 !important;
+                    line-height: 1 !important;
+                    }
+                    .lv-balance-max {
+                    font-size: 13px !important;
+                    color: #8a94a6 !important;
+                    font-weight: 500 !important;
+                    }
+                    .lv-progress {
+                    height: 5px !important;
+                    border-radius: 3px !important;
+                    background: #f0f3f7 !important;
+                    overflow: hidden !important;
+                    }
+                    .lv-progress-bar {
+                    height: 100% !important;
+                    border-radius: 3px !important;
+                    transition: width 0.6s ease !important;
+                    }
+
+
+                    .lv-filter-btn {
+                    padding: 6px 16px !important;
+                    font-size: 13px !important;
+                    font-weight: 500 !important;
+                    border-radius: 6px !important;
+                    border: 1px solid #e8edf2 !important;
+                    background-color: #f5f7fa !important;
+                    color: #4a5568 !important;
+                    text-decoration: none !important;
+                    margin: 2px !important;
+                    display: inline-block !important;
+                    transition: all 0.2s ease !important;
+                    }
+                    .lv-filter-btn:hover {
+                    background: var(--tc-gradient) !important;
+                    border-color: transparent !important;
+                    color: white !important;
+                    }
+                    .lv-filter-btn.lv-active {
+                    background: var(--tc-gradient) !important;
+                    border-color: transparent !important;
+                    color: white !important;
+                    box-shadow: 0 3px 10px rgba(44,91,50,0.30) !important;
+                    }
+
+                    .lv-table thead th {
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                    color: #8a94a6 !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.5px !important;
+                    border-bottom: 1px solid #f0f3f7 !important;
+                    padding: 10px 14px !important;
+                    background: #fafbfc !important;
+                    }
+                    .lv-table tbody td {
+                    font-size: 14px !important;
+                    padding: 12px 14px !important;
+                    vertical-align: middle !important;
+                    border-bottom: 1px solid #f0f3f7 !important;
+                    color: #2d3748 !important;
+                    }
+                    .lv-table tbody tr:hover {
+                    background: #f9fdf9 !important;
+                    }
+
+
+                    .lv-badge {
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    padding: 4px 11px !important;
+                    border-radius: 20px !important;
+                    letter-spacing: 0.2px !important;
+                    }
+                    .lv-badge-approved { background: rgba(44,91,50,0.12) !important; color: #1f4324 !important; }
+                    .lv-badge-pending { background: rgba(231,76,45,0.12) !important; color: #b03520 !important; }
+                    .lv-badge-rejected { background: #fdecea !important; color: #c0392b !important; }
+                    .lv-badge-draft { background: #f0f3f7 !important; color: #6b7280 !important; }
+
+
+                    .lv-apply-card {
+                    border-radius: 12px !important;
+                    border: 1px solid #e8edf2 !important;
+                    overflow: hidden !important;
+                    }
+
+
+                    .lv-gradient-header {
+                    background: var(--tc-gradient) !important;
+                    border-radius: 0 !important;
+                    padding: 14px 20px !important;
+                    }
+
+
+                    .lv-submit-btn {
+                    background: var(--tc-gradient) !important;
+                    border: none !important;
+                    color: white !important;
+                    font-weight: 600 !important;
+                    font-size: 14px !important;
+                    padding: 9px 24px !important;
+                    border-radius: 8px !important;
+                    transition: opacity 0.2s ease !important;
+                    }
+                    .lv-submit-btn:hover { opacity: 0.88 !important; color: white !important; }
+                    .lv-submit-btn:disabled { background: #aaa !important; opacity: 1 !important; }
+
+                    .lv-type-chip {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    font-size: 13px !important;
+                    font-weight: 500 !important;
+                    padding: 3px 10px !important;
+                    border-radius: 20px !important;
+                    background: var(--tc-green-light) !important;
+                    color: var(--tc-green) !important;
+                    }
+
+
+                    .lv-manager-card {
+                    border-radius: 12px !important;
+                    border: 1px solid #e8edf2 !important;
+                    background: #fafbfc !important;
+                    }
+
+
+                    .lv-icon-btn {
+                    color: #8a94a6 !important;
+                    font-size: 15px !important;
+                    padding: 4px 8px !important;
+                    border-radius: 6px !important;
+                    transition: all 0.2s ease !important;
+                    text-decoration: none !important;
+                    }
+                    .lv-icon-btn:hover {
+                    color: var(--tc-green) !important;
+                    background: var(--tc-green-light) !important;
+                    }
+
+
+                    .lv-slot-0 { color: var(--tc-green) !important; }
+                    .lv-icon-slot-0 { background: var(--tc-green-light) !important; color: var(--tc-green) !important; }
+                    .lv-bar-slot-0 { background: var(--tc-green) !important; }
+
+
+                    .lv-slot-1 { color: var(--tc-saffron) !important; }
+                    .lv-icon-slot-1 { background: var(--tc-saffron-light) !important; color: var(--tc-saffron)
+                    !important; }
+                    .lv-bar-slot-1 { background: var(--tc-saffron) !important; }
+
+
+                    .lv-slot-2 { color: var(--tc-blue) !important; }
+                    .lv-icon-slot-2 { background: var(--tc-blue-light) !important; color: var(--tc-blue) !important; }
+                    .lv-bar-slot-2 { background: var(--tc-blue) !important; }
+
+
+                    .lv-slot-3 { color: #7a3010 !important; }
+                    .lv-icon-slot-3 { background: rgba(122,48,16,0.10) !important; color: #7a3010 !important; }
+                    .lv-bar-slot-3 { background: linear-gradient(90deg, var(--tc-green), var(--tc-saffron)) !important;
+                    }
+
+
+                    .lv-page-title-accent {
+                    width: 40px;
+                    height: 4px;
+                    background: var(--tc-gradient);
+                    border-radius: 2px;
+                    margin-bottom: 12px;
+                    }
+
+
+                    .lv-section-heading {
+                    border-left: 4px solid transparent !important;
+                    border-image: var(--tc-gradient) 1 !important;
+                    padding-left: 10px !important;
+                    font-weight: 700 !important;
+                    color: #1B2A4A !important;
+                    }
+
+
+                </style>
+
+
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/ess">
+                                <i class="fa fa-tachometer"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">My Leaves</li>
+                    </ol>
+                </nav>
+
+
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-8">
+                        <div class="lv-page-title-accent"></div>
+                        <h2 class="mb-1" style="font-weight:700; color:#1B2A4A;">My Leaves</h2>
+                        <p class="text-muted mb-0">Apply for leave, check your balance and track your requests</p>
+                    </div>
+<!--                    <div class="col-md-4 text-end">-->
+<!--                        <a href="#apply-leave-section" class="btn lv-submit-btn">-->
+<!--                            <i class="fa fa-plus me-2"></i>-->
+<!--                            Apply Leave-->
+<!--                        </a>-->
+<!--                    </div>-->
+                </div>
+
+
+                <t t-if="success_message">
+                    <div id="lv-success-toast"
+                         style="position:fixed;top:24px;right:24px;z-index:9999;
+                min-width:320px;max-width:420px;
+                background:#fff;border-radius:12px;
+                box-shadow:0 8px 32px rgba(0,0,0,0.18);
+                border-left:5px solid #2C5B32;
+                padding:16px 20px;
+                display:flex;align-items:flex-start;gap:12px;
+                animation: slideInRight 0.35s ease;">
+                        <div style="width:36px;height:36px;border-radius:50%;
+                    background:rgba(44,91,50,0.12);flex-shrink:0;
+                    display:flex;align-items:center;justify-content:center;">
+                            <i class="fa fa-check" style="color:#2C5B32;font-size:16px;"></i>
+                        </div>
+                        <div style="flex:1;">
+                            <p style="font-weight:700;color:#1B2A4A;margin:0 0 2px;font-size:14px;">Success</p>
+                            <p style="color:#4a5568;margin:0;font-size:13px;">
+                                <t t-esc="success_message"/>
+                            </p>
+                        </div>
+                        <button onclick="document.getElementById('lv-success-toast').remove()"
+                                style="background:none;border:none;color:#8a94a6;
+                       font-size:18px;cursor:pointer;padding:0;line-height:1;">
+                            &#x2715;
+                        </button>
+                    </div>
+                    <style>
+                        @keyframes slideInRight {
+                        from { opacity: 0; transform: translateX(60px); }
+                        to { opacity: 1; transform: translateX(0); }
+                        }
+                    </style>
+                    <script>
+
+                        setTimeout(function(){
+                        var toast = document.getElementById('lv-success-toast');
+                        if(toast){
+                        toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateX(60px)';
+                        setTimeout(function(){ toast.remove(); }, 400);
+                        }
+                        }, 5000);
+                    </script>
+                </t>
+
+
+                <t t-if="error">
+                    <div id="lv-error-toast"
+                         style="position:fixed;top:24px;right:24px;z-index:9999;
+                min-width:320px;max-width:420px;
+                background:#fff;border-radius:12px;
+                box-shadow:0 8px 32px rgba(0,0,0,0.18);
+                border-left:5px solid #E74C2D;
+                padding:16px 20px;
+                display:flex;align-items:flex-start;gap:12px;
+                animation: slideInRight 0.35s ease;">
+                        <div style="width:36px;height:36px;border-radius:50%;
+                    background:rgba(231,76,45,0.12);flex-shrink:0;
+                    display:flex;align-items:center;justify-content:center;">
+                            <i class="fa fa-exclamation" style="color:#E74C2D;font-size:16px;"></i>
+                        </div>
+                        <div style="flex:1;">
+                            <p style="font-weight:700;color:#1B2A4A;margin:0 0 2px;font-size:14px;">Error</p>
+                            <p style="color:#4a5568;margin:0;font-size:13px;">
+                                <t t-if="error_message">
+                                    <t t-esc="error_message"/>
+                                </t>
+                                <t t-else="">Something went wrong. Please try again.</t>
+                            </p>
+                        </div>
+                        <button onclick="document.getElementById('lv-error-toast').remove()"
+                                style="background:none;border:none;color:#8a94a6;
+                       font-size:18px;cursor:pointer;padding:0;line-height:1;">
+                            &#x2715;
+                        </button>
+                    </div>
+                    <script>
+                        setTimeout(function(){
+                        var toast = document.getElementById('lv-error-toast');
+                        if(toast){
+                        toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateX(60px)';
+                        setTimeout(function(){ toast.remove(); }, 400);
+                        }
+                        }, 6000);
+                    </script>
+                </t>
+
+
+                <h5 class="mb-3 lv-section-heading">Leave Balance</h5>
+
+                <div class="row g-3 mb-2">
+                    <t t-foreach="balances" t-as="bal">
+                        <t t-set="slot" t-value="bal['color_slot'] % 4"/>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card lv-balance-card p-3 h-100">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div t-attf-class="lv-icon-slot-#{slot}"
+                                         style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <i class="fa fa-calendar" style="font-size:18px;"></i>
+                                    </div>
+                                    <p class="mb-0 fw-bold" style="font-size:14px;color:#1B2A4A;">
+                                        <t t-esc="bal['name']"/>
+                                    </p>
+
+                                    <t t-if="bal.get('is_frozen')">
+                                        <t t-if="bal.get('is_unlocked')">
+                                            <span class="lv-badge lv-badge-approved" style="margin-left:6px;">
+                                                <i class="fa fa-unlock me-1"></i>Unlocked
+                                            </span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="lv-badge lv-badge-draft" style="margin-left:6px;">
+                                                <i class="fa fa-lock me-1"></i>Locked
+                                            </span>
+                                        </t>
+                                    </t>
+                                </div>
+                                <div t-attf-class="lv-balance-value lv-slot-#{slot} mb-1">
+                                    <t t-esc="'%.2f' % bal['remaining']"/>
+                                    <span style="font-size:15px;font-weight:600;color:#8a94a6;">Days</span>
+                                </div>
+                                <div class="lv-balance-max mb-2">
+                                    /
+                                    <t t-esc="'%.2f' % bal['max_days']"/>
+                                    Days
+                                </div>
+                                <div class="lv-progress">
+                                    <t t-set="pct"
+                                       t-value="(bal['remaining'] / bal['max_days'] * 100) if bal['max_days'] &gt; 0 else 0"/>
+                                    <t t-set="pct_capped"
+                                       t-value="0 if pct &lt; 0 else (pct if pct &lt;= 100 else 100)"/>
+                                    <div t-attf-class="lv-progress-bar lv-bar-slot-#{slot}"
+                                         t-attf-style="width:#{pct_capped}%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+                <p class="text-muted mb-4" style="font-size:13px;">
+                    <i class="fa fa-info-circle me-1"></i>* Balances are as of today
+                </p>
+
+
+<!--                <div id="apply-leave-section" class="card lv-apply-card shadow-sm mb-4">-->
+
+<!--                    <div class="lv-gradient-header d-flex align-items-center gap-2">-->
+<!--                        <i class="fa fa-plus-circle text-white" style="font-size:18px;"></i>-->
+<!--                        <h5 class="mb-0 text-white fw-bold" style="font-size:16px;">New Leave Request</h5>-->
+<!--                    </div>-->
+<!--                    <div class="card-body p-4">-->
+
+<!--                        <t t-if="approval_required and not line_manager">-->
+<!--                            <div class="alert alert-warning mb-3" role="alert">-->
+<!--                                <i class="fa fa-exclamation-triangle me-2"></i>-->
+<!--                                <strong>No line manager assigned.</strong>-->
+<!--                                Please contact HR — leave requests require a line manager for approval.-->
+<!--                            </div>-->
+<!--                        </t>-->
+
+<!--                        <form action="/my/leaves/submit" method="POST" enctype="multipart/form-data">-->
+<!--                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>-->
+<!--                            <div class="row g-3">-->
+
+
+<!--                                <div class="col-md-3">-->
+<!--                                    <label for="leave_type_id" class="form-label fw-bold">-->
+<!--                                        Leave Type-->
+<!--                                        <span style="color:var(&#45;&#45;tc-saffron);">*</span>-->
+<!--                                    </label>-->
+<!--                                    <select name="leave_type_id" id="leave_type_id"-->
+<!--                                            class="form-select" required="required">-->
+<!--                                        <option value="">&#45;&#45; Select Type &#45;&#45;</option>-->
+<!--                                        <t t-foreach="leave_types" t-as="lt">-->
+<!--                                            <option t-att-value="lt.id">-->
+<!--                                                <t t-esc="lt.name"/>-->
+<!--                                            </option>-->
+<!--                                        </t>-->
+<!--                                    </select>-->
+<!--                                </div>-->
+
+
+<!--                                <div class="col-md-3">-->
+<!--                                    <label for="date_from" class="form-label fw-bold">-->
+<!--                                        From Date-->
+<!--                                        <span style="color:var(&#45;&#45;tc-saffron);">*</span>-->
+<!--                                    </label>-->
+<!--                                    <input type="date" name="date_from" id="date_from"-->
+<!--                                           class="form-control" required="required"/>-->
+<!--                                </div>-->
+
+
+<!--                                <div class="col-md-3">-->
+<!--                                    <label for="date_to" class="form-label fw-bold">-->
+<!--                                        To Date-->
+<!--                                        <span style="color:var(&#45;&#45;tc-saffron);">*</span>-->
+<!--                                    </label>-->
+<!--                                    <input type="date" name="date_to" id="date_to"-->
+<!--                                           class="form-control" required="required"/>-->
+<!--                                </div>-->
+
+
+<!--                                <div class="col-md-3">-->
+<!--                                    <label class="form-label fw-bold">Total Days</label>-->
+<!--                                    <div class="form-control bg-light text-muted" id="total_days_display"-->
+<!--                                         style="cursor:not-allowed;">—-->
+<!--                                    </div>-->
+<!--                                </div>-->
+
+<!--                                <div class="col-12" id="half-day-row" style="display:none;">-->
+<!--                                    <div style="border:1px solid #e8edf2;border-radius:10px;padding:14px 16px;background:#fafbfc;">-->
+<!--                                        <label class="d-flex align-items-center gap-2 mb-0"-->
+<!--                                               style="cursor:pointer;font-size:14px;font-weight:600;">-->
+<!--                                            <input type="checkbox" id="is_half_day" name="is_half_day" value="1"/>-->
+<!--                                            Half Day-->
+<!--                                        </label>-->
+<!--                                        <div id="half-day-period-block" style="display:none;margin-top:10px;">-->
+<!--                                            <select name="half_day_period" id="half_day_period" class="form-select"-->
+<!--                                                    style="max-width:220px;">-->
+<!--                                                <option value="am">Morning</option>-->
+<!--                                                <option value="pm">Afternoon</option>-->
+<!--                                            </select>-->
+<!--                                        </div>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                                <input type="hidden" name="request_date_from_period" id="request_date_from_period"-->
+<!--                                       value="am"/>-->
+<!--                                <input type="hidden" name="request_date_to_period" id="request_date_to_period"-->
+<!--                                       value="pm"/>-->
+
+
+<!--                                <div class="col-12" id="weekend-note-row" style="display:none;">-->
+<!--                                    <div style="font-size:13px;color:#b03520;">-->
+<!--                                        <i class="fa fa-info-circle me-1"></i>-->
+<!--                                        Weekends aren't available for leave. The date was moved to the next working day.-->
+<!--                                    </div>-->
+<!--                                </div>-->
+
+<!--                                <div class="col-12" id="holiday-note-row" style="display:none;">-->
+<!--                                    <div style="font-size:13px;color:#b03520;">-->
+<!--                                        <i class="fa fa-info-circle me-1"></i>-->
+<!--                                        <span id="holiday-note-text"></span>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+
+
+<!--                                <div class="col-12" id="overlap-warning-row" style="display:none;">-->
+<!--                                    <div id="overlap-warning"-->
+<!--                                         style="background:rgba(231,76,45,0.08);-->
+<!--                border:1px solid rgba(231,76,45,0.35);-->
+<!--                border-left:4px solid #E74C2D;-->
+<!--                border-radius:8px;-->
+<!--                padding:10px 16px;-->
+<!--                display:flex;align-items:center;gap:10px;-->
+<!--                font-size:13px;color:#b03520;">-->
+<!--                                        <i class="fa fa-exclamation-triangle" style="font-size:16px;flex-shrink:0;"></i>-->
+<!--                                        <span id="overlap-warning-text">-->
+<!--                                            These dates overlap with an existing leave request.-->
+<!--                                        </span>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+
+<!--                                <div class="col-12" id="pastdate-warning-row" style="display:none;">-->
+<!--                                    <div id="pastdate-warning"-->
+<!--                                         style="background:rgba(231,76,45,0.08);-->
+<!--                border:1px solid rgba(231,76,45,0.35);-->
+<!--                border-left:4px solid #E74C2D;-->
+<!--                border-radius:8px;-->
+<!--                padding:10px 16px;-->
+<!--                display:flex;align-items:center;gap:10px;-->
+<!--                font-size:13px;color:#b03520;">-->
+<!--                                        <i class="fa fa-exclamation-triangle" style="font-size:16px;flex-shrink:0;"></i>-->
+<!--                                        <span>-->
+<!--                                            You are regularizing your past leaves. Once applied, it cannot be cancelled-->
+<!--                                            by the initiator. for cancellation of such leaves, reach to HR.-->
+<!--                                        </span>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+
+
+<!--                                <div class="col-12">-->
+<!--                                    <label for="reason" class="form-label fw-bold">-->
+<!--                                        Reason-->
+<!--                                        <span style="color:var(&#45;&#45;tc-saffron);">*</span>-->
+<!--                                    </label>-->
+<!--                                    <textarea name="reason" id="reason" class="form-control" rows="3"-->
+<!--                                              placeholder="Enter reason for leave..."-->
+<!--                                              required="required" maxlength="250"></textarea>-->
+<!--                                    <div class="form-text">Maximum 250 characters</div>-->
+<!--                                </div>-->
+
+<!--                                <div class="col-12" id="backup-section" style="display:none;">-->
+<!--                                    <div style="border:1px solid #e8edf2;border-radius:10px;padding:16px;background:#fafbfc;">-->
+<!--                                        <label class="form-label fw-bold d-block mb-2">-->
+<!--                                            Backup Person-->
+<!--                                            <span style="color:var(&#45;&#45;tc-saffron);" id="backup-required-star">*-->
+<!--                                            </span>-->
+<!--                                        </label>-->
+<!--                                        <p class="text-muted mb-3" style="font-size:13px;">-->
+<!--                                            <i class="fa fa-info-circle me-1"></i>-->
+<!--                                            Since this leave is for future dates, please nominate someone to cover-->
+<!--                                            for you.-->
+<!--                                        </p>-->
+
+
+<!--                                        <div class="d-flex gap-3 mb-3 flex-wrap">-->
+<!--                                            <label class="d-flex align-items-center gap-2"-->
+<!--                                                   style="cursor:pointer;font-size:14px;">-->
+<!--                                                <input type="radio" name="backup_type" value="internal"-->
+<!--                                                       id="backup_type_internal"/>-->
+<!--                                                Within techcarrot-->
+<!--                                            </label>-->
+<!--                                            <label class="d-flex align-items-center gap-2"-->
+<!--                                                   style="cursor:pointer;font-size:14px;">-->
+<!--                                                <input type="radio" name="backup_type" value="external"-->
+<!--                                                       id="backup_type_external"/>-->
+<!--                                                Outside techcarrot-->
+<!--                                            </label>-->
+<!--                                        </div>-->
+
+
+<!--                                        <div id="backup-internal-block" style="display:none;">-->
+<!--                                            <div style="position:relative;">-->
+
+<!--                                                <input type="text" id="backup_emp_search" class="form-control"-->
+<!--                                                       autocomplete="off"-->
+<!--                                                       placeholder="Type to search employee..."/>-->
+
+<!--                                                <input type="hidden" name="backup_employee_id" id="backup_employee_id"-->
+<!--                                                       value=""/>-->
+
+
+<!--                                                <div id="backup_emp_results"-->
+<!--                                                     style="display:none;position:absolute;z-index:1000;left:0;right:0;-->
+<!--                    background:#fff;border:1px solid #e8edf2;border-radius:8px;-->
+<!--                    box-shadow:0 6px 20px rgba(0,0,0,0.10);max-height:240px;-->
+<!--                    overflow-y:auto;margin-top:2px;">-->
+
+<!--                                                </div>-->
+<!--                                            </div>-->
+
+
+<!--                                            <script type="application/json" id="backup_emp_data">-->
+<!--                                                [-->
+<!--                                                <t t-foreach="backup_employees" t-as="emp">{"id":<t t-esc="emp.id"/>,-->
+<!--                                                    "name": "<t t-esc="emp.name"/>"}-->
+<!--                                                    <t t-if="not emp_last">,</t>-->
+<!--                                                </t>-->
+<!--                                                ]-->
+<!--                                            </script>-->
+<!--                                        </div>-->
+
+
+<!--                                        <div id="backup-external-block" style="display:none;">-->
+<!--                                            <div class="row g-2">-->
+<!--                                                <div class="col-md-6">-->
+<!--                                                    <input type="text" name="backup_name" id="backup_name"-->
+<!--                                                           class="form-control" placeholder="Backup person name"-->
+<!--                                                           pattern="[A-Za-z .'\-]+"-->
+<!--                                                           title="Name can only contain letters, spaces, hyphens, apostrophes, and periods."/>-->
+<!--                                                </div>-->
+<!--                                                <div class="col-md-6">-->
+<!--                                                    <input type="email" name="backup_email" id="backup_email"-->
+<!--                                                           class="form-control" placeholder="Backup person email"/>-->
+<!--                                                </div>-->
+<!--                                            </div>-->
+<!--                                            <div class="form-text">Both name and email are required for an external-->
+<!--                                                backup.-->
+<!--                                            </div>-->
+<!--                                        </div>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+
+<!--                                <div class="col-12">-->
+<!--                                    <label for="leave_attachment" class="form-label fw-bold">-->
+<!--                                        Supporting Document-->
+<!--                                        <span class="text-muted fw-normal" id="lv-attach-optional">(Optional)</span>-->
+<!--                                        <span style="color:var(&#45;&#45;tc-saffron);display:none;" id="lv-attach-required">*-->
+<!--                                        </span>-->
+<!--                                    </label>-->
+<!--                                    <input type="file"-->
+<!--                                           name="leave_attachment"-->
+<!--                                           id="leave_attachment"-->
+<!--                                           class="form-control"-->
+<!--                                           accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.txt"/>-->
+<!--                                    <div class="form-text">-->
+<!--                                        <i class="fa fa-info-circle me-1"/>-->
+<!--                                        Accepted: PDF, DOC, PNG, JPG, XLSX (max 10MB)-->
+<!--                                    </div>-->
+<!--                                    <div class="form-text" id="lv-attach-hint" style="display:none;color:#b03520;">-->
+<!--                                        <i class="fa fa-info-circle me-1"></i>-->
+<!--                                        A supporting document is mandatory for this leave type.-->
+<!--                                    </div>-->
+<!--                                </div>-->
+
+
+<!--                                <div class="col-12 d-flex justify-content-end gap-3 pt-1">-->
+<!--                                    <button type="reset" class="btn btn-outline-secondary px-4 fw-bold">-->
+<!--                                        <i class="fa fa-refresh me-1"></i>Reset-->
+<!--                                    </button>-->
+<!--                                    <t t-if="approval_required and not line_manager">-->
+<!--                                        <button type="button" class="btn lv-submit-btn" disabled="disabled"-->
+<!--                                                title="Cannot submit: no line manager assigned">-->
+<!--                                            <i class="fa fa-paper-plane me-2"></i>Submit Request-->
+<!--                                        </button>-->
+<!--                                    </t>-->
+<!--                                    <t t-else="">-->
+<!--                                        <button type="submit" class="btn lv-submit-btn">-->
+<!--                                            <i class="fa fa-paper-plane me-2"></i>Submit Request-->
+<!--                                        </button>-->
+<!--                                    </t>-->
+<!--                                </div>-->
+
+<!--                            </div>-->
+<!--                        </form>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+
+                <div id="leave-requests-section" class="card border-0 shadow-sm mb-4"
+                     style="border-radius:12px;overflow:hidden;">
+                    <div class="card-header bg-transparent border-0 py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h5 class="mb-0 lv-section-heading" style="font-size:16px;">My Leave Requests</h5>
+                        <div class="d-flex flex-wrap gap-1">
+                            <t t-foreach="searchbar_filters.items()" t-as="flt">
+                                <t t-set="fkey" t-value="flt[0]"/>
+                                <t t-set="fval" t-value="flt[1]"/>
+                                <a t-attf-href="/my/leaves?filterby=#{fkey}&amp;sortby=#{sortby}#leave-requests-section"
+                                   t-attf-class="lv-filter-btn #{filterby == fkey and 'lv-active' or ''}">
+                                    <t t-esc="fval['label']"/>
+                                </a>
+                            </t>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-0">
+                        <t t-if="leave_requests">
+                            <div class="table-responsive">
+                                <table class="table lv-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Leave Type</th>
+                                            <th>From</th>
+                                            <th>To</th>
+                                            <th>Days</th>
+                                            <th>Status</th>
+                                            <th>Applied On</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="leave_requests" t-as="leave">
+                                            <tr>
+                                                <td>
+                                                    <span class="lv-type-chip">
+                                                        <i class="fa fa-calendar-o" style="color:var(--tc-green);"></i>
+                                                        <t t-esc="leave.holiday_status_id.name"/>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="leave.date_from.strftime('%d/%m/%Y') if leave.date_from else '—'"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="leave.date_to.strftime('%d/%m/%Y') if leave.date_to else '—'"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="'%.2f' % leave.number_of_days"/>
+                                                </td>
+                                                <td>
+                                                    <t t-if="leave.state == 'validate'">
+                                                        <span class="lv-badge lv-badge-approved">Approved</span>
+                                                    </t>
+                                                    <t t-elif="leave.state == 'refuse'">
+                                                        <span class="lv-badge lv-badge-rejected">Rejected</span>
+                                                    </t>
+                                                    <t t-elif="leave.state == 'cancel'">
+                                                        <span class="lv-badge lv-badge-draft">Cancelled</span>
+                                                    </t>
+                                                    <t t-elif="leave.state in ['confirm','validate1']">
+                                                        <span class="lv-badge lv-badge-pending">Pending</span>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span class="lv-badge lv-badge-draft">Draft</span>
+                                                    </t>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="leave.create_date.strftime('%d/%m/%Y') if leave.create_date else '—'"/>
+                                                </td>
+                                                <td class="d-flex gap-2 align-items-center">
+                                                    <a t-attf-href="/my/leaves/#{leave.id}"
+                                                       class="lv-icon-btn" title="View Details">
+                                                        <i class="fa fa-eye"></i>
+                                                    </a>
+                                                    <t t-if="leave.state in ['confirm', 'validate1']">
+<!--                                                        <form t-attf-action="/my/leaves/#{leave.id}/remind"-->
+<!--                                                              method="POST"-->
+<!--                                                              style="display:inline;">-->
+<!--                                                            <input type="hidden" name="csrf_token"-->
+<!--                                                                   t-att-value="request.csrf_token()"/>-->
+<!--                                                            <button type="submit"-->
+<!--                                                                    class="btn btn-sm fw-bold"-->
+<!--                                                                    style="background:rgba(231,76,45,0.10);color:#b03520;border:1px solid rgba(231,76,45,0.30);-->
+<!--                                                                           border-radius:6px;padding:4px 10px;font-size:12px;"-->
+<!--                                                                    title="Send reminder to manager"-->
+<!--                                                                    onclick="return confirm('Send a reminder to your manager for this leave request?');">-->
+<!--                                                                <i class="fa fa-bell me-1"></i>Remind-->
+<!--                                                            </button>-->
+<!--                                                        </form>-->
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <t t-if="total_pages &gt; 1">
+                                <div class="d-flex justify-content-center align-items-center gap-2 py-3 border-top">
+
+                                    <t t-if="page &gt; 1">
+                                        <a t-attf-href="/my/leaves/page/#{page - 1}?filterby=#{filterby}&amp;sortby=#{sortby}#leave-requests-section"
+                                           class="lv-filter-btn">‹ Prev
+                                        </a>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="lv-filter-btn" style="opacity:0.4;cursor:not-allowed;">‹ Prev
+                                        </span>
+                                    </t>
+
+
+                                    <t t-foreach="range(1, total_pages + 1)" t-as="pnum">
+                                        <a t-attf-href="/my/leaves/page/#{pnum}?filterby=#{filterby}&amp;sortby=#{sortby}#leave-requests-section"
+                                           t-attf-class="lv-filter-btn #{page == pnum and 'lv-active' or ''}">
+                                            <t t-esc="pnum"/>
+                                        </a>
+                                    </t>
+
+
+                                    <t t-if="page &lt; total_pages">
+                                        <a t-attf-href="/my/leaves/page/#{page + 1}?filterby=#{filterby}&amp;sortby=#{sortby}#leave-requests-section"
+                                           class="lv-filter-btn">Next ›
+                                        </a>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="lv-filter-btn" style="opacity:0.4;cursor:not-allowed;">Next ›
+                                        </span>
+                                    </t>
+                                </div>
+                            </t>
+                        </t>
+                        <t t-else="">
+                            <div class="text-center py-5">
+                                <i class="fa fa-calendar-times-o fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted mb-2">No Leave Requests Found</h5>
+                                <p class="text-muted mb-0">You haven't submitted any leave requests yet.</p>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+
+
+                <h5 class="mb-3 lv-section-heading">My Line Manager</h5>
+                <div class="card lv-manager-card shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <t t-if="line_manager">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div style="width:52px;height:52px;border-radius:50%;
+                                                background: var(--tc-gradient);
+                                                display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <i class="fa fa-user" style="color:#fff;font-size:22px;"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold" style="font-size:15px;color:#1B2A4A;">
+                                            <t t-esc="line_manager.name"/>
+                                        </h6>
+                                        <small class="text-muted">
+                                            <t t-esc="line_manager.employee_ids[0].job_id.name if line_manager.employee_ids else 'Manager'"/>
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-column gap-2">
+                                    <span style="font-size:14px;color:#4a5568;">
+                                        <i class="fa fa-envelope me-2" style="color:var(--tc-green);"></i>
+                                        <t t-esc="line_manager.email or '—'"/>
+                                    </span>
+                                    <span style="font-size:14px;color:#4a5568;">
+                                        <i class="fa fa-phone me-2" style="color:var(--tc-green);"></i>
+                                        <t t-esc="line_manager.partner_id.phone or '—'"/>
+                                    </span>
+                                </div>
+                                <a t-att-href="'mailto:' + (line_manager.email or '')"
+                                   class="btn lv-submit-btn px-4">
+                                    <i class="fa fa-comment me-2"></i>Send Message
+                                </a>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="d-flex align-items-center gap-3" style="color:var(--tc-saffron);">
+                                <i class="fa fa-exclamation-triangle fa-2x"></i>
+                                <div>
+                                    <p class="mb-0 fw-bold">No Line Manager Assigned</p>
+                                    <small class="text-muted">No line manager is currently assigned to your profile.
+                                        This will not affect your ability to apply for leave.
+                                    </small>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+
+                <script type="application/json" id="lv-existing-leaves">
+                    [
+                    <t t-foreach="all_active_leaves" t-as="lr">
+                        <t t-if="lr.state not in ['refuse','cancel']">{"from":"<t
+                                t-esc="lr.date_from.strftime('%Y-%m-%d') if lr.date_from else ''"/>","to":"<t
+                                t-esc="lr.date_to.strftime('%Y-%m-%d') if lr.date_to else ''"/>"}
+                            <t t-if="not lr_last">,</t>
+                        </t>
+                    </t>
+                    ]
+                </script>
+                <script type="application/json" id="lv-holidays">
+                    <t t-out="holiday_json"/>
+                </script>
+
+
+                <script type="application/json" id="lv-require-doc-map">
+                    <t t-out="require_doc_json"/>
+                </script>
+                <script type="application/json" id="lv-request-unit-map">
+                    <t t-out="request_unit_json"/>
+                </script>
+
+            </div>
+
+            <script type="text/javascript">
+                (function(){
+                var f = document.getElementById('date_from');
+                var t = document.getElementById('date_to');
+                var d = document.getElementById('total_days_display');
+                var overlapRow = document.getElementById('overlap-warning-row');
+                var pastRow = document.getElementById('pastdate-warning-row');
+                var overlapText = document.getElementById('overlap-warning-text');
+                var submitBtn = document.querySelector('button[type="submit"].lv-submit-btn');
+                if(!f || !t || !d) return;
+
+
+                var existingLeaves = [];
+                try {
+                var raw = document.getElementById('lv-existing-leaves');
+                if(raw) existingLeaves = JSON.parse(raw.textContent || '[]');
+                } catch(e){ existingLeaves = []; }
+
+                var holidayMap = {};
+                try {
+                var hEl = document.getElementById('lv-holidays');
+                if(hEl){
+                var ta = document.createElement('textarea');
+                ta.innerHTML = hEl.textContent || '{}';
+                holidayMap = JSON.parse(ta.value || '{}');
+                }
+                } catch(e){ holidayMap = {}; }
+
+                var holidayNote = document.getElementById('holiday-note-row');
+                var holidayNoteText = document.getElementById('holiday-note-text');
+
+
+                function countWorkdays(from, to){
+                var count = 0;
+                var cur = new Date(from); cur.setHours(0,0,0,0);
+                var end = new Date(to); end.setHours(0,0,0,0);
+                while(cur &lt;= end){
+                var w = cur.getDay();
+                var ymd = toStr(cur);
+                if(w !== 0 &amp;&amp; w !== 6 &amp;&amp; !holidayMap[ymd]) count++;
+                cur.setDate(cur.getDate() + 1);
+                }
+                return count;
+                }
+
+                function toStr(dt){
+                var y = dt.getFullYear();
+                var m = String(dt.getMonth()+1).padStart(2,'0');
+                var day = String(dt.getDate()).padStart(2,'0');
+                return y + '-' + m + '-' + day;
+                }
+
+                var weekendNote = document.getElementById('weekend-note-row');
+
+                function snapToWorkday(input){
+                if(!input.value) return null;
+                var dt = new Date(input.value + 'T00:00:00');
+                var hitHoliday = null;
+                var moved = false;
+                for(var guard = 0; guard &lt; 60; guard++){
+                var w = dt.getDay();
+                var ymd = toStr(dt);
+                if(w === 6){ dt.setDate(dt.getDate() + 2); moved = true; continue; }
+                if(w === 0){ dt.setDate(dt.getDate() + 1); moved = true; continue; }
+                if(holidayMap[ymd]){
+                hitHoliday = holidayMap[ymd];
+                dt.setDate(dt.getDate() + 1);
+                moved = true;
+                continue;
+                }
+                break;
+                }
+                if(moved){ input.value = toStr(dt); }
+                return { moved: moved, holiday: hitHoliday };
+                }
+
+                function showHolidayNote(name){
+                if(!holidayNote || !holidayNoteText) return;
+                holidayNoteText.textContent =
+                name + ' is a public holiday, so the date was moved to the next '
+                + 'working day. You can adjust the dates if needed.';
+                holidayNote.style.display = 'block';
+                setTimeout(function(){ if(holidayNote) holidayNote.style.display = 'none'; }, 6000);
+                }
+
+                function showWeekendNote(){
+                if(!weekendNote) return;
+                weekendNote.style.display = 'block';
+                setTimeout(function(){ if(weekendNote) weekendNote.style.display = 'none'; }, 5000);
+                }
+
+                function nextWorkday(str){
+                var dt = new Date(str + 'T00:00:00');
+                var w = dt.getDay();
+                if(w === 6) dt.setDate(dt.getDate() + 2);
+                else if(w === 0) dt.setDate(dt.getDate() + 1);
+                return toStr(dt);
+                }
+
+
+                function checkOverlap(fromStr, toStr){
+                if(!fromStr || !toStr) return null;
+                var newFrom = new Date(fromStr + 'T00:00:00');
+                var newTo = new Date(toStr + 'T00:00:00');
+                for(var i = 0; i &lt; existingLeaves.length; i++){
+                var lv = existingLeaves[i];
+                if(!lv.from || !lv.to) continue;
+                var exFrom = new Date(lv.from + 'T00:00:00');
+                var exTo = new Date(lv.to + 'T00:00:00');
+
+                if(newFrom &lt;= exTo &amp;&amp; newTo &gt;= exFrom){
+                return lv;
+                }
+                }
+                return null;
+                }
+
+                function formatDate(str){
+                if(!str) return '';
+                var dt = new Date(str + 'T00:00:00');
+                var months = ['Jan','Feb','Mar','Apr','May','Jun',
+                'Jul','Aug','Sep','Oct','Nov','Dec'];
+                return dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+                }
+
+                function updateTotal(){
+                if (window.__essBackupRefresh) { window.__essBackupRefresh(); }
+                checkPastDate();
+                if(!f.value || !t.value){
+                d.textContent = '—'; d.style.color = '';
+                hideOverlap();
+                return;
+                }
+                var a = new Date(f.value + 'T00:00:00');
+                var b = new Date(t.value + 'T00:00:00');
+                if(a > b){
+                d.textContent = 'Invalid range'; d.style.color = '#c0392b';
+                hideOverlap();
+                return;
+                }
+                var n = countWorkdays(a, b);
+                if(halfDayCheckbox &amp;&amp; halfDayCheckbox.checked &amp;&amp; n === 1){
+                n = 0.5;
+                }
+                d.textContent = n + ' Day' + (n !== 1 ? 's' : '');
+                d.style.color = '#1B2A4A';
+
+
+                var conflict = checkOverlap(f.value, t.value);
+                if(conflict){
+                showOverlap(
+                'These dates overlap with an existing leave request (' +
+                formatDate(conflict.from) + ' – ' + formatDate(conflict.to) +
+                '). Please choose different dates.'
+                );
+                } else {
+                hideOverlap();
+                }
+                }
+
+                function showOverlap(msg){
+                overlapText.textContent = msg;
+                overlapRow.style.display = 'block';
+                d.style.color = '#c0392b';
+
+
+                if(submitBtn){ submitBtn.disabled = true; submitBtn.style.opacity = '0.5'; }
+                }
+
+                function todayYMD(){
+                var d = new Date(); d.setHours(0,0,0,0);
+                var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'),
+                da=String(d.getDate()).padStart(2,'0');
+                return y+'-'+m+'-'+da;
+                }
+                function checkPastDate(){
+                if(!pastRow) return;
+                var isPast = f.value &amp;&amp; f.value &lt; todayYMD();
+                pastRow.style.display = isPast ? 'block' : 'none';
+                }
+
+                function hideOverlap(){
+                overlapRow.style.display = 'none';
+
+                if(submitBtn){ submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
+                }
+
+
+                f.addEventListener('change', function(){
+                var r = snapToWorkday(f);
+                if(r &amp;&amp; r.moved){
+                if(r.holiday){ showHolidayNote(r.holiday); }
+                else { showWeekendNote(); }
+                }
+                if(f.value){
+                t.setAttribute('min', f.value);
+                if(t.value &amp;&amp; t.value &lt; f.value){ t.value = f.value; snapToWorkday(t); }
+                }
+                updateTotal();
+                refreshHalfDayVisibility();
+                });
+
+                t.addEventListener('change', function(){
+                var r = snapToWorkday(t);
+                if(r &amp;&amp; r.moved){
+                if(r.holiday){ showHolidayNote(r.holiday); }
+                else { showWeekendNote(); }
+                }
+                updateTotal();
+                refreshHalfDayVisibility();
+                });
+
+
+                var resetBtn = document.querySelector('button[type="reset"]');
+                if(resetBtn){
+                resetBtn.addEventListener('click', function(){
+                setTimeout(function(){
+                if(d){ d.textContent = '—'; d.style.color = ''; }
+                if(overlapRow) overlapRow.style.display = 'none';
+                if(pastRow) pastRow.style.display = 'none';
+                if(weekendNote) weekendNote.style.display = 'none';
+                if(holidayNote) holidayNote.style.display = 'none';
+                if(window.__essBackupRefresh) window.__essBackupRefresh();
+                if(submitBtn){ submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
+                }, 0);
+                });
+                }
+
+
+                var requireDocMap = {};
+                try {
+                var rdEl = document.getElementById('lv-require-doc-map');
+                if(rdEl){
+                var ta = document.createElement('textarea');
+                ta.innerHTML = rdEl.textContent || '{}';
+                requireDocMap = JSON.parse(ta.value || '{}');
+                }
+                } catch(e){ requireDocMap = {}; }
+                var typeSel = document.getElementById('leave_type_id');
+                var fileInput = document.getElementById('leave_attachment');
+                var reqStar = document.getElementById('lv-attach-required');
+                var optTag = document.getElementById('lv-attach-optional');
+                var hint = document.getElementById('lv-attach-hint');
+                function updateDocRequirement(){
+                var needed = typeSel &amp;&amp; requireDocMap[typeSel.value] === true;
+                if(reqStar) reqStar.style.display = needed ? 'inline' : 'none';
+                if(optTag) optTag.style.display = needed ? 'none' : 'inline';
+                if(hint) hint.style.display = needed ? 'block' : 'none';
+                if(fileInput){
+                if(needed){ fileInput.setAttribute('required','required'); }
+                else { fileInput.removeAttribute('required'); }
+                }
+                }
+                if(typeSel){
+                typeSel.addEventListener('change', updateDocRequirement);
+                updateDocRequirement();
+                }
+
+                var requestUnitMap = {};
+                try {
+                var ruEl = document.getElementById('lv-request-unit-map');
+                if(ruEl){
+                var ta2 = document.createElement('textarea');
+                ta2.innerHTML = ruEl.textContent || '{}';
+                requestUnitMap = JSON.parse(ta2.value || '{}');
+                }
+                } catch(e){ requestUnitMap = {}; }
+
+                var halfDayRow = document.getElementById('half-day-row');
+                var halfDayCheckbox = document.getElementById('is_half_day');
+                var halfDayPeriodBlock = document.getElementById('half-day-period-block');
+                var halfDayPeriodSelect = document.getElementById('half_day_period');
+                var fromPeriodInput = document.getElementById('request_date_from_period');
+                var toPeriodInput = document.getElementById('request_date_to_period');
+
+                function isSameDay(){
+                return f.value &amp;&amp; t.value &amp;&amp; f.value === t.value;
+                }
+
+                function supportsHalfDay(){
+                return typeSel &amp;&amp; requestUnitMap[typeSel.value] === 'half_day';
+                }
+
+                function refreshHalfDayVisibility(){
+                var show = supportsHalfDay() &amp;&amp; isSameDay();
+                if(halfDayRow) halfDayRow.style.display = show ? 'block' : 'none';
+                if(!show &amp;&amp; halfDayCheckbox){
+                halfDayCheckbox.checked = false;
+                syncPeriodInputs();
+                }
+                }
+
+                function syncPeriodInputs(){
+                var isHalf = halfDayCheckbox &amp;&amp; halfDayCheckbox.checked;
+                if(halfDayPeriodBlock) halfDayPeriodBlock.style.display = isHalf ? 'block' : 'none';
+                if(isHalf){
+                var period = halfDayPeriodSelect ? halfDayPeriodSelect.value : 'am';
+                fromPeriodInput.value = period;
+                toPeriodInput.value = period;
+                } else {
+                fromPeriodInput.value = 'am';
+                toPeriodInput.value = 'pm';
+                }
+                updateTotal();
+                }
+
+                if(halfDayCheckbox) halfDayCheckbox.addEventListener('change', syncPeriodInputs);
+                if(halfDayPeriodSelect) halfDayPeriodSelect.addEventListener('change', syncPeriodInputs);
+                if(typeSel) typeSel.addEventListener('change', refreshHalfDayVisibility);
+                refreshHalfDayVisibility();
+
+                var fileInputEl = document.getElementById('leave_attachment');
+                if(fileInputEl){
+                fileInputEl.addEventListener('change', function(){
+                var file = fileInputEl.files &amp;&amp; fileInputEl.files[0];
+                if(!file) return;
+                var allowed = ['pdf','doc','docx','png','jpg','jpeg','xlsx','txt'];
+                var ext = file.name.split('.').pop().toLowerCase();
+                if(allowed.indexOf(ext) === -1){
+                alert('Invalid file type. Allowed: PDF, DOC, DOCX, PNG, JPG, JPEG, XLSX, TXT.');
+                fileInputEl.value = '';
+                return;
+                }
+                if(file.size > 10 * 1024 * 1024){
+                alert('File is too large. Maximum allowed size is 10MB.');
+                fileInputEl.value = '';
+                return;
+                }
+                });
+                }
+
+                })();
+
+
+                (function() {
+                if (window.location.hash === '#leave-requests-section') {
+                var el = document.getElementById('leave-requests-section');
+                if (el) { setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100); }
+                }
+                })();
+
+
+                (function(){
+                if (window.history &amp;&amp; window.history.replaceState) {
+                var url = new URL(window.location.href);
+                var hadFlag = url.searchParams.has('success')
+                || url.searchParams.has('error')
+                || url.searchParams.has('error_msg');
+                if (hadFlag) {
+                url.searchParams.delete('success');
+                url.searchParams.delete('error');
+                url.searchParams.delete('error_msg');
+
+                window.history.replaceState({}, document.title,
+                url.pathname + url.search + url.hash);
+                }
+                }
+                })();
+            </script>
+            <script type="text/javascript">
+                //<![CDATA[
+            function initEssBackup(){
+                var dateTo = document.getElementById('date_to');
+                var section = document.getElementById('backup-section');
+                var radioInt = document.getElementById('backup_type_internal');
+                var radioExt = document.getElementById('backup_type_external');
+                var blockInt = document.getElementById('backup-internal-block');
+                var blockExt = document.getElementById('backup-external-block');
+                var empSelect = document.getElementById('backup_employee_id');
+                var empSearch  = document.getElementById('backup_emp_search');
+                var empResults = document.getElementById('backup_emp_results');
+                var empData = [];
+                try {
+                    var empRaw = document.getElementById('backup_emp_data');
+                    if(empRaw) empData = JSON.parse(empRaw.textContent || '[]');
+                } catch(e){ empData = []; }
+                var extName = document.getElementById('backup_name');
+                var extEmail = document.getElementById('backup_email');
+                if(!dateTo || !section) return;
+
+                function todayStr(){
+                var d = new Date(); d.setHours(0,0,0,0);
+                var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), da=String(d.getDate()).padStart(2,'0');
+                return y+'-'+m+'-'+da;
+                }
+
+                function isFuture(){
+                if(!dateTo.value) return false;
+                return dateTo.value > todayStr();
+                }
+
+                function clearBackup(){
+                if(radioInt) radioInt.checked = false;
+                if(radioExt) radioExt.checked = false;
+                if(empSelect) empSelect.value = '';
+                if(extName) extName.value = '';
+                if(extEmail) extEmail.value = '';
+                if(empSearch) empSearch.value = '';
+                if(empSelect) empSelect.value = '';
+                hideResults();
+
+                }
+
+                function setReq(el, on){
+                if(!el) return;
+                if(on){ el.setAttribute('required','required'); }
+                else { el.removeAttribute('required'); }
+                }
+
+                function applyRequired(){
+                var future = isFuture();
+                var wantInt = future && radioInt && radioInt.checked;
+                var wantExt = future && radioExt && radioExt.checked;
+                setReq(extName, wantExt);
+                setReq(extEmail, wantExt);
+                }
+
+                function refreshSection(){
+                if(isFuture()){
+                section.style.display = 'block';
+                } else {
+                section.style.display = 'none';
+                clearBackup();
+                if(blockInt) blockInt.style.display = 'none';
+                if(blockExt) blockExt.style.display = 'none';
+                }
+                applyRequired();
+                }
+
+                function showInternal(){
+                if(blockInt) blockInt.style.display = 'block';
+                if(blockExt) blockExt.style.display = 'none';
+                if(extName) extName.value = '';
+                if(extEmail) extEmail.value = '';
+                applyRequired();
+                }
+                function showExternal(){
+                if(blockExt) blockExt.style.display = 'block';
+                if(blockInt) blockInt.style.display = 'none';
+                if(empSelect) empSelect.value = '';
+                applyRequired();
+                }
+
+                dateTo.addEventListener('change', refreshSection);
+                if(radioInt) radioInt.addEventListener('change', showInternal);
+                if(radioExt) radioExt.addEventListener('change', showExternal);
+
+                window.__essBackupRefresh = refreshSection;
+
+                function renderResults(q){
+                    if(!empResults) return;
+                    q = (q || '').toLowerCase();
+                    var html = '';
+                    var count = 0;
+                    for(var i=0;i<empData.length;i++){
+                        var name = (empData[i].name || '');
+                        if(!q || name.toLowerCase().indexOf(q) !== -1){
+                            html += '<div class="backup-emp-option" data-id="'+empData[i].id+'" '
+                                 +  'style="padding:8px 12px;cursor:pointer;font-size:14px;border-bottom:1px solid #f0f3f7;">'
+                                 +  name.replace(/</g,'&lt;')
+                                 +  '</div>';
+                            count++;
+                            if(count >= 50) { break; }
+                        }
+                    }
+                    if(!html){
+                        html = '<div style="padding:8px 12px;color:#8a94a6;font-size:13px;">No matches</div>';
+                    }
+                    empResults.innerHTML = html;
+                    empResults.style.display = 'block';
+                }
+
+                function hideResults(){
+                    if(empResults) empResults.style.display = 'none';
+                }
+
+                if(empSearch && empResults && empSelect){
+
+                    empSearch.addEventListener('input', function(){
+                        empSelect.value = '';
+                        renderResults(empSearch.value);
+                    });
+
+                    empSearch.addEventListener('focus', function(){
+                        renderResults(empSearch.value);
+                    });
+
+                    empResults.addEventListener('click', function(ev){
+                        var opt = ev.target.closest ? ev.target.closest('.backup-emp-option')
+                                                    : null;
+                        if(!opt) return;
+                        empSelect.value = opt.getAttribute('data-id');
+                        empSearch.value = opt.textContent;
+                        hideResults();
+                    });
+
+                    document.addEventListener('click', function(ev){
+                        if(ev.target !== empSearch && !empResults.contains(ev.target)){
+                            hideResults();
+                        }
+                    });
+                }
+
+            refreshSection();
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initEssBackup);
+            } else {
+                initEssBackup();
+            }
+            //]]>
+            </script>
+
+        </t>
+    </template>
+
+
+    <template id="portal_leave_detail" name="ESS - Leave Detail">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal container my-4">
+
+                <style>
+                    :root {
+                    --tc-green: #2C5B32;
+                    --tc-green-light: rgba(44, 91, 50, 0.10);
+                    --tc-saffron: #E74C2D;
+                    --tc-saffron-light: rgba(231, 76, 45, 0.10);
+                    --tc-blue: #2B2B6B;
+                    --tc-blue-light: rgba(43, 43, 107, 0.10);
+                    --tc-gradient: linear-gradient(135deg, #2C5B32 0%, #7a3010 50%, #E74C2D 100%);
+                    }
+                    .lv-badge { font-size: 13px !important; font-weight: 600 !important; padding: 8px 18px !important;
+                    border-radius: 8px !important; letter-spacing: 0.2px !important; }
+                    .lv-badge-approved { background: rgba(44,91,50,0.12) !important; color: #1f4324 !important; }
+                    .lv-badge-pending { background: rgba(231,76,45,0.12) !important; color: #b03520 !important; }
+                    .lv-badge-rejected { background: #fdecea !important; color: #c0392b !important; }
+                    .lv-badge-draft { background: #f0f3f7 !important; color: #6b7280 !important; }
+                    .lv-gradient-btn {
+                    background: var(--tc-gradient) !important;
+                    border: none !important;
+                    color: white !important;
+                    font-weight: 600 !important;
+                    border-radius: 8px !important;
+                    transition: opacity 0.2s ease !important;
+                    }
+                    .lv-gradient-btn:hover { opacity: 0.88 !important; color: white !important; }
+                    .lv-page-title-accent {
+                    width: 40px; height: 4px;
+                    background: var(--tc-gradient);
+                    border-radius: 2px; margin-bottom: 12px;
+                    }
+                </style>
+
+
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/ess">
+                                <i class="fa fa-tachometer"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="/my/leaves">
+                                <i class="fa fa-calendar"></i>
+                                My Leaves
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">Leave Request</li>
+                    </ol>
+                </nav>
+
+
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-8">
+                        <div class="lv-page-title-accent"></div>
+                        <h2 class="mb-1" style="font-weight:700;color:#1B2A4A;">
+                            <i class="fa fa-calendar me-2" style="color:var(--tc-green);"></i>
+                            Leave Request Details
+                        </h2>
+                        <p class="text-muted mb-0">
+                            <t t-esc="leave.holiday_status_id.name"/>
+                            ·
+                            <t t-esc="leave.date_from.strftime('%d %b %Y') if leave.date_from else ''"/>
+                            –
+                            <t t-esc="leave.date_to.strftime('%d %b %Y') if leave.date_to else ''"/>
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <t t-if="state_label == 'Approved'">
+                            <span class="lv-badge lv-badge-approved">
+                                <t t-esc="state_label"/>
+                            </span>
+                        </t>
+                        <t t-elif="state_label == 'Rejected'">
+                            <span class="lv-badge lv-badge-rejected">
+                                <t t-esc="state_label"/>
+                            </span>
+                        </t>
+                        <t t-elif="state_label == 'Pending Approval'">
+                            <span class="lv-badge lv-badge-pending">
+                                <t t-esc="state_label"/>
+                            </span>
+                        </t>
+                        <t t-else="">
+                            <span class="lv-badge lv-badge-draft">
+                                <t t-esc="state_label"/>
+                            </span>
+                        </t>
+                    </div>
+                </div>
+
+
+                <t t-if="error">
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                        <i class="fa fa-exclamation-triangle me-2"></i>
+                        <t t-esc="error_message or 'An error occurred.'"/>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </t>
+
+                <div class="row">
+
+
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm mb-4"
+                             style="border-left:4px solid var(--tc-green) !important;border-radius:12px;">
+
+                            <div style="background:var(--tc-gradient);padding:10px 18px;border-radius:0;">
+                                <h5 class="mb-0 fw-bold text-white" style="font-size:15px;">
+                                    <i class="fa fa-info-circle me-2"></i>Leave Information
+                                </h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Leave Type</label>
+                                        <p class="mb-0 fw-bold" style="font-size:15px;">
+                                            <t t-esc="leave.holiday_status_id.name or 'N/A'"/>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Number of Days</label>
+                                        <p class="mb-0 fw-bold" style="font-size:15px;color:var(--tc-green);">
+                                            <t t-esc="'%.2f' % leave.number_of_days"/>
+                                            days
+                                        </p>
+                                    </div>
+
+                                    <t t-if="leave.request_unit_half and leave.date_from and leave.date_to and leave.date_from.date() == leave.date_to.date()">
+                                        <div class="col-md-6">
+                                            <label class="text-muted small">Day Period</label>
+                                            <p class="mb-0 fw-bold" style="font-size:15px;">
+                                                <t t-if="leave.request_date_from_period == leave.request_date_to_period">
+                                                    <t t-if="leave.request_date_from_period == 'am'">Morning</t>
+                                                    <t t-else="">Afternoon</t>
+                                                </t>
+                                                <t t-else="">Full Day</t>
+                                            </p>
+                                        </div>
+                                    </t>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">From Date</label>
+                                        <p class="mb-0" style="font-size:14px;">
+                                            <i class="fa fa-calendar me-1" style="color:var(--tc-green);"></i>
+                                            <t t-esc="leave.date_from.strftime('%d %B %Y') if leave.date_from else '—'"/>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">To Date</label>
+                                        <p class="mb-0" style="font-size:14px;">
+                                            <i class="fa fa-calendar me-1" style="color:var(--tc-green);"></i>
+                                            <t t-esc="leave.date_to.strftime('%d %B %Y') if leave.date_to else '—'"/>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Applied On</label>
+                                        <p class="mb-0" style="font-size:14px;">
+                                            <i class="fa fa-clock-o me-1" style="color:var(--tc-green);"></i>
+                                            <t t-esc="leave.create_date.strftime('%d %B %Y, %H:%M') if leave.create_date else '—'"/>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small">Submitted By</label>
+                                        <p class="mb-0" style="font-size:14px;">
+                                            <i class="fa fa-user me-1" style="color:var(--tc-green);"></i>
+                                            <t t-esc="employee.name"/>
+                                        </p>
+                                    </div>
+                                    <t t-if="leave.name and leave.name != '/'">
+                                        <div class="col-12">
+                                            <label class="text-muted small">Reason</label>
+                                            <div class="border rounded p-3 bg-light">
+                                                <t t-esc="leave.name"/>
+                                            </div>
+                                        </div>
+                                    </t>
+
+
+                                    <t t-if="attachments">
+                                        <div class="lv-detail-card mb-3">
+                                            <h6 class="mb-2">
+                                                <i class="fa fa-paperclip me-1"></i>Supporting Document
+                                                <t t-if="len(attachments) > 1">s</t>
+                                            </h6>
+                                            <t t-foreach="attachments" t-as="att">
+                                                <div class="d-flex align-items-center justify-content-between py-1">
+                                                    <span class="text-truncate me-2" style="max-width:70%;">
+                                                        <i class="fa fa-file-o me-1 text-muted"></i>
+                                                        <t t-esc="att.name"/>
+                                                    </span>
+                                                    <a t-attf-href="/web/content/#{att.id}?access_token=#{att.access_token}&amp;download=true"
+                                                       class="btn btn-sm"
+                                                       style="border:1px solid var(--tc-green);color:var(--tc-green);"
+                                                       target="_blank">
+                                                        <i class="fa fa-download me-1"></i>Download
+                                                    </a>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <t t-if="leave.state == 'refuse'">
+                            <div class="card shadow-sm mb-4"
+                                 style="border-left:4px solid #c0392b !important;border-radius:12px;">
+                                <div class="card-header text-white py-3 px-4"
+                                     style="background-color:#c0392b;border-radius:0;">
+                                    <h5 class="mb-0 fw-bold">
+                                        <i class="fa fa-times-circle me-2"></i>Rejection Reason
+                                    </h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="mb-0" style="font-size:15px;">
+                                        <t t-if="refuse_reason">
+                                            <t t-esc="refuse_reason"/>
+                                        </t>
+                                        <t t-else="">No reason provided.</t>
+                                    </p>
+                                </div>
+                            </div>
+                        </t>
+
+
+                        <t t-if="can_cancel">
+<!--                            <div class="card border-0 shadow-sm mb-4"-->
+<!--                                 style="border-radius:12px;border-left:4px solid var(&#45;&#45;tc-saffron) !important;">-->
+<!--                                <div class="card-body p-4">-->
+<!--                                    <h6 class="fw-bold mb-2" style="color:#1B2A4A;">Cancel This Request</h6>-->
+<!--                                    <p class="text-muted mb-3" style="font-size:14px;">-->
+<!--                                        You can cancel this leave up until it starts.-->
+<!--                                    </p>-->
+<!--                                    <form t-attf-action="/my/leaves/#{leave.id}/cancel" method="POST">-->
+<!--                                        <input type="hidden" name="csrf_token"-->
+<!--                                               t-att-value="request.csrf_token()"/>-->
+<!--                                        <button type="submit" class="btn fw-bold px-4"-->
+<!--                                                style="background:var(&#45;&#45;tc-saffron);color:#fff;-->
+<!--                               border:none;border-radius:8px;"-->
+<!--                                                onclick="return confirm('Are you sure you want to cancel this leave request?');">-->
+<!--                                            <i class="fa fa-trash me-2"></i>Cancel Leave Request-->
+<!--                                        </button>-->
+<!--                                    </form>-->
+<!--                                </div>-->
+<!--                            </div>-->
+                        </t>
+                    </div>
+
+
+                    <div class="col-lg-4">
+
+                        <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;overflow:hidden;">
+                            <div style="background:var(--tc-gradient);padding:10px 16px;">
+                                <h5 class="mb-0 fw-bold text-white" style="font-size:14px;">
+                                    <i class="fa fa-users me-2"></i>Approval Chain
+                                </h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <t t-if="line_manager">
+                                    <p class="mb-0" style="font-size:14px;">
+                                        <strong>Line Manager:</strong>
+                                        <br/>
+                                        <i class="fa fa-user me-1" style="color:var(--tc-green);"></i>
+                                        <t t-esc="line_manager.name"/>
+                                    </p>
+                                </t>
+                                <t t-else="">
+                                    <p style="color:var(--tc-saffron);font-size:14px;margin:0;">
+                                        <i class="fa fa-exclamation-triangle me-1"></i>No line manager assigned
+                                    </p>
+                                </t>
+                            </div>
+                        </div>
+
+
+                        <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;overflow:hidden;">
+                            <div style="background:var(--tc-gradient);padding:10px 16px;">
+                                <h5 class="mb-0 fw-bold text-white" style="font-size:14px;">
+                                    <i class="fa fa-bar-chart me-2"></i>Leave Balance
+                                </h5>
+                            </div>
+                            <div class="card-body p-3">
+                                <a href="/my/leaves" class="btn lv-gradient-btn w-100 fw-bold px-4">
+                                    <i class="fa fa-calendar me-2"></i>View All Balances
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <div class="text-center mt-2 mb-4">
+                    <a href="/my/leaves" class="btn btn-lg px-4"
+                       style="border:1px solid var(--tc-green);color:var(--tc-green);
+                              background:transparent;font-weight:600;border-radius:8px;">
+                        <i class="fa fa-arrow-left me-2"></i>Back to My Leaves
+                    </a>
+                </div>
+
+            </div>
+        </t>
+    </template>
+
+
+    <template id="portal_my_approvals" name="ESS - Manager Approvals">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal container my-4">
+
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/ess">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item active">Approvals</li>
+                    </ol>
+                </nav>
+
+                <h2 class="mb-1" style="font-weight:700;color:#1B2A4A;">Approvals</h2>
+                <p class="text-muted mb-4">Leave requests from your team.</p>
+
+                <t t-if="success_message">
+                    <div id="approval-success-alert" class="alert alert-success">
+                        <t t-esc="success_message"/>
+                    </div>
+                </t>
+                <t t-if="error">
+                    <div id="approval-error-alert" class="alert alert-danger">
+                        <t t-esc="error_message or 'An error occurred.'"/>
+                    </div>
+                </t>
+
+
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <t t-foreach="searchbar_filters.items()" t-as="flt">
+                        <t t-set="fkey" t-value="flt[0]"/>
+                        <t t-set="fval" t-value="flt[1]"/>
+                        <a t-attf-href="/my/approvals?filterby=#{fkey}"
+                           t-attf-style="padding:6px 16px;font-size:13px;font-weight:500;border-radius:6px;text-decoration:none;border:1px solid #e8edf2;#{filterby == fkey and 'background:linear-gradient(135deg,#2C5B32,#E74C2D);color:#fff;border-color:transparent;' or 'background:#f5f7fa;color:#4a5568;'}">
+                            <t t-esc="fval['label']"/>
+                        </a>
+                    </t>
+                </div>
+
+                <t t-if="leaves">
+                    <div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
+                        <table class="table mb-0">
+                            <thead style="background:#fafbfc;">
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Type</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Days</th>
+                                    <th>Status</th>
+                                    <t t-if="filterby == 'pending'">
+                                        <th>Action</th>
+                                    </t>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="leaves" t-as="lv">
+                                    <tr>
+                                        <td>
+                                            <t t-esc="lv.employee_id.name"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="lv.holiday_status_id.name"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="lv.request_date_from and lv.request_date_from.strftime('%d/%m/%Y') or '—'"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="lv.request_date_to and lv.request_date_to.strftime('%d/%m/%Y') or '—'"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="'%.2f' % lv.number_of_days"/>
+                                        </td>
+                                        <td>
+                                            <t t-if="lv.state == 'validate'">
+                                                <span style="background:rgba(44,91,50,0.12);color:#1f4324;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:600;">
+                                                    Approved
+                                                </span>
+                                            </t>
+                                            <t t-elif="lv.state == 'refuse'">
+                                                <span style="background:#fdecea;color:#c0392b;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:600;">
+                                                    Rejected
+                                                </span>
+                                            </t>
+                                            <t t-else="">
+                                                <span style="background:rgba(231,76,45,0.12);color:#b03520;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:600;">
+                                                    Pending
+                                                </span>
+                                            </t>
+                                        </td>
+                                        <t t-if="filterby == 'pending'">
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                    <form t-attf-action="/my/approvals/#{lv.id}/approve" method="POST"
+                                                          style="display:inline;">
+                                                        <input type="hidden" name="csrf_token"
+                                                               t-att-value="request.csrf_token()"/>
+                                                        <button type="submit" class="btn btn-sm text-white"
+                                                                style="background:#2C5B32;border:none;"
+                                                                onclick="return confirm('Approve this leave request?');">
+                                                            <i class="fa fa-check me-1"></i>Approve
+                                                        </button>
+                                                    </form>
+                                                    <form t-attf-action="/my/approvals/#{lv.id}/reject" method="POST"
+                                                          style="display:inline;">
+                                                        <input type="hidden" name="csrf_token"
+                                                               t-att-value="request.csrf_token()"/>
+                                                        <button type="submit" class="btn btn-sm text-white"
+                                                                style="background:#E74C2D;border:none;"
+                                                                onclick="return confirm('Reject this leave request?');">
+                                                            <i class="fa fa-times me-1"></i>Reject
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </t>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+                <t t-else="">
+                    <div class="text-center py-5">
+                        <i class="fa fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No requests in this view</h5>
+                    </div>
+                </t>
+
+                <script type="text/javascript">
+                    (function(){
+                    if (window.history &amp;&amp; window.history.replaceState) {
+                    var url = new URL(window.location.href);
+                    var hadFlag = url.searchParams.has('success')
+                    || url.searchParams.has('error')
+                    || url.searchParams.has('error_msg');
+                    if (hadFlag) {
+                    url.searchParams.delete('success');
+                    url.searchParams.delete('error');
+                    url.searchParams.delete('error_msg');
+                    window.history.replaceState({}, document.title,
+                    url.pathname + url.search + url.hash);
+                    }
+                    }
+                    setTimeout(function(){
+                    var s = document.getElementById('approval-success-alert');
+                    var e = document.getElementById('approval-error-alert');
+                    if(s) s.style.display = 'none';
+                    if(e) e.style.display = 'none';
+                    }, 5000);
+                    })();
+                </script>
+
+            </div>
+
+        </t>
+    </template>
+
+</odoo>

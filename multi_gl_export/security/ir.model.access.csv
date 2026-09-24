@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_account_general_ledger_multi,account.general.ledger.report.handler.multi,account_reports.model_account_general_ledger_report_handler,,1,0,0,0

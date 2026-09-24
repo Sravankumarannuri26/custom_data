@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+        <template id="report_payment_document_custom" inherit_id="account.report_payment_receipt_document">
+            <xpath expr="//div[@t-if='o.partner_type']" position="replace">
+                <div class="col-6" t-if="o.partner_type">
+                    <t t-if="o.partner_type == 'customer'">
+                        Customer:
+                    </t>
+                    <t t-else="o.partner_type == 'supplier'">
+                        Vendor:
+                    </t>
+                    <b><span t-field="o.partner_id" data-oe-demo="Marc Demo"/></b><br></br>
+    <!--                <span class="no-border" style="font-size:20px;"><b><t t-esc="o.partner_id.name"/></b></span><br></br>-->
+                    <t t-if="o.partner_id.street"> <span class="no-border" style="padding-left: 70px"><t t-esc="o.partner_id.street"/>, <t t-esc="o.partner_id.street2"/></span><br></br></t>
+                    <t t-if="o.partner_id.city"><span class="no-border" style="padding-left: 70px"><t t-esc="o.partner_id.city"/></span><br></br></t>
+                    <t t-if="o.partner_id.zip"><span class="no-border" style="padding-left: 70px"><t t-esc="o.partner_id.zip"/></span><br></br></t>
+                    <t t-if="o.partner_id.state_id"><span class="no-border" style="padding-left: 70px"><t t-esc="o.partner_id.state_id.name"/>, <t t-esc="o.partner_id.country_id.name"/></span><br></br></t>
+                    <b><span class="no-border" style="padding-left: 70px">TRN :<t t-esc="o.partner_id.vat"/></span></b>
+                </div>
+            </xpath>
+        </template>
+
+
+        <template id="external_layout_standard" inherit_id="web.external_layout_standard" >
+            <xpath expr="//ul[@name='company_address_list']" position="replace">
+                <div name="company_address_list" >
+                    <span  ><t t-esc="o.company_id.name"/></span><br></br>
+                    <span  ><t t-esc="o.company_id.street"/>, <t t-esc="o.company_id.street2"/></span><br></br>
+                    <span  ><t t-esc="o.company_id.city"/>, </span>
+                    <span  ><t t-esc="o.company_id.zip"/></span><br></br>
+                    <span  ><t t-esc="o.company_id.state_id.name"/>, <t t-esc="o.company_id.country_id.name"/></span><br></br>
+                    <span  >TRN <t t-esc="o.company_id.vat"/></span>
+                </div>
+            </xpath>
+        </template>
+
+
+
+
+</odoo>

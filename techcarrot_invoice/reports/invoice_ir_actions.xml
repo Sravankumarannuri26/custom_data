@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+    <record id="paperformat_techcarret_invoice" model="report.paperformat">
+        <field name="name">Techcarret Invoice A4</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">8</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+    <!--    <field name="report_ids" eval="[(6, 0, [ref('account.account_invoices_without_payment'), ref('account.account_invoices')])]"/>-->
+        <field name="dpi">100</field>
+    </record>
+
+    <!--Generate the pdf report-->
+    <record id="action_generate_techcarrot_invoice_report" model="ir.actions.report">
+        <field name="name">Techcarrot Invoices/Bills</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">techcarrot_invoice.report_techcarrot_invoices</field>
+        <field name="report_file">techcarrot_invoice.report_techcarrot_invoices</field>
+        <field name="print_report_name">'%s' % object.name if object.state == 'posted' else 'Techcarrot Invoices_Bills'</field>
+        <field name="is_invoice_report">True</field>
+        <field name="paperformat_id" ref="techcarrot_invoice.paperformat_techcarret_invoice"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+    </record>
+
+<!--    &lt;!&ndash;Generate the India pdf report&ndash;&gt;-->
+<!--    <record id="action_generate_techcarrot_invoice_india_report" model="ir.actions.report">-->
+<!--        <field name="name">Techcarrot Invoices/Bills India</field>-->
+<!--        <field name="model">account.move</field>-->
+<!--        <field name="report_type">qweb-pdf</field>-->
+<!--        <field name="report_name">techcarrot_invoice.report_techcarrot_invoices_india</field>-->
+<!--        <field name="report_file">techcarrot_invoice.report_techcarrot_invoices_india</field>-->
+<!--        <field name="print_report_name">'%s' % object.name if object.state == 'posted' else 'Techcarrot Invoices_Bills India'</field>-->
+<!--        <field name="is_invoice_report">True</field>-->
+<!--        <field name="paperformat_id" ref="techcarrot_invoice.paperformat_techcarret_invoice"/>-->
+<!--        <field name="binding_model_id" ref="account.model_account_move"/>-->
+<!--    </record>-->
+
+</odoo>

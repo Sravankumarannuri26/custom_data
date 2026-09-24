@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Action to open workflow configuration (defines approval flow per ticket type) -->
+    <record id="action_workflow_level" model="ir.actions.act_window">
+        <field name="name">Workflow Level</field>
+        <field name="res_model">it.ticket.workflow.config</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Action to view average processing time for completed tickets -->
+    <record id="action_ticket_avg_processing" model="ir.actions.act_window">
+        <field name="name">Average Processing Time</field>
+        <field name="res_model">it.ticket.report.processing</field>
+        <field name="view_mode">kanban,form,graph</field>
+        <field name="domain">[('state','in',['done'])]</field>
+        <field name="context">{'group_by': []}</field>
+    </record>
+
+    <!-- Action to analyze tickets grouped by ticket type -->
+    <record id="action_ticket_by_type" model="ir.actions.act_window">
+        <field name="name">Tickets by Category</field>
+        <field name="res_model">it.ticket.report.type</field>
+        <field name="view_mode">kanban,form,graph</field>
+        <field name="context">{'group_by': 'ticket_type_id'}</field>
+    </record>
+
+    <!-- Action to view currently open tickets assigned to IT support -->
+    <record id="action_open_tickets_support" model="ir.actions.act_window">
+        <field name="name">Open Tickets per IT Support</field>
+        <field name="res_model">it.ticket.report.open</field>
+        <field name="domain">[('state','in',['assigned','in_progress'])]</field>
+        <field name="view_mode">kanban,form,graph</field>
+    </record>
+
+    <!-- Action to view completed (solved) tickets handled by IT support -->
+    <record id="action_solved_tickets_support" model="ir.actions.act_window">
+        <field name="name">Solved Tickets per IT Support</field>
+        <field name="res_model">it.ticket.report.solved</field>
+        <field name="domain">[('state','=','done')]</field>
+        <field name="view_mode">kanban,form,graph</field>
+    </record>
+
+    <!-- Server action to open reminder configuration wizard -->
+    <record id="action_open_reminder_server" model="ir.actions.server">
+        <field name="name">Reminder Configuration</field>
+        <field name="model_id" ref="model_it_ticket"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = model.open_reminder_wizard()
+        </field>
+    </record>
+
+    <!-- Server action to open duration configuration wizard -->
+    <record id="action_open_duration_server" model="ir.actions.server">
+        <field name="name">Duration Configuration</field>
+        <field name="model_id" ref="model_it_ticket"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = {
+            "type": "ir.actions.act_window",
+            "res_model": "it.duration.config.wizard",
+            "view_mode": "form",
+            "target": "new"
+            }
+        </field>
+    </record>
+
+    <!-- NEW: Action for HR Manager to view tickets pending HR approval -->
+    <record id="action_it_ticket_pending_hr_approval" model="ir.actions.act_window">
+        <field name="name">Pending My Approval</field>
+        <field name="res_model">it.ticket</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','hr_approval')]</field>
+    </record>
+
+    <!-- Root menu for IT Helpdesk module -->
+    <menuitem id="menu_it_tickets_root" name="IT Helpdesk" sequence="10"/>
+
+    <!-- Menu for IT Manager &amp; IT Team to view all tickets -->
+    <menuitem id="menu_it_tickets_all"
+              name="All Tickets"
+              parent="menu_it_tickets_root"
+              action="action_it_ticket_all"
+              sequence="10"
+              groups="ticketing_it.group_it_manager,ticketing_it.group_it_team"/>
+
+    <!-- Menu for Line Manager to view tickets of their team -->
+    <menuitem id="menu_it_tickets_my_team"
+              name="My Team's Tickets"
+              parent="menu_it_tickets_root"
+              action="action_it_ticket_my_approvals"
+              sequence="10"
+              groups="ticketing_it.group_line_manager"/>
+
+    <!-- Menu for Line Manager to view tickets pending their approval -->
+    <menuitem id="menu_it_tickets_pending_manager"
+              name="Pending My Approval"
+              parent="menu_it_tickets_root"
+              action="action_it_ticket_pending_manager"
+              sequence="20"
+              groups="ticketing_it.group_line_manager"/>
+
+    <!-- Menu for IT Manager to view tickets pending IT approval -->
+    <menuitem id="menu_it_tickets_pending_it"
+              name="Pending IT Approval"
+              parent="menu_it_tickets_root"
+              action="action_it_ticket_pending_it"
+              sequence="30"
+              groups="ticketing_it.group_it_manager"/>
+
+    <!-- NEW: Menu for HR Manager to view tickets pending HR approval -->
+    <menuitem id="menu_it_tickets_pending_hr"
+          name="Pending My Approval"
+          parent="menu_it_tickets_root"
+          action="action_it_ticket_pending_hr_approval"
+          sequence="25"
+          groups="employee_profile_change_request.group_profile_change_hr_reviewer"/>
+
+    <!-- Reports main menu (visible to IT Manager only) -->
+    <menuitem id="menu_it_ticket_reports"
+              name="Reports"
+              parent="menu_it_tickets_root"
+              groups="ticketing_it.group_it_manager"
+              sequence="40"/>
+
+    <!-- Menu for average processing time report -->
+    <menuitem id="menu_avg_processing"
+              name="Average Processing Time"
+              parent="menu_it_ticket_reports"
+              action="action_ticket_avg_processing"
+              sequence="10"/>
+
+    <!-- Menu for ticket category analysis -->
+    <menuitem id="menu_ticket_type"
+              name="Tickets by Type"
+              parent="menu_it_ticket_reports"
+              action="action_ticket_by_type"
+              sequence="20"/>
+
+    <!-- Menu for open tickets per IT support -->
+    <menuitem id="menu_open_support"
+              name="Open Tickets per Support"
+              parent="menu_it_ticket_reports"
+              action="action_open_tickets_support"
+              sequence="30"/>
+
+    <!-- Menu for solved tickets per IT support -->
+    <menuitem id="menu_solved_support"
+              name="Solved Tickets per Support"
+              parent="menu_it_ticket_reports"
+              action="action_solved_tickets_support"
+              sequence="20"/>
+
+    <!-- Configuration menu for IT Helpdesk settings -->
+    <menuitem id="menu_it_tickets_configuration"
+              name="Configuration"
+              parent="menu_it_tickets_root"
+              groups="ticketing_it.group_it_manager"
+              sequence="50"/>
+
+    <!-- Menu to configure reminder settings -->
+    <menuitem id="menu_it_tickets_configuration_reminders"
+              name="Reminders"
+              parent="menu_it_tickets_configuration"
+              action="action_open_reminder_server"
+              sequence="10"/>
+
+    <!-- Menu to configure social media access duration -->
+    <menuitem id="menu_it_tickets_configuration_duration"
+              name="Duration"
+              parent="menu_it_tickets_configuration"
+              action="action_open_duration_server"
+              sequence="20"/>
+
+    <!-- Menu to configure workflow levels -->
+        <!-- Menu to configure workflow levels -->
+    <menuitem id="menu_workflow_level"
+              name="Workflow Level"
+              parent="menu_it_tickets_configuration"
+              action="action_workflow_level"
+              groups="ticketing_it.group_it_manager"
+              sequence="30"/>
+
+    <!-- Submenu to manage ticket types and their workflows -->
+    <menuitem id="menu_ticket_workflow_config"
+              name="Ticket Types"
+              parent="menu_workflow_level"
+              action="action_ticket_workflow_config"
+              groups="ticketing_it.group_it_manager"
+              sequence="10"/>
+
+</odoo>

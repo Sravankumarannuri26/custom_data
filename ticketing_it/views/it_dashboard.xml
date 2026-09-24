@@ -1,0 +1,60 @@
+<odoo>
+
+    <!-- Action to display graph of open tickets grouped by type -->
+    <record id="action_helpdesk_open_ticket_graph" model="ir.actions.act_window">
+        <field name="name">Open Tickets by Type</field>
+        <field name="res_model">it.ticket</field>
+        <field name="view_mode">graph</field>
+        <field name="view_id" ref="view_it_ticket_open_graph"/>
+        <field name="domain">[('status_category','=','open')]</field>
+    </record>
+
+    <!-- Action to display graph of closed tickets grouped by type -->
+    <record id="action_helpdesk_closed_ticket_graph" model="ir.actions.act_window">
+        <field name="name">Closed Tickets by Type</field>
+        <field name="res_model">it.ticket</field>
+        <field name="view_mode">graph</field>
+        <field name="view_id" ref="view_it_ticket_closed_graph"/>
+        <field name="domain">[('status_category','=','closed')]</field>
+    </record>
+
+
+    <!-- Dashboard board view combining multiple ticket analytics -->
+    <record id="it_ticket_dashboard_board" model="ir.ui.view">
+        <field name="name">it.ticket.dashboard.board</field>
+        <field name="model">board.board</field>
+        <field name="arch" type="xml">
+            <form string="Dashboard">
+                <board style="1">
+                    <column>
+                        <!-- Widget to show open tickets graph -->
+                        <action string="Open Tickets" name="%(action_helpdesk_open_ticket_graph)d"/>
+
+                        <!-- Widget to show closed tickets graph -->
+                        <action string="Closed Tickets" name="%(action_helpdesk_closed_ticket_graph)d"/>
+                    </column>
+                </board>
+            </form>
+        </field>
+    </record>
+
+    <!-- Window action to open the dashboard board view -->
+    <record id="action_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard</field>
+        <field name="res_model">board.board</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="it_ticket_dashboard_board"/>
+        <field name="usage">menu</field>
+    </record>
+
+    <!-- Root menu for IT Helpdesk module -->
+    <menuitem id="menu_it_tickets_root" name="IT Helpdesk" sequence="10"/>
+
+    <!-- Menu item to access the dashboard -->
+    <menuitem id="menu_dashboard"
+              parent="menu_it_tickets_root"
+              action="action_dashboard"
+              sequence="5"
+              name="Dashboard"/>
+
+</odoo>

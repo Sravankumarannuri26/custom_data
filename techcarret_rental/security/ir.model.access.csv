@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_rental_invoice_history_all,rental.invoice.history,model_rental_invoice_history,base.group_user,1,1,1,1
+access_employee_workentry,employee.workentry,model_employee_workentry,base.group_user,1,1,1,1
+access_import_attendance,import_attendance,model_import_attendance,base.group_user,1,1,1,1
+access_import_attendance_line,import_attendance_line,model_import_attendance_line,base.group_user,1,1,1,1
+access_tecproject_type,tecproject_type,model_tecproject_type,base.group_user,1,1,1,1
+access_edit_product_desc,edit_product_desc,model_edit_product_desc,base.group_user,1,1,1,1

@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- LIST VIEW -->
+    <record id="view_it_ticket_tree" model="ir.ui.view">
+        <field name="name">it.ticket.tree</field>
+        <field name="model">it.ticket</field>
+        <field name="arch" type="xml">
+            <list string="IT Tickets" default_order="create_date desc">
+                <field name="name" string="Ticket #"/>
+                <field name="employee_id"/>
+                <field name="ticket_type_id"/>
+                <field name="priority" widget="priority"/>
+                <field name="state"
+                       decoration-success="state=='done'"
+                       decoration-danger="state=='rejected'"
+                       decoration-warning="state in ['manager_approval','it_approval']"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+    <!-- GRAPH VIEW -->
+    <record id="view_it_ticket_graph" model="ir.ui.view">
+        <field name="name">it.ticket.graph</field>
+        <field name="model">it.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Tickets Analysis" type="bar">
+                <field name="state" type="row"/>
+                <field name="id" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    <!-- FORM VIEW -->
+    <record id="view_it_ticket_form" model="ir.ui.view">
+        <field name="name">it.ticket.form</field>
+        <field name="model">it.ticket</field>
+        <field name="arch" type="xml">
+            <form string="IT Ticket">
+                <header>
+
+                    <!-- Submit -->
+                    <button name="action_submit"
+                            string="Submit"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+
+                    <!-- LINE MANAGER APPROVE -->
+                    <button name="action_manager_approve"
+                            string="Approve"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'manager_approval' or not is_line_manager"/>
+
+                    <!-- LINE MANAGER REJECT -->
+                    <button name="action_reject"
+                            string="Reject"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'manager_approval' or not is_line_manager"/>
+
+                    <!-- Category MANAGER APPROVE -->
+                    <!--                    <button name="action_category_manager_approve"-->
+                    <!--                            string="Approve"-->
+                    <!--                            type="object"-->
+                    <!--                            class="btn-primary"-->
+                    <!--                            groups="ticketing_it.group_category_manager"-->
+                    <!--                            invisible="state != 'category_manager_approval'"/>-->
+
+                    <!-- Category MANAGER REJECT -->
+                    <!--                    <button name="action_reject"-->
+                    <!--                            string="Reject"-->
+                    <!--                            type="object"-->
+                    <!--                            class="btn-secondary"-->
+                    <!--                            groups="ticketing_it.group_category_manager"-->
+                    <!--                            invisible="state != 'category_manager_approval'"/>-->
+
+                    <!-- IT MANAGER APPROVE -->
+                    <button name="action_it_approve"
+                            string="Approve"
+                            type="object"
+                            class="btn-primary"
+                            groups="ticketing_it.group_it_manager"
+                            invisible="state != 'it_approval'"/>
+
+                    <!-- IT MANAGER REJECT -->
+                    <button name="action_reject"
+                            string="Reject"
+                            type="object"
+                            class="btn-secondary"
+                            groups="ticketing_it.group_it_manager"
+                            invisible="state != 'it_approval'"/>
+
+                    <!--    Assignee - Start Work-->
+                    <button name="action_start_work"
+                            string="Start Work"
+                            type="object"
+                            class="btn-primary"
+                            groups="ticketing_it.group_it_team"
+                            invisible="state != 'assigned'"/>
+                    <!--    Assignee - Mark Done-->
+                    <button name="action_done"
+                            string="Mark Done"
+                            type="object"
+                            class="btn-primary"
+                            groups="ticketing_it.group_it_team"
+                            invisible="state != 'in_progress'"/>
+
+                    <!-- HR MANAGER APPROVE -->
+                    <button name="action_hr_approve"
+                            string="Approve"
+                            type="object"
+                            class="btn-success"
+                            groups="employee_profile_change_request.group_profile_change_hr_reviewer"
+                            invisible="state != 'hr_approval'"/>
+
+                    <!-- HR MANAGER REJECT -->
+                    <button name="action_reject"
+                            string="Reject"
+                            type="object"
+                            class="btn-danger"
+                            groups="employee_profile_change_request.group_profile_change_hr_reviewer"
+                            invisible="state != 'hr_approval'"/>
+                    <!-- Workflow 0 -->
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft,assigned,in_progress,done"
+                           invisible="workflow_level != '0'"/>
+
+                    <!-- Workflow 1 -->
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft,it_approval,assigned,in_progress,done"
+                           invisible="workflow_level != '1'"/>
+
+                    <!-- Workflow 2 -->
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft,manager_approval,it_approval,assigned,in_progress,done"
+                           invisible="workflow_level != '2'"/>
+
+                    <!-- Workflow 3 -->
+                    <!--                    <field name="state"-->
+                    <!--                           widget="statusbar"-->
+                    <!--                           statusbar_visible="draft,category_manager_approval,assigned,in_progress,done"-->
+                    <!--                           invisible="workflow_level != '3'"/>-->
+
+                    <!--                    &lt;!&ndash; Workflow 4 &ndash;&gt;-->
+                    <!--                    <field name="state"-->
+                    <!--                           widget="statusbar"-->
+                    <!--                           statusbar_visible="draft,category_manager_approval,it_approval,assigned,in_progress,done"-->
+                    <!--                           invisible="workflow_level != '4'"/>-->
+
+                </header>
+
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="employee_id" readonly="can_edit"/>
+                            <field name="ticket_type_id" readonly="1"/>
+                            <!--                            <field name="duration"-->
+                            <!--                                   groups="ticketing_it.group_it_manager,ticketing_it.group_category_manager"-->
+                            <!--                                   invisible="not is_social_media"/>-->
+
+                            <field name="duration"
+                                   invisible="not is_social_media"
+                            />
+                            <field name="custom_expiry_date"
+                                   invisible="duration != 'custom'"
+                                   required="duration == 'custom'"/>
+                            <!--                                   readonly="1"-->
+                            <!--                                   groups="!ticketing_it.group_it_manager"-->
+
+                            <field name="priority" widget="priority"/>
+                            <!--                            <field name="done_date"/>-->
+                            <field name="submitted_date"/>
+                        </group>
+                        <group>
+                            <field name="subject" widget="text" readonly="can_edit"/>
+                            <field name="required_date" readonly="can_edit"/>
+                            <field name="line_manager_id" readonly="1"/>
+                            <field name="it_manager_id" readonly="1"/>
+                            <!--                            <field name="category_manager_id"-->
+                            <!--                                   readonly="1"-->
+                            <!--                                   invisible="workflow_level not in ['3', '4']"/>-->
+                            <field name="assigned_to_id"
+                                   domain="[('id','in',allowed_it_users)]"
+                                   groups="ticketing_it.group_it_manager"
+                                   string="Assigned To"/>
+                            <field name="assigned_to_id"
+                                   readonly="1"
+                                   groups="!ticketing_it.group_it_manager"
+                                   string="Assigned To"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Description" name="description" readonly="1">
+                            <field name="description" widget="html"/>
+                        </page>
+                        <page string="Rejection Info" name="rejection" invisible="state != 'rejected'">
+                            <group>
+                                <field name="rejected_by_id"/>
+                                <field name="rejected_date"/>
+                                <field name="rejection_reason"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <!-- Open Tickets Graph -->
+    <record id="view_it_ticket_open_graph" model="ir.ui.view">
+        <field name="name">it.ticket.open.graph</field>
+        <field name="model">it.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Open Tickets by Type" type="bar">
+                <!-- X-axis: Ticket Type -->
+                <field name="ticket_type_id" type="row"/>
+                <!-- Y-axis: Count -->
+                <field name="open_count" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    <!-- Closed Tickets Graph -->
+    <record id="view_it_ticket_closed_graph" model="ir.ui.view">
+        <field name="name">it.ticket.closed.graph</field>
+        <field name="model">it.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Closed Tickets by Type" type="bar">
+                <!-- X-axis: Ticket Type -->
+                <field name="ticket_type_id" type="row"/>
+                <!-- Y-axis: Count -->
+                <field name="closed_count" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ACTIONS -->
+    <record id="action_it_ticket_all" model="ir.actions.act_window">
+        <field name="name">All Tickets</field>
+        <field name="res_model">it.ticket</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+    </record>
+    <record id="action_it_ticket_my_approvals" model="ir.actions.act_window">
+        <field name="name">My Team's Tickets</field>
+        <field name="res_model">it.ticket</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('line_manager_id', '=', uid)]</field>
+        <field name="context">{}</field>
+    </record>
+    <!--    <record id="action_it_ticket_category_manager_approvals" model="ir.actions.act_window">-->
+    <!--        <field name="name">Tickets</field>-->
+    <!--        <field name="res_model">it.ticket</field>-->
+    <!--        <field name="view_mode">list,form</field>-->
+    <!--        <field name="domain">[('category_manager_id', '=', uid)]</field>-->
+    <!--        <field name="context">{}</field>-->
+    <!--    </record>-->
+
+    <record id="action_it_ticket_pending_manager" model="ir.actions.act_window">
+        <field name="name">Pending My Approval</field>
+        <field name="res_model">it.ticket</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">['|', '&amp;', ('state','=','manager_approval'), ('line_manager_id', '=', uid),
+            ('state','=','hr_approval')]
+        </field>
+    </record>
+
+    <!--    <record id="action_it_ticket_pending_category_manager" model="ir.actions.act_window">-->
+    <!--        <field name="name">Pending Category Manager Approval</field>-->
+    <!--        <field name="res_model">it.ticket</field>-->
+    <!--        <field name="view_mode">list,form</field>-->
+    <!--        <field name="domain">[('state','=','category_manager_approval'), ('category_manager_id', '=', uid)]</field>-->
+    <!--        <field name="context">{}</field>-->
+    <!--    </record>-->
+
+    <record id="action_it_ticket_pending_it" model="ir.actions.act_window">
+        <field name="name">Pending IT Approval</field>
+        <field name="res_model">it.ticket</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','it_approval')]</field>
+        <field name="context">{}</field>
+    </record>
+
+</odoo>

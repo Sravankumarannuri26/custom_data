@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Adds an "IT Ticket Approvals" entry point to the standard portal home
+        page (/my) for users who are a Line Manager or IT Manager on at least
+        one ticket. This is the discoverable link for portal-only approvers
+        who have no backend access to the Helpdesk app.
+    -->
+    <template id="portal_my_home_it_approvals" name="Portal My Home: IT Ticket Approvals"
+              inherit_id="portal.portal_my_home" priority="20">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-if="request.env.user.has_group('ticketing_it.group_it_manager') or
+                     request.env['it.ticket'].sudo().search_count(
+                         [('line_manager_id', '=', request.env.user.id)]) > 0">
+                <div class="col-12 col-md-6 col-lg-4 mb-4">
+                    <a href="/my/it-approvals"
+                       class="o_portal_my_doc_card card h-100 text-decoration-none">
+                        <div class="card-body d-flex align-items-center gap-3">
+                            <i class="fa fa-gavel fa-2x text-primary"/>
+                            <div>
+                                <h5 class="card-title mb-1">IT Ticket Approvals</h5>
+                                <p class="card-text text-muted mb-0" style="font-size:13px;">
+                                    Review and approve/reject pending IT tickets
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </t>
+        </xpath>
+    </template>
+</odoo>

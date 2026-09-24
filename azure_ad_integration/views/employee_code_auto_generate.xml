@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--  Add Employee Code and Related Fields to Form  -->
+    <record id="view_employee_form_code_fields" model="ir.ui.view">
+        <field name="name">hr.employee.form.code.fields</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Add emp_code field after work_email -->
+            <xpath expr="//field[@name='work_email']/.." position="after">
+                <group col="2" colspan="2">
+                    <label for="emp_code" string="Emp Code"/>
+                    <field name="emp_code" placeholder="Generate Employee Code" nolabel="1"/>
+                </group>
+            </xpath>
+
+            <!-- Add line_manager_id after parent_id -->
+            <xpath expr="//page[@name='work_information']//field[@name='parent_id']" position="after">
+                <field name="line_manager_id"/>
+            </xpath>
+
+            <!-- Add the 3 SELECTION FIELDS (engagement_location, payroll_location, employment_type) -->
+            <xpath expr="//field[@name='employee_properties']" position="before">
+                <group string="Employee Classification" colspan="4" col="4">
+                    <group colspan="2">
+<!--                        <field name="engagement_location" widget="selection"/>-->
+                        <field name="payroll_location" widget="selection"/>
+                    </group>
+                    <group colspan="2">
+                        <field name="employment_type" widget="selection"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!--  Add Generate Button in header - HIDES when emp_code exists  -->
+    <record id="view_employee_form_code_button" model="ir.ui.view">
+        <field name="name">hr.employee.form.code.button</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_open_code_generation_wizard"
+                        type="object"
+                        string="Generate Employee Code"
+                        class="oe_highlight"
+                        invisible="emp_code"
+                        help="Generate employee code based on classification. Button hides when code exists."/>
+            </xpath>
+        </field>
+    </record>
+
+    <!--  Bulk Generate Action  -->
+    <record id="action_bulk_generate_codes" model="ir.actions.server">
+        <field name="name">Generate Employee Codes (Bulk)</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_bulk_generate_employee_codes()</field>
+    </record>
+</odoo>

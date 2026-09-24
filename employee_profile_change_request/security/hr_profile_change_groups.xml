@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         Odoo 19 uses res.groups.privilege instead of
+         ir.module.category for grouping groups in Settings.
+         privilege_id replaces category_id on res.groups.
+    ══════════════════════════════════════════════════════════ -->
+
+    <!-- Step 1: Create the privilege (section header in Settings > Users) -->
+    <record id="privilege_profile_change_approval" model="res.groups.privilege">
+        <field name="name">Profile Change Approval</field>
+        <field name="sequence">100</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
+    <!-- Step 2: Create the group with privilege_id instead of category_id -->
+    <record id="group_profile_change_hr_reviewer" model="res.groups">
+        <field name="name">HR Reviewer</field>
+        <field name="sequence">10</field>
+        <field name="privilege_id" ref="privilege_profile_change_approval"/>
+        <field name="comment">
+            Users in this group can view, approve, and reject employee
+            profile change requests submitted from the self-service portal.
+        </field>
+        <field name="implied_ids" eval="[(6, 0, [ref('hr.group_hr_user')])]"/>
+    </record>
+
+</odoo>

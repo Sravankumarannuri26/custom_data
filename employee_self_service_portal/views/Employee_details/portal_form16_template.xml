@@ -1,0 +1,127 @@
+<odoo>
+    <template id="portal_form16" name="My Form 16">
+        <t t-call="portal.portal_layout">
+            <div class="o_portal">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2><i class="fa fa-file-pdf-o me-2"></i>My Form 16</h2>
+                            <div class="text-muted">
+                                <small>Total Records: <span class="badge badge-info" t-esc="len(form16_records)"/></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fa fa-filter me-2"></i>Filters</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" action="/my/employee/form16" class="row">
+                            <div class="col-md-4 mb-2">
+                                <label for="filter_year" class="form-label">Financial Year</label>
+                                <select name="financial_year" id="filter_year" class="form-control" onchange="this.form.submit()">
+                                    <option value="" t-att-selected="selected_year == ''">All</option>
+                                    <t t-foreach="all_years" t-as="fy">
+                                        <option t-att-value="fy" t-att-selected="fy == selected_year">
+                                            <t t-esc="fy"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+<!--                            <div class="col-md-4 mb-2 d-flex align-items-end">-->
+<!--                                <button type="submit" class="btn btn-primary me-2" style="margin-right:20px;">-->
+<!--                                    <i class="fa fa-search me-1"></i>Filter-->
+<!--                                </button>-->
+<!--                                <a href="/my/employee/form16" class="btn btn-secondary">-->
+<!--                                    <i class="fa fa-refresh me-1"></i>Clear-->
+<!--                                </a>-->
+<!--                            </div>-->
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Error Messages -->
+                <t t-if="request.params.get('error') == 'not_found'">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fa fa-exclamation-triangle me-2"></i>
+                        Form 16 not found or access denied.
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                </t>
+
+                <!-- Form 16 Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fa fa-list me-2"></i>Form 16 History</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <t t-if="form16_records">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th><i class="fa fa-user me-1"></i>Employee</th>
+                                            <th><i class="fa fa-calendar me-1"></i>Financial Year</th>
+                                            <th><i class="fa fa-file-pdf-o me-1"></i>File</th>
+                                            <th class="text-center"><i class="fa fa-cogs me-1"></i>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="form16_records" t-as="rec">
+                                            <tr>
+                                                <td>
+                                                    <strong t-esc="rec.employee_id.name"/>
+                                                </td>
+                                                <td>
+                                                    <span class="badge badge-info">
+                                                        <i class="fa fa-calendar-o me-1"></i>
+                                                        <t t-esc="rec.financial_year"/>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        <i class="fa fa-file-pdf-o me-1"></i>
+                                                        <t t-esc="rec.form16_filename or 'Form16.pdf'"/>
+                                                    </small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a t-att-href="'/my/employee/form16/download/%d' % rec.id"
+                                                       class="btn btn-sm btn-success"
+                                                       title="Download Form 16">
+                                                        <i class="fa fa-download me-1"></i>Download
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="text-center py-5">
+                                <i class="fa fa-file-pdf-o fa-3x text-muted mb-3"></i>
+                                <h4 class="text-muted">No Form 16 Found</h4>
+                                <p class="text-muted">No Form 16 records match your current filter criteria.</p>
+                                <a href="/my/employee/form16" class="btn btn-primary">
+                                    <i class="fa fa-refresh me-2"></i>View All
+                                </a>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+
+                <!-- Back Button -->
+                <div class="mt-4">
+                    <a href="/my/ess" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

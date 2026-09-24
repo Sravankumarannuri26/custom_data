@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <template id="report_techcarrot_invoices_document_total_inherit"
+                  inherit_id="techcarrot_invoice.report_techcarrot_invoices_document">
+
+
+            <xpath expr="//table[@name='invoice_line_table']/following-sibling::br[1]" position="replace">
+            </xpath>
+
+            <xpath expr="//table[@name='invoice_line_table']/following-sibling::br[1]" position="replace">
+            </xpath>
+
+
+            <xpath expr="//table[@name='invoice_line_table']//tbody/tr[last()]" position="after">
+                <t t-set="amount_untaxed_fmt" t-value="'{:,.2f}'.format(o.amount_untaxed)"/>
+                <t t-set="amount_tax_fmt"     t-value="'{:,.2f}'.format(o.amount_tax)"/>
+                <t t-set="amount_total_fmt"   t-value="'{:,.2f}'.format(o.amount_total)"/>
+                <tr style="border-top:1px solid #000;border-bottom:1px solid #000;border-left:none;border-right:none;">
+                    <td colspan="2" style="border:none;"></td>
+                    <td class="text-end" style="border:none;">
+                        <b>Total</b>
+                    </td>
+                    <td class="text-end" style="border:none;">
+                        <b><span t-esc="o.currency_id.name"/>&#160;<span t-esc="amount_untaxed_fmt"/></b>
+                    </td>
+                    <td class="text-end" style="border:none;">
+                        <b><span t-esc="o.currency_id.name"/>&#160;<span t-esc="amount_tax_fmt"/></b>
+                    </td>
+                    <td class="text-end" style="border:none;">
+                        <b><span t-esc="o.currency_id.name"/>&#160;<span t-esc="amount_total_fmt"/></b>
+                    </td>
+                </tr>
+            </xpath>
+
+           
+            <xpath expr="//div[@id='right-elements']" position="replace">
+                <div class="text-end mt-2 mb-3">
+                    <p class="text-muted lh-sm" style="font-size:11px;">
+                        Total In Words:<b>
+                            <span t-field="o.currency_id.name"/>&#160;<span t-field="o.amount_total_words"/>
+                        </b>
+                    </p>
+                </div>
+            </xpath>
+
+        </template>
+
+    </data>
+</odoo>

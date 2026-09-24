@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+<!--code commented by sriman as contract view is removed in odoo 19-->
+<!--    <record id="techcarrot_employee_contract_inherit" model="ir.ui.view">-->
+<!--        <field name="name">hr.contract.form</field>-->
+<!--        <field name="model">hr.contract</field>-->
+<!--        <field name="inherit_id" ref="l10n_ae_hr_payroll.hr_contract_view_form"/>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <xpath expr="//div[@name='l10n_ae_other_allowances']" position="after">-->
+<!--                <field name="aat_allowance" string="MI Allowance"/>-->
+<!--                <field name="sub_total"/>-->
+<!--            </xpath>-->
+<!--            <xpath expr="//field[@name='employee_id']" position="after">-->
+<!--                <field name="emp_code" invisible="1"/>-->
+<!--            </xpath>-->
+<!--        </field>-->
+<!--    </record>-->
+
+<!--    code is added by sriman as contract is removed in odoo19-->
+    <record id="techcarrot_employee_ae_payroll_inherit" model="ir.ui.view">
+        <field name="name">hr.employee.ae.payroll.form.inherit</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="l10n_ae_hr_payroll.hr_employee_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//separator)[1]" position="before">
+                <field name="aat_allowance" string="MI Allowance"/>
+                <field name="sub_total"/>
+            </xpath>
+
+        </field>
+    </record>
+
+
+<!--    HR Salary Attachment-->
+    <record id="techcarrot_employee_salary_attachment_inherit" model="ir.ui.view">
+        <field name="name">hr.salary.attachment.form</field>
+        <field name="model">hr.salary.attachment</field>
+        <field name="inherit_id" ref="hr_payroll.hr_salary_attachment_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='employee_ids']" position="after">
+                <field name="emp_code" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+<!--    HR Leave-->
+    <record id="techcarrot_employee_leave_inherit" model="ir.ui.view">
+        <field name="name">hr.leave.form</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_form_manager"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='company_id']" position="before">
+                <field name="emp_code" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_employee_manual_salary_block" model="ir.ui.view">
+    <field name="name">hr.employee.manual.salary.block</field>
+    <field name="model">hr.employee</field>
+    <field name="inherit_id" ref="l10n_in_hr_payroll.hr_employee_view_form_in_inherit"/>
+    <field name="arch" type="xml">
+
+        <!-- Insert before Salary Components -->
+        <xpath expr="//group[@name='payroll_group']" position="inside">
+
+            <group string="Manual Salary Components" invisible="country_code != 'IN'">
+
+                <label for="basic_salary_manual"/>
+                <div class="o_row">
+                    <field name="basic_salary_manual"/>
+                    <span>/ month</span>
+                </div>
+
+                <label for="hra_manual"/>
+                <div class="o_row">
+                    <field name="hra_manual"/>
+                    <span>/ month</span>
+                </div>
+
+                <label for="flexi_manual"/>
+                <div class="o_row">
+                    <field name="flexi_manual"/>
+                    <span>/ month</span>
+                </div>
+
+                <label for="statutory_manual"/>
+                <div class="o_row">
+                    <field name="statutory_manual"/>
+                    <span>/ month</span>
+                </div>
+
+                <label for="gratuity_manual"/>
+                <div class="o_row">
+                    <field name="gratuity_manual"/>
+                    <span>/ month</span>
+                </div>
+
+                <label for="pf_manual"/>
+                <div class="o_row">
+                    <field name="pf_manual"/>
+                    <span>/ month</span>
+                </div>
+
+                <label for="medical_manual"/>
+                <div class="o_row">
+                    <field name="medical_manual"/>
+                    <span>/ month</span>
+                </div>
+
+            </group>
+
+        </xpath>
+
+    </field>
+</record>
+
+ 
+
+</odoo>

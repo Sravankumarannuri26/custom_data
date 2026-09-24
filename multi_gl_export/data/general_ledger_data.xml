@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="general_ledger_report_reference_column"
+                model="account.report.column">
+            <field name="name">Project Reference</field>
+            <field name="expression_label">name</field>
+            <field name="figure_type">string</field>
+             <field name="sequence">1</field>
+            <field name="report_id"
+                   ref="account_reports.general_ledger_report"/>
+        </record>
+        <record id="general_ledger_report_ref_column"
+                model="account.report.column">
+            <field name="name">Reference</field>
+            <field name="expression_label">ref</field>
+            <field name="figure_type">string</field>
+            <field name="sequence">2</field>
+            <field name="report_id"
+                   ref="account_reports.general_ledger_report"/>
+        </record>
+        <record id="general_ledger_report_project_column"
+                model="account.report.column">
+            <field name="name">Project Code</field>
+            <field name="expression_label">project</field>
+            <field name="figure_type">string</field>
+             <field name="sequence">3</field>
+            <field name="report_id"
+                   ref="account_reports.general_ledger_report"/>
+        </record>
+        <record id="general_ledger_report_label_column"
+                model="account.report.column">
+            <field name="name">Label</field>
+            <field name="expression_label">label</field>
+            <field name="figure_type">string</field>
+             <field name="sequence">4</field>
+            <field name="report_id"
+                   ref="account_reports.general_ledger_report"/>
+        </record>
+
+
+        <record id="general_ledger_line_reference_expression"
+                model="account.report.expression">
+            <field name="label">name</field>
+            <field name="engine">custom</field>
+            <field name="formula">
+                _report_custom_engine_general_ledger
+            </field>
+            <field name="subformula">name</field>
+            <field name="report_line_id"
+                   ref="account_reports.general_ledger_custom_engine_line"/>
+        </record>
+        <record id="general_ledger_line_ref_expression"
+                model="account.report.expression">
+            <field name="label">ref</field>
+            <field name="engine">custom</field>
+            <field name="formula">
+                _report_custom_engine_general_ledger
+            </field>
+            <field name="subformula">ref</field>
+            <field name="report_line_id"
+                   ref="account_reports.general_ledger_custom_engine_line"/>
+        </record>
+
+
+        <record id="general_ledger_line_project_expression"
+                model="account.report.expression">
+            <field name="label">project</field>
+            <field name="engine">custom</field>
+            <field name="formula">
+                _report_custom_engine_general_ledger
+            </field>
+            <field name="subformula">project</field>
+            <field name="report_line_id"
+                   ref="account_reports.general_ledger_custom_engine_line"/>
+        </record>
+
+        <record id="general_ledger_line_project_expression"
+                model="account.report.expression">
+            <field name="label">label</field>
+            <field name="engine">custom</field>
+            <field name="formula">
+                _report_custom_engine_general_ledger
+            </field>
+            <field name="subformula">label</field>
+            <field name="report_line_id"
+                   ref="account_reports.general_ledger_custom_engine_line"/>
+        </record>
+
+    </data>
+</odoo>
+ 
