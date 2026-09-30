@@ -2,7 +2,7 @@ import json
 from odoo import http
 from odoo.http import request
 
-API_KEY = "dd7ef9db2080651a656e5a9dbfed5a03ef9616a7"  # move to a config param later
+API_KEY = "dd7ef9db2080651a656e5a9dbfed5a03ef9616a7"
 
 
 class EssIntegrationAPI(http.Controller):
@@ -17,71 +17,53 @@ class EssIntegrationAPI(http.Controller):
         if not self._check_auth():
             return request.make_response(
                 json.dumps({'error': 'Unauthorized'}),
-                headers={'Content-Type': 'application/json'},
-                status=401
+                headers={'Content-Type': 'application/json'}, status=401
             )
 
         email = kwargs.get('email')
         if not email:
             return request.make_response(
                 json.dumps({'error': 'email parameter required'}),
-                headers={'Content-Type': 'application/json'},
-                status=400
+                headers={'Content-Type': 'application/json'}, status=400
             )
 
         employee = request.env['hr.employee'].sudo().search([('work_email', '=', email)], limit=1)
         if not employee:
             return request.make_response(
                 json.dumps({'error': 'Employee not found'}),
-                headers={'Content-Type': 'application/json'},
-                status=404
+                headers={'Content-Type': 'application/json'}, status=404
             )
 
-        leave_types = request.env['hr.leave.type'].sudo().search([])
+        leave_types = request.env['hr.leave.type'].with_context(
+            employee_id=employee.id
+        ).sudo().search([('active', '=', True)])
+
         balances = []
         for lt in leave_types:
-            balances.append({
-                'name': lt.name,
-                'remaining': lt.with_context(employee_id=employee.id).virtual_remaining_leaves,
-            })
+            remaining = lt.with_context(employee_id=employee.id).virtual_remaining_leaves
+            has_allocation = request.env['hr.leave.allocation'].sudo().search_count([
+                ('employee_id', '=', employee.id),
+                ('holiday_status_id', '=', lt.id),
+                ('state', '=', 'validate'),
+            ]) > 0
+            if not has_allocation and remaining == 0:
+                continue
+            balances.append({'name': lt.name, 'remaining': remaining})
 
-        return request.make_response(
-            json.dumps({'employee': employee.name, 'balances': balances}),
-            headers={'Content-Type': 'application/json'}
-        )
+        leave_pending_count = request.env['hr.leave'].sudo().search_count([
+            ('employee_id', '=', employee.id),
+            ('state', 'in', ['confirm', 'validate1']),
+        ])
+        leave_approved_count = request.env['hr.leave'].sudo().search_count([
+            ('employee_id', '=', employee.id),
+            ('state', '=', 'validate'),
+        ])
+        leave_balance_days = round(sum(b['remaining'] for b in balances), 1)
 
-    @http.route('/api/ess/apply_leave', type='http', auth='public', methods=['POST'], csrf=False)
-    def apply_leave(self, **kwargs):
-        if not self._check_auth():
-            return request.make_response(
-                json.dumps({'error': 'Unauthorized'}),
-                headers={'Content-Type': 'application/json'}, status=401
-            )
-
-        email = kwargs.get('email')
-        leave_type_name = kwargs.get('leave_type', 'Annual Leave')
-        date_from = kwargs.get('date_from')
-        date_to = kwargs.get('date_to')
-
-        employee = request.env['hr.employee'].sudo().search([('work_email', '=', email)], limit=1)
-        if not employee:
-            return request.make_response(json.dumps({'error': 'Employee not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
-
-        leave_type = request.env['hr.leave.type'].sudo().search([('name', '=', leave_type_name)], limit=1)
-        if not leave_type:
-            return request.make_response(json.dumps({'error': 'Leave type not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
-
-        leave = request.env['hr.leave'].sudo().create({
-            'employee_id': employee.id,
-            'holiday_status_id': leave_type.id,
-            'request_date_from': date_from,
-            'request_date_to': date_to,
-            'name': 'Applied via ESS Community test',
-        })
-
-        return request.make_response(
-            json.dumps({'success': True, 'leave_id': leave.id, 'state': leave.state}),
-            headers={'Content-Type': 'application/json'}
-        )
+        return request.make_response(json.dumps({
+            'employee': employee.name,
+            'balances': balances,
+            'pending_count': leave_pending_count,
+            'approved_count': leave_approved_count,
+            'balance_days': leave_balance_days,
+        }), headers={'Content-Type': 'application/json'})
