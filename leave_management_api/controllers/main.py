@@ -2,6 +2,7 @@ import json
 import base64
 import urllib.parse
 from datetime import timedelta
+from odoo import SUPERUSER_ID
 from odoo import http, fields
 from odoo.http import request
 from odoo.exceptions import ValidationError
@@ -501,7 +502,7 @@ class LeaveManagementAPI(http.Controller):
                 day_period = 'Full Day'
 
         # --- FIX: read 'name' (reason) explicitly via read() to bypass masking ---
-        reason_raw = request.env['hr.leave'].sudo().browse(leave.id).read(['name'])
+        reason_raw = request.env['hr.leave'].with_user(SUPERUSER_ID).sudo().browse(leave.id).read(['name'])
         reason_value = reason_raw[0]['name'] if reason_raw else None
 
         return request.make_response(json.dumps({
