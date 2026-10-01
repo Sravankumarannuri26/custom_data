@@ -623,3 +623,151 @@ class LeaveManagementAPI(http.Controller):
         except Exception:
             return request.make_response(json.dumps({'success': False, 'error': 'Failed to send reminder. Please try again.'}),
                                          headers={'Content-Type': 'application/json'})
+
+    # ---------- manager helpers ----------
+
+    def _is_line_manager(self, employee):
+        return request.env['hr.employee'].sudo().search_count([
+            ('line_manager_id.user_id', '=', employee.user_id.id),
+        ]) > 0 if employee.user_id else False
+
+    def _get_approvable_leave(self, leave_id, manager_employee):
+        leave = request.env['hr.leave'].sudo().browse(int(leave_id))
+        if not leave.exists():
+            return False
+        mgr_user = leave.employee_id.line_manager_id.user_id
+        if not mgr_user or not manager_employee.user_id or mgr_user.id != manager_employee.user_id.id:
+            return False
+        return leave
+
+    # ---------- GET /api/ess/approvals ----------
+
+    @http.route('/api/ess/approvals', type='http', auth='public', methods=['GET'], csrf=False)
+    def get_approvals(self, **kwargs):
+        if not self._check_auth():
+            return self._unauthorized()
+
+        email = kwargs.get('email')
+        employee = self._get_employee(email)
+        if not employee:
+            return request.make_response(json.dumps({'error': 'Employee not found'}),
+                                         headers={'Content-Type': 'application/json'}, status=404)
+
+        if not self._is_line_manager(employee):
+            return request.make_response(json.dumps({'error': 'Not a line manager'}),
+                                         headers={'Content-Type': 'application/json'}, status=403)
+
+        filterby = kwargs.get('filterby', 'pending')
+        filter_map = {
+            'pending': [('state', '=', 'confirm')],
+            'approved': [('state', 'in', ['validate1', 'validate'])],
+            'rejected': [('state', '=', 'refuse')],
+        }
+        domain = [
+            ('employee_id.line_manager_id.user_id', '=', employee.user_id.id),
+        ] + filter_map.get(filterby, filter_map['pending'])
+
+        leaves = request.env['hr.leave'].sudo().search(domain, order='write_date desc')
+
+        leaves_out = [{
+            'id': lv.id,
+            'employee_name': lv.employee_id.name,
+            'leave_type': lv.holiday_status_id.name,
+            'date_from': lv.request_date_from.strftime('%d/%m/%Y') if lv.request_date_from else None,
+            'date_to': lv.request_date_to.strftime('%d/%m/%Y') if lv.request_date_to else None,
+            'number_of_days': lv.number_of_days,
+            'state': lv.state,
+        } for lv in leaves]
+
+        return request.make_response(json.dumps({
+            'is_line_manager': True,
+            'filterby': filterby,
+            'leaves': leaves_out,
+        }), headers={'Content-Type': 'application/json'})
+
+    # ---------- POST /api/ess/approvals/<id>/approve ----------
+
+    @http.route('/api/ess/approvals/<int:leave_id>/approve', type='http', auth='public', methods=['POST'], csrf=False)
+    def approve_leave(self, leave_id, **post):
+        if not self._check_auth():
+            return self._unauthorized()
+
+        email = post.get('email')
+        manager_employee = self._get_employee(email)
+        if not manager_employee:
+            return request.make_response(json.dumps({'success': False, 'error': 'Employee not found'}),
+                                         headers={'Content-Type': 'application/json'}, status=404)
+
+        if not self._is_line_manager(manager_employee):
+            return request.make_response(json.dumps({'success': False, 'error': 'Not authorized'}),
+                                         headers={'Content-Type': 'application/json'}, status=403)
+
+        leave = self._get_approvable_leave(leave_id, manager_employee)
+        if not leave:
+            return request.make_response(json.dumps({
+                'success': False, 'error': 'You are not authorised to act on this request.'
+            }), headers={'Content-Type': 'application/json'})
+
+        if leave.state not in ('confirm', 'validate1'):
+            return request.make_response(json.dumps({
+                'success': False, 'error': 'This request is no longer pending.'
+            }), headers={'Content-Type': 'application/json'})
+
+        try:
+            leave_company = leave.employee_id.company_id
+            leave.with_company(leave_company).with_context(
+                allowed_company_ids=[leave_company.id]
+            ).action_approve()
+            leave.message_post(
+                body="Approved via portal by line manager: %s" % manager_employee.name,
+                subtype_xmlid='mail.mt_note',
+            )
+            return request.make_response(json.dumps({'success': True}), headers={'Content-Type': 'application/json'})
+        except Exception:
+            request.env.cr.rollback()
+            return request.make_response(json.dumps({
+                'success': False, 'error': 'Could not approve this request. Please try again or contact HR.'
+            }), headers={'Content-Type': 'application/json'})
+
+    # ---------- POST /api/ess/approvals/<id>/reject ----------
+
+    @http.route('/api/ess/approvals/<int:leave_id>/reject', type='http', auth='public', methods=['POST'], csrf=False)
+    def reject_leave(self, leave_id, **post):
+        if not self._check_auth():
+            return self._unauthorized()
+
+        email = post.get('email')
+        manager_employee = self._get_employee(email)
+        if not manager_employee:
+            return request.make_response(json.dumps({'success': False, 'error': 'Employee not found'}),
+                                         headers={'Content-Type': 'application/json'}, status=404)
+
+        if not self._is_line_manager(manager_employee):
+            return request.make_response(json.dumps({'success': False, 'error': 'Not authorized'}),
+                                         headers={'Content-Type': 'application/json'}, status=403)
+
+        leave = self._get_approvable_leave(leave_id, manager_employee)
+        if not leave:
+            return request.make_response(json.dumps({
+                'success': False, 'error': 'You are not authorised to act on this request.'
+            }), headers={'Content-Type': 'application/json'})
+
+        if leave.state not in ('confirm', 'validate1'):
+            return request.make_response(json.dumps({
+                'success': False, 'error': 'This request is no longer pending.'
+            }), headers={'Content-Type': 'application/json'})
+
+        reason = (post.get('reject_reason') or '').strip()
+
+        try:
+            leave.action_refuse()
+            note = "Rejected via portal by line manager: %s" % manager_employee.name
+            if reason:
+                note += "<br/>Reason: %s" % reason
+            leave.message_post(body=note, subtype_xmlid='mail.mt_note')
+            return request.make_response(json.dumps({'success': True}), headers={'Content-Type': 'application/json'})
+        except Exception:
+            request.env.cr.rollback()
+            return request.make_response(json.dumps({
+                'success': False, 'error': 'Could not reject this request. Please try again or contact HR.'
+            }), headers={'Content-Type': 'application/json'})
