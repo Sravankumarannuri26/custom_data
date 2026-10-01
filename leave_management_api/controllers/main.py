@@ -771,3 +771,33 @@ class LeaveManagementAPI(http.Controller):
             return request.make_response(json.dumps({
                 'success': False, 'error': 'Could not reject this request. Please try again or contact HR.'
             }), headers={'Content-Type': 'application/json'})
+
+    # ---------- GET /api/ess/approvals/summary ----------
+
+    @http.route('/api/ess/approvals/summary', type='http', auth='public', methods=['GET'], csrf=False)
+    def get_approvals_summary(self, **kwargs):
+        if not self._check_auth():
+            return self._unauthorized()
+
+        email = kwargs.get('email')
+        employee = self._get_employee(email)
+        if not employee:
+            return request.make_response(json.dumps({'error': 'Employee not found'}),
+                                         headers={'Content-Type': 'application/json'}, status=404)
+
+        is_manager = self._is_line_manager(employee)
+        if not is_manager:
+            return request.make_response(json.dumps({'is_line_manager': False}),
+                                         headers={'Content-Type': 'application/json'})
+
+        base = [('employee_id.line_manager_id.user_id', '=', employee.user_id.id)]
+        pending_count = request.env['hr.leave'].sudo().search_count(base + [('state', '=', 'confirm')])
+        approved_count = request.env['hr.leave'].sudo().search_count(base + [('state', 'in', ['validate1', 'validate'])])
+        rejected_count = request.env['hr.leave'].sudo().search_count(base + [('state', '=', 'refuse')])
+
+        return request.make_response(json.dumps({
+            'is_line_manager': True,
+            'pending_count': pending_count,
+            'approved_count': approved_count,
+            'rejected_count': rejected_count,
+        }), headers={'Content-Type': 'application/json'})
