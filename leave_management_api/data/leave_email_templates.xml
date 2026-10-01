@@ -1,0 +1,711 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="email_template_leave_manager_notification" model="mail.template">
+            <field name="name">Leave Request - Manager Notification</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+            <field name="subject">Action Required: Leave from {{ object.employee_id.name }} [{{
+                object.request_date_from.strftime('%d-%m-%Y') if object.request_date_from else '' }}] (Ref
+                #{{ object.id }})
+            </field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+            <field name="email_to">{{ object.user_id.email or object.employee_id.leave_manager_id.user_id.email or ''
+                }}
+            </field>
+
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+
+                    <div style="background-color: #2D6A4F; padding: 15px; border-radius: 5px;">
+                        <h2 style="color: white; margin: 0;">Leave Request - Approval Required</h2>
+                    </div>
+
+                    <p>Dear Approver,</p>
+
+                    <p>A new leave request has been submitted by <strong><t t-esc="object.employee_id.name"/></strong> and requires your approval.</p>
+
+                    <table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse: collapse; margin: 15px 0;">
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Employee</strong></td>
+                            <td><t t-esc="object.employee_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Leave Type</strong></td>
+                            <td><t t-esc="object.holiday_status_id.name"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>From Date</strong></td>
+                            <td><t t-esc="object.request_date_from and object.request_date_from.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>To Date</strong></td>
+                            <td><t t-esc="object.request_date_to and object.request_date_to.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Number of Days</strong></td>
+                            <td><t t-esc="object.number_of_days"/> day(s)</td>
+                        </tr>
+                        <tr t-if="object.request_unit_half and object.date_from and object.date_to and object.date_from.date() == object.date_to.date()" style="background-color: #f2f2f2;">
+                            <td><strong>Day Period</strong></td>
+                            <td>
+                                <t t-if="object.request_date_from_period == object.request_date_to_period">
+                                <t t-if="object.request_date_from_period == 'am'">Morning</t>
+                                <t t-else="">Afternoon</t>
+                            </t>
+                                <t t-else="">Full Day</t>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reason</strong></td>
+                            <td><t t-esc="object.name or 'No reason provided'"/></td>
+                        </tr>
+                    </table>
+
+                    <p>Please log in to Odoo to approve or reject this request.</p>
+
+                    <t t-set="base_url" t-value="env['ir.config_parameter'].sudo().get_param('web.base.url')"/>
+                    <p style="text-align: center; margin-top: 20px;">
+                        <a t-att-href="base_url + '/odoo/time-off'"
+                           style="background-color: #2D6A4F; color: white; padding: 10px 20px;
+                                  text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Review &amp; Approve Request
+                        </a>
+                    </p>
+
+                    <p>Thank you,<br/>
+                        <t t-esc="object.employee_id.name"/>
+                    </p>
+
+                    <p style="color: grey; font-size: 12px;">
+                        This is an automated notification from the ESS Portal. Please do not reply.
+                    </p>
+
+                </div>
+            ]]></field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+
+        <record id="email_template_leave_approved" model="mail.template">
+            <field name="name">Leave Request - Approved Notification</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+            <field name="subject">Leave Approved - {{ object.holiday_status_id.name }} [{{
+                object.request_date_from.strftime('%d-%m-%Y') if object.request_date_from else '' }}] (Ref
+                #{{ object.id }})
+            </field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+            <field name="email_to">{{ object.employee_id.work_email or '' }}</field>
+
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+
+                    <div style="background-color: #27ae60; padding: 15px; border-radius: 5px;">
+                        <h2 style="color: white; margin: 0;">&#10003; Your Leave Request has been Approved</h2>
+                    </div>
+
+                    <p>Dear <strong><t t-esc="object.employee_id.name"/></strong>,</p>
+
+                    <p>We are pleased to inform you that your leave request has been
+                        <strong style="color: #27ae60;">approved</strong>.
+                    </p>
+
+                    <table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse: collapse; margin: 15px 0;">
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Leave Type</strong></td>
+                            <td><t t-esc="object.holiday_status_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>From Date</strong></td>
+                            <td><t t-esc="object.request_date_from and object.request_date_from.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>To Date</strong></td>
+                            <td><t t-esc="object.request_date_to and object.request_date_to.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Number of Days</strong></td>
+                            <td><t t-esc="object.number_of_days"/> day(s)</td>
+                        </tr>
+                        <tr t-if="object.request_unit_half and object.date_from and object.date_to and object.date_from.date() == object.date_to.date()" style="background-color: #f2f2f2;">
+                            <td><strong>Day Period</strong></td>
+                            <td>
+                                <t t-if="object.request_date_from_period == object.request_date_to_period">
+                                <t t-if="object.request_date_from_period == 'am'">Morning</t>
+                                <t t-else="">Afternoon</t>
+                                </t>
+                            <t t-else="">Full Day</t>
+                            </td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Approved By</strong></td>
+                            <td><t t-esc="object.user_id.name or 'Manager'"/></td>
+                        </tr>
+                    </table>
+
+                    <t t-set="base_url" t-value="env['ir.config_parameter'].sudo().get_param('web.base.url')"/>
+                    <p style="text-align: center; margin-top: 20px;">
+                        <a t-att-href="base_url + '/my/leaves'"
+                           style="background-color: #27ae60; color: white; padding: 10px 20px;
+                                  text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            View My Leaves
+                        </a>
+                    </p>
+
+                    <p>Thank you,<br/>
+                        <t t-esc="user.company_id.name"/>
+                    </p>
+
+                    <p style="color: grey; font-size: 12px;">
+                        This is an automated notification from the ESS Portal. Please do not reply.
+                    </p>
+
+                </div>
+            ]]></field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+
+        <record id="email_template_leave_rejected" model="mail.template">
+            <field name="name">Leave Request - Rejected Notification</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+            <field name="subject">Leave Rejected - {{ object.holiday_status_id.name }} [{{
+                object.request_date_from.strftime('%d-%m-%Y') if object.request_date_from else '' }}] (Ref
+                #{{ object.id }})
+            </field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+            <field name="email_to">{{ object.employee_id.work_email or '' }}</field>
+
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+
+                    <div style="background-color: #c0392b; padding: 15px; border-radius: 5px;">
+                        <h2 style="color: white; margin: 0;">&#10007; Your Leave Request has been Rejected</h2>
+                    </div>
+
+                    <p>Dear <strong><t t-esc="object.employee_id.name"/></strong>,</p>
+
+                    <p>We regret to inform you that your leave request has been
+                        <strong style="color: #c0392b;">rejected</strong>.
+                    </p>
+
+                    <table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse: collapse; margin: 15px 0;">
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Leave Type</strong></td>
+                            <td><t t-esc="object.holiday_status_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>From Date</strong></td>
+                            <td><t t-esc="object.request_date_from and object.request_date_from.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>To Date</strong></td>
+                            <td><t t-esc="object.request_date_to and object.request_date_to.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Number of Days</strong></td>
+                            <td><t t-esc="object.number_of_days"/> day(s)</td>
+                        </tr>
+                        <tr t-if="object.request_unit_half and object.date_from and object.date_to and object.date_from.date() == object.date_to.date()" style="background-color: #f2f2f2;">
+                        <td><strong>Day Period</strong></td>
+                        <td>
+                            <t t-if="object.request_date_from_period == object.request_date_to_period">
+                            <t t-if="object.request_date_from_period == 'am'">Morning</t>
+                            <t t-else="">Afternoon</t>
+                        </t>
+                            <t t-else="">Full Day</t>
+                        </td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Rejected By</strong></td>
+                            <td><t t-esc="object.user_id.name or 'Manager'"/></td>
+                        </tr>
+                    </table>
+
+                    <p>If you have any questions regarding this decision, please contact
+                        your line manager or HR department.
+                    </p>
+
+                    <t t-set="base_url" t-value="env['ir.config_parameter'].sudo().get_param('web.base.url')"/>
+                    <p style="text-align: center; margin-top: 20px;">
+                        <a t-att-href="base_url + '/my/leaves'"
+                           style="background-color: #c0392b; color: white; padding: 10px 20px;
+                                  text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            View My Leaves
+                        </a>
+                    </p>
+
+                    <p>Thank you,<br/>
+                        <t t-esc="user.company_id.name"/>
+                    </p>
+
+                    <p style="color: grey; font-size: 12px;">
+                        This is an automated notification from the ESS Portal. Please do not reply.
+                    </p>
+
+                </div>
+            ]]></field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+
+        <record id="email_template_leave_reminder" model="mail.template">
+            <field name="name">Leave Request - Manager Reminder</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+            <field name="subject">Reminder: Leave Pending - {{ object.employee_id.name }} [{{
+                object.request_date_from.strftime('%d-%m-%Y') if object.request_date_from else '' }}] (Ref
+                #{{ object.id }})
+            </field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+            <field name="email_to">{{ object.user_id.email or object.employee_id.leave_manager_id.user_id.email or ''
+                }}
+            </field>
+
+            <field name="body_html"><![CDATA[
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+
+            <div style="background-color: #e67e22; padding: 15px; border-radius: 5px;">
+                <h2 style="color: white; margin: 0;">&#9201; Reminder: Leave Approval Pending</h2>
+            </div>
+
+             <p>Dear Approver,</p>
+
+            <p>This is a gentle reminder that the following leave request is still
+                <strong style="color:#e67e22;">awaiting your approval</strong>.
+            </p>
+
+            <table border="1" cellpadding="6" cellspacing="0" width="100%"
+                   style="border-collapse: collapse; margin: 15px 0;">
+                <tr style="background-color: #f2f2f2;">
+                    <td><strong>Employee</strong></td>
+                    <td><t t-esc="object.employee_id.name"/></td>
+                </tr>
+                <tr>
+                    <td><strong>Leave Type</strong></td>
+                    <td><t t-esc="object.holiday_status_id.name"/></td>
+                </tr>
+                <tr style="background-color: #f2f2f2;">
+                    <td><strong>From Date</strong></td>
+                    <td><t t-esc="object.request_date_from and object.request_date_from.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                </tr>
+                <tr>
+                    <td><strong>To Date</strong></td>
+                    <td><t t-esc="object.request_date_to and object.request_date_to.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                </tr>
+                <tr style="background-color: #f2f2f2;">
+                    <td><strong>Number of Days</strong></td>
+                    <td><t t-esc="object.number_of_days"/> day(s)</td>
+                </tr>
+                <tr t-if="object.request_unit_half and object.date_from and object.date_to and object.date_from.date() == object.date_to.date()" style="background-color: #f2f2f2;">
+                <td><strong>Day Period</strong></td>
+                <td>
+                <t t-if="object.request_date_from_period == object.request_date_to_period">
+                    <t t-if="object.request_date_from_period == 'am'">Morning</t>
+                    <t t-else="">Afternoon</t>
+                </t>
+                <t t-else="">Full Day</t>
+                </td>
+                </tr>
+                <tr>
+                    <td><strong>Submitted On</strong></td>
+                    <td><t t-esc="object.create_date and object.create_date.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                </tr>
+            </table>
+
+            <p>Please take action at your earliest convenience.</p>
+
+            <t t-set="base_url" t-value="env['ir.config_parameter'].sudo().get_param('web.base.url')"/>
+            <p style="text-align: center; margin-top: 20px;">
+                <a t-att-href="base_url + '/odoo/time-off'"
+                   style="background-color: #e67e22; color: white; padding: 10px 20px;
+                          text-decoration: none; border-radius: 5px; font-weight: bold;">
+                    Review &amp; Approve Request
+                </a>
+            </p>
+
+            <p>Thank you,<br/>
+                <t t-esc="object.employee_id.name"/>
+            </p>
+
+            <p style="color: grey; font-size: 12px;">
+                This is an automated reminder from the ESS Portal. Please do not reply.
+            </p>
+
+        </div>
+    ]]></field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+        <record id="email_template_leave_negative_hr" model="mail.template">
+            <field name="name">Leave Request - Negative Balance HR Alert</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+            <field name="subject">Negative Leave Balance: {{ object.employee_id.name }} - {{
+                object.holiday_status_id.name }} (Ref #{{ object.id }})
+            </field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+            <field name="body_html"><![CDATA[
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+
+            <div style="background-color: #c0392b; padding: 15px; border-radius: 5px;">
+                <h2 style="color: white; margin: 0;">&#9888; Negative Leave Balance Alert</h2>
+            </div>
+
+            <p>Dear HR,</p>
+
+            <p>An approved leave request has taken
+                <strong><t t-esc="object.employee_id.name"/></strong>'s balance
+                <strong style="color:#c0392b;">into negative</strong> for the leave type below.
+            </p>
+
+            <t t-set="bal" t-value="object.holiday_status_id.sudo().with_context(employee_id=object.employee_id.id).virtual_remaining_leaves"/>
+
+            <table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse: collapse; margin: 15px 0;">
+                <tr style="background-color: #f2f2f2;">
+                    <td><strong>Employee</strong></td>
+                    <td><t t-esc="object.employee_id.name"/></td>
+                </tr>
+                <tr>
+                    <td><strong>Leave Type</strong></td>
+                    <td><t t-esc="object.holiday_status_id.name"/></td>
+                </tr>
+                <tr style="background-color: #f2f2f2;">
+                    <td><strong>From Date</strong></td>
+                    <td><t t-esc="object.request_date_from and object.request_date_from.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                </tr>
+                <tr>
+                    <td><strong>To Date</strong></td>
+                    <td><t t-esc="object.request_date_to and object.request_date_to.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                </tr>
+                <tr style="background-color: #f2f2f2;">
+                    <td><strong>Number of Days</strong></td>
+                    <td><t t-esc="object.number_of_days"/> day(s)</td>
+                </tr>
+                <tr t-if="object.request_unit_half and object.date_from and object.date_to and object.date_from.date() == object.date_to.date()" style="background-color: #f2f2f2;">
+                <td><strong>Day Period</strong></td>
+                <td>
+                <t t-if="object.request_date_from_period == object.request_date_to_period">
+                    <t t-if="object.request_date_from_period == 'am'">Morning</t>
+                    <t t-else="">Afternoon</t>
+                </t>
+                <t t-else="">Full Day</t>
+                </td>
+                </tr>
+                <tr>
+                    <td><strong>Current Balance</strong></td>
+                    <td style="color:#c0392b;font-weight:bold;"><t t-esc="'%.2f' % bal"/> day(s)</td>
+                </tr>
+            </table>
+
+            <p>Please review this employee's leave records.</p>
+
+            <p style="color: grey; font-size: 12px;">
+                This is an automated notification from the ESS Portal. Please do not reply.
+            </p>
+
+        </div>
+    ]]></field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+
+        <record id="email_template_leave_applied_notification" model="mail.template">
+            <field name="name">Leave Applied - Notification</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+            <field name="subject">Leave Applied: {{ object.employee_id.name }} - {{ object.holiday_status_id.name }} [{{
+                object.request_date_from.strftime('%d-%m-%Y') if object.request_date_from else '' }}] (Ref
+                #{{ object.id }})
+            </field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+
+                    <div style="background-color: #2D6A4F; padding: 15px; border-radius: 5px;">
+                        <h2 style="color: white; margin: 0;">Leave Application</h2>
+                    </div>
+
+                    <p>Dear Recipient,</p>
+
+                    <p>A leave application has been submitted by
+                        <strong><t t-esc="object.employee_id.name"/></strong>
+                        and has been approved based on the available leave balance.
+                        This email is for your information and records.
+                    </p>
+
+                    <table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse: collapse; margin: 15px 0;">
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Employee</strong></td>
+                            <td><t t-esc="object.employee_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Leave Type</strong></td>
+                            <td><t t-esc="object.holiday_status_id.name"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>From Date</strong></td>
+                            <td><t t-esc="object.request_date_from and object.request_date_from.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>To Date</strong></td>
+                            <td><t t-esc="object.request_date_to and object.request_date_to.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Number of Days</strong></td>
+                            <td><t t-esc="object.number_of_days"/> day(s)</td>
+                        </tr>
+                        <tr t-if="object.request_unit_half and object.date_from and object.date_to and object.date_from.date() == object.date_to.date()" style="background-color: #f2f2f2;">
+                        <td><strong>Day Period</strong></td>
+                        <td>
+                        <t t-if="object.request_date_from_period == object.request_date_to_period">
+                            <t t-if="object.request_date_from_period == 'am'">Morning</t>
+                            <t t-else="">Afternoon</t>
+                        </t>
+                        <t t-else="">Full Day</t>
+                        </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reason</strong></td>
+                            <td><t t-esc="object.name or 'No reason provided'"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Backup Person</strong></td>
+                            <td><t t-esc="object.x_backup_display"/></td>
+                        </tr>
+                    </table>
+
+                    <p style="color: grey; font-size: 12px;">
+                        This is an automated notification from the ESS Portal. Please do not reply.
+                    </p>
+
+                </div>
+            ]]></field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+        <record id="email_template_leave_backup_notification" model="mail.template">
+            <field name="name">Leave - Backup Person Notification</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+            <field name="subject">You have been nominated as backup: {{ object.employee_id.name }} [{{
+                object.request_date_from.strftime('%d-%m-%Y') if object.request_date_from else '' }}] (Ref
+                #{{ object.id }})
+            </field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+
+                    <div style="background-color: #2D6A4F; padding: 15px; border-radius: 5px;">
+                        <h2 style="color: white; margin: 0;">Backup Nomination</h2>
+                    </div>
+
+                    <p>Dear <strong><t t-esc="object.x_backup_employee_id.name or 'Colleague'"/></strong>,</p>
+
+                    <p>You have been nominated as the backup person for
+                        <strong><t t-esc="object.employee_id.name"/></strong>
+                        during their leave. This email is for your information.
+                    </p>
+
+                    <table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse: collapse; margin: 15px 0;">
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Employee on Leave</strong></td>
+                            <td><t t-esc="object.employee_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Leave Type</strong></td>
+                            <td><t t-esc="object.holiday_status_id.name"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>From Date</strong></td>
+                            <td><t t-esc="object.request_date_from and object.request_date_from.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>To Date</strong></td>
+                            <td><t t-esc="object.request_date_to and object.request_date_to.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                    </table>
+
+                    <p>Please be available to cover any urgent matters during this period.</p>
+
+                    <p style="color: grey; font-size: 12px;">
+                        This is an automated notification from the ESS Portal. Please do not reply.
+                    </p>
+
+                </div>
+            ]]></field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+
+        <!-- Employee self-cancel: goes to HR department + the employee -->
+        <record id="email_template_leave_cancelled_self" model="mail.template">
+            <field name="name">Leave Cancelled (Self) - Notification</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+            <field name="subject">Leave Cancelled: {{ object.employee_id.name }} - {{ object.holiday_status_id.name }}
+                [{{ object.request_date_from.strftime('%d-%m-%Y') if object.request_date_from else '' }}] (Ref
+                #{{ object.id }})
+            </field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+                    <div style="background-color: #7a3010; padding: 15px; border-radius: 5px;">
+                        <h2 style="color: white; margin: 0;">Leave Cancelled</h2>
+                    </div>
+                    <p>Dear Recipient,</p>
+                    <p>The following leave has been cancelled by
+                        <strong><t t-esc="object.employee_id.name"/></strong>.
+                        This email is for your records.
+                    </p>
+                    <table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse: collapse; margin: 15px 0;">
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Employee</strong></td>
+                            <td><t t-esc="object.employee_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Leave Type</strong></td>
+                            <td><t t-esc="object.holiday_status_id.name"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>From Date</strong></td>
+                            <td><t t-esc="object.request_date_from and object.request_date_from.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>To Date</strong></td>
+                            <td><t t-esc="object.request_date_to and object.request_date_to.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                    </table>
+                    <p style="color: grey; font-size: 12px;">
+                        This is an automated notification from the ESS Portal. Please do not reply.
+                    </p>
+                </div>
+            ]]></field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+        <!-- HR cancel (backend Refuse): goes to the full apply-recipient list -->
+        <record id="email_template_leave_cancelled_hr" model="mail.template">
+            <field name="name">Leave Cancelled (HR) - Notification</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+            <field name="subject">Leave Cancelled: {{ object.employee_id.name }} - {{ object.holiday_status_id.name }}
+                [{{ object.request_date_from.strftime('%d-%m-%Y') if object.request_date_from else '' }}] (Ref
+                #{{ object.id }})
+            </field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+                    <div style="background-color: #7a3010; padding: 15px; border-radius: 5px;">
+                        <h2 style="color: white; margin: 0;">Leave Cancelled</h2>
+                    </div>
+                    <p>Dear Recipient,</p>
+                    <p>The following leave for
+                        <strong><t t-esc="object.employee_id.name"/></strong>
+                        has been cancelled by HR. This email is for your records.
+                    </p>
+                    <table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse: collapse; margin: 15px 0;">
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Employee</strong></td>
+                            <td><t t-esc="object.employee_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Leave Type</strong></td>
+                            <td><t t-esc="object.holiday_status_id.name"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>From Date</strong></td>
+                            <td><t t-esc="object.request_date_from and object.request_date_from.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>To Date</strong></td>
+                            <td><t t-esc="object.request_date_to and object.request_date_to.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Backup Person</strong></td>
+                            <td>
+                                <t t-if="object.x_backup_type == 'internal'"><t t-esc="object.x_backup_employee_id.name or '—'"/></t>
+                                <t t-elif="object.x_backup_type == 'external'"><t t-esc="object.x_backup_name or '—'"/></t>
+                                <t t-else="">—</t>
+                            </td>
+                        </tr>
+                    </table>
+                    <p style="color: grey; font-size: 12px;">
+                        This is an automated notification from the ESS Portal. Please do not reply.
+                    </p>
+                </div>
+            ]]></field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+
+        <record id="email_template_leave_on_behalf" model="mail.template">
+            <field name="name">Leave Applied by HR (For Your Record)</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+            <field name="subject">Leave Applied on Behalf - {{ object.employee_id.name }} - {{
+                object.holiday_status_id.name }} [{{ object.request_date_from.strftime('%d-%m-%Y') if
+                object.request_date_from else '' }}] (Ref #{{ object.id }})
+            </field>
+            <field name="email_from">{{ user.company_id.email or 'no-reply@example.com' }}</field>
+            <field name="body_html"><![CDATA[
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+
+                    <div style="background-color: #2D6A4F; padding: 15px; border-radius: 5px;">
+                        <h2 style="color: white; margin: 0;">Leave Applied on Behalf</h2>
+                    </div>
+
+                    <p>Dear <strong><t t-esc="object.employee_id.name"/></strong>,</p>
+
+                    <p>
+                        <strong><t t-esc="object.create_uid.name or 'HR'"/></strong>
+                        (HR) has applied the following leave on your behalf, and it has
+                        been approved. This email is for your record.
+                    </p>
+
+                    <table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse: collapse; margin: 15px 0;">
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Employee</strong></td>
+                            <td><t t-esc="object.employee_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Applied By (HR)</strong></td>
+                            <td><t t-esc="object.create_uid.name or 'HR'"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Leave Type</strong></td>
+                            <td><t t-esc="object.holiday_status_id.name"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>From Date</strong></td>
+                            <td><t t-esc="object.request_date_from and object.request_date_from.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>To Date</strong></td>
+                            <td><t t-esc="object.request_date_to and object.request_date_to.strftime('%d-%m-%Y') or 'N/A'"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Number of Days</strong></td>
+                            <td><t t-esc="object.number_of_days"/> day(s)</td>
+                        </tr>
+                        <tr t-if="object.request_unit_half and object.date_from and object.date_to and object.date_from.date() == object.date_to.date()" style="background-color: #f2f2f2;">
+                        <td><strong>Day Period</strong></td>
+                        <td>
+                            <t t-if="object.request_date_from_period == object.request_date_to_period">
+                             <t t-if="object.request_date_from_period == 'am'">Morning</t>
+                            <t t-else="">Afternoon</t>
+                        </t>
+                        <t t-else="">Full Day</t>
+                        </td>
+                        </tr>
+                        <tr style="background-color: #f2f2f2;">
+                            <td><strong>Reason</strong></td>
+                            <td><t t-esc="object.name or 'No reason provided'"/></td>
+                        </tr>
+                    </table>
+
+                    <p>If you have any questions about this leave, please contact HR.</p>
+
+                    <p style="color: grey; font-size: 12px;">
+                        This is an automated notification from the ESS Portal. Please do not reply.
+                    </p>
+
+                </div>
+            ]]></field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
