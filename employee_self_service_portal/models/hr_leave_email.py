@@ -119,7 +119,9 @@ class HrLeaveESS(models.Model):
             creator_user = leave.create_uid
             employee_user = leave.employee_id.user_id
             on_behalf = bool(
-                employee_user and creator_user and employee_user.id != creator_user.id
+                employee_user and creator_user
+                and not creator_user.share
+                and creator_user.id != employee_user.id
             )
 
             if on_behalf:
