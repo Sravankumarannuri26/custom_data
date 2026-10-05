@@ -19,7 +19,7 @@
         "security/portal_employee_security.xml",
         "data/portal_data.xml",
         "data/attendance_cron.xml",               # Auto-checkout cron job
-        "data/leave_email_templates.xml",
+        # "data/leave_email_templates.xml",
         # "data/expense_categories.xml",            # Default expense categories
         "views/menu.xml",
         "views/portal_layout.xml",
