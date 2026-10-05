@@ -115,7 +115,11 @@ class HrLeave(models.Model):
                 continue
             creator_user = leave.create_uid
             employee_user = leave.employee_id.user_id
-            on_behalf = bool(employee_user and creator_user and employee_user.id != creator_user.id)
+            on_behalf = bool(
+                employee_user and creator_user
+                and not creator_user.share
+                and creator_user.id != employee_user.id
+            )
             if on_behalf:
                 hr_dept = leave.env.company.leave_hr_department_email
                 recipients = []
