@@ -1,34 +1,94 @@
 import json
-import base64
-import urllib.parse
 import re
+import base64
+import logging
 from datetime import timedelta
-from odoo import SUPERUSER_ID
-from odoo import http, fields
+import pytz
+from markupsafe import Markup
+from odoo import SUPERUSER_ID, http, fields
 from odoo.http import request
 from odoo.exceptions import ValidationError
-import pytz
+
+_logger = logging.getLogger(__name__)
 
 API_KEY = "dd7ef9db2080651a656e5a9dbfed5a03ef9616a7"
 
 
 class LeaveManagementAPI(http.Controller):
 
+    # ------------------------------------------------------------------
+    # generic helpers
+    # ------------------------------------------------------------------
+
     def _check_auth(self):
         auth_header = request.httprequest.headers.get('Authorization', '')
         token = auth_header.replace('Bearer ', '').strip()
         return token == API_KEY
 
-    def _unauthorized(self):
+    def _json(self, payload, status=200):
         return request.make_response(
-            json.dumps({'error': 'Unauthorized'}),
-            headers={'Content-Type': 'application/json'}, status=401
+            json.dumps(payload),
+            headers={'Content-Type': 'application/json'},
+            status=status,
         )
+
+    def _unauthorized(self):
+        return self._json({'error': 'Unauthorized'}, 401)
 
     def _get_employee(self, email):
         return request.env['hr.employee'].sudo().search([('work_email', '=', email)], limit=1)
 
-    # ---------- balance helpers ----------
+    # ------------------------------------------------------------------
+    # service-user helpers (all writes run as the integration user)
+    # ------------------------------------------------------------------
+
+    def _service_user(self):
+        uid = int(request.env['ir.config_parameter'].sudo().get_param('ess_integration.service_user_id') or 0)
+        user = request.env['res.users'].sudo().browse(uid)
+        return user if user.exists() else None
+
+    def _as_service(self, rec):
+        user = self._service_user()
+        if not user:
+            _logger.warning("ess_integration.service_user_id is not set; falling back to plain sudo")
+            return rec.sudo()
+        return rec.with_user(user).sudo()
+
+    def _audit_note(self, leave, text, employee, extra=None):
+        body = Markup("%s <b>%s</b> (%s)") % (text, employee.name or '', employee.work_email or '')
+        if extra:
+            body += Markup("<br/>Reason: %s") % extra
+        self._as_service(leave).message_post(body=body, subtype_xmlid='mail.mt_note')
+
+    # ------------------------------------------------------------------
+    # friendly errors
+    # ------------------------------------------------------------------
+
+    def _friendly_leave_error(self, raw):
+        raw_l = (raw or '').lower()
+        if 'no valid allocation' in raw_l:
+            return ("You don't have enough leave balance for this request. "
+                    "Please check your available days or contact HR.")
+        if 'overlap' in raw_l or 'already' in raw_l:
+            return ("This request overlaps with an existing leave. "
+                    "Please choose different dates.")
+        if 'duration' in raw_l:
+            return "The selected dates don't include any valid working days."
+        return raw
+
+    def _friendly_cancel_error(self, raw):
+        raw_l = (raw or '').lower()
+        if 'past' in raw_l or 'in the past' in raw_l:
+            return ("You can't cancel a leave request whose dates are in the past. "
+                    "Please contact HR if something needs to be corrected.")
+        if 'delete' in raw_l or 'unlink' in raw_l:
+            return ("This leave request can't be cancelled directly. "
+                    "Please contact HR for help.")
+        return "Couldn't cancel this leave request. Please try again or contact HR."
+
+    # ------------------------------------------------------------------
+    # balance helpers
+    # ------------------------------------------------------------------
 
     def _ess_net_balance(self, employee, leave_type):
         Alloc = request.env['hr.leave.allocation'].sudo()
@@ -96,7 +156,7 @@ class LeaveManagementAPI(http.Controller):
         return days
 
     def _ess_leave_notify_recipients(self, employee):
-        company = request.env.company.sudo()
+        company = employee.company_id.sudo()
         emp = employee.sudo()
         candidates = [
             emp.work_email, company.leave_hr_department_email,
@@ -113,18 +173,18 @@ class LeaveManagementAPI(http.Controller):
                 result.append(e)
         return result
 
-    # ---------- GET /api/ess/leaves ----------
+    # ------------------------------------------------------------------
+    # GET /api/ess/leaves
+    # ------------------------------------------------------------------
 
     @http.route('/api/ess/leaves', type='http', auth='public', methods=['GET'], csrf=False)
     def get_leaves(self, **kwargs):
         if not self._check_auth():
             return self._unauthorized()
 
-        email = kwargs.get('email')
-        employee = self._get_employee(email)
+        employee = self._get_employee(kwargs.get('email'))
         if not employee:
-            return request.make_response(json.dumps({'error': 'Employee not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+            return self._json({'error': 'Employee not found'}, 404)
 
         balances = self._get_leave_balances(employee)
 
@@ -143,12 +203,11 @@ class LeaveManagementAPI(http.Controller):
                 return False
             return True
 
-        selectable_types = leave_types.filtered(_selectable)
         leave_types_out = [{
             'id': lt.id, 'name': lt.name,
             'request_unit': lt.request_unit,
             'support_document': bool(getattr(lt, 'support_document', False)),
-        } for lt in selectable_types]
+        } for lt in leave_types.filtered(_selectable)]
 
         filterby = kwargs.get('filterby', 'all')
         sortby = kwargs.get('sortby', 'date')
@@ -220,7 +279,7 @@ class LeaveManagementAPI(http.Controller):
                 'job_title': lm_emp.job_id.name if lm_emp.job_id else '',
             }
 
-        return request.make_response(json.dumps({
+        return self._json({
             'employee': employee.name,
             'balances': balances,
             'leave_types': leave_types_out,
@@ -232,27 +291,27 @@ class LeaveManagementAPI(http.Controller):
             'holiday_map': holiday_map,
             'line_manager': line_manager,
             'approval_required': employee.company_id.leave_approval_required,
-        }), headers={'Content-Type': 'application/json'})
+        })
 
-    # ---------- POST /api/ess/leaves/submit ----------
+    # ------------------------------------------------------------------
+    # POST /api/ess/leaves/submit
+    # ------------------------------------------------------------------
 
     @http.route('/api/ess/leaves/submit', type='http', auth='public', methods=['POST'], csrf=False)
     def submit_leave(self, **post):
         if not self._check_auth():
             return self._unauthorized()
 
-        email = post.get('email')
-        employee = self._get_employee(email)
+        employee = self._get_employee(post.get('email'))
         if not employee:
-            return request.make_response(json.dumps({'success': False, 'error': 'Employee not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+            return self._json({'success': False, 'error': 'Employee not found'}, 404)
 
         approval_required = employee.company_id.leave_approval_required
         if approval_required and not employee.line_manager_id:
-            return request.make_response(json.dumps({
+            return self._json({
                 'success': False,
-                'error': "You cannot apply for leave because no line manager is assigned. Please contact HR."
-            }), headers={'Content-Type': 'application/json'})
+                'error': "You cannot apply for leave because no line manager is assigned. Please contact HR.",
+            })
 
         leave_type_id = post.get('leave_type_id')
         date_from_str = post.get('date_from')
@@ -263,15 +322,13 @@ class LeaveManagementAPI(http.Controller):
         to_period = post.get('request_date_to_period') or 'pm'
 
         if not leave_type_id or not date_from_str or not date_to_str:
-            return request.make_response(json.dumps({'success': False, 'error': 'Please fill all required fields'}),
-                                         headers={'Content-Type': 'application/json'})
+            return self._json({'success': False, 'error': 'Please fill all required fields'})
 
         try:
             date_from_obj = fields.Date.from_string(date_from_str)
             date_to_obj = fields.Date.from_string(date_to_str)
             if date_to_obj < date_from_obj:
-                return request.make_response(json.dumps({'success': False, 'error': 'End date cannot be before start date'}),
-                                             headers={'Content-Type': 'application/json'})
+                return self._json({'success': False, 'error': 'End date cannot be before start date'})
 
             overlapping = request.env['hr.leave'].sudo().search([
                 ('employee_id', '=', employee.id),
@@ -282,45 +339,38 @@ class LeaveManagementAPI(http.Controller):
             if overlapping:
                 overlap_from = overlapping.date_from.strftime('%d %b %Y') if overlapping.date_from else ''
                 overlap_to = overlapping.date_to.strftime('%d %b %Y') if overlapping.date_to else ''
-                return request.make_response(json.dumps({
+                return self._json({
                     'success': False,
-                    'error': f"You already have a leave request from {overlap_from} to {overlap_to}. Overlapping dates are not allowed."
-                }), headers={'Content-Type': 'application/json'})
+                    'error': f"You already have a leave request from {overlap_from} to {overlap_to}. Overlapping dates are not allowed.",
+                })
         except Exception:
-            return request.make_response(json.dumps({'success': False, 'error': 'Invalid date format'}),
-                                         headers={'Content-Type': 'application/json'})
+            return self._json({'success': False, 'error': 'Invalid date format'})
 
         try:
             leave_type_id_int = int(leave_type_id)
             leave_type = request.env['hr.leave.type'].sudo().browse(leave_type_id_int)
             if not leave_type.exists():
-                return request.make_response(json.dumps({'success': False, 'error': 'Invalid leave type selected'}),
-                                             headers={'Content-Type': 'application/json'})
+                return self._json({'success': False, 'error': 'Invalid leave type selected'})
         except Exception:
-            return request.make_response(json.dumps({'success': False, 'error': 'Invalid leave type'}),
-                                         headers={'Content-Type': 'application/json'})
+            return self._json({'success': False, 'error': 'Invalid leave type'})
 
         attachment = request.httprequest.files.get('leave_attachment')
         has_file = bool(attachment and attachment.filename)
-        requires_doc = getattr(leave_type, 'support_document', False)
-        if requires_doc and not has_file:
-            return request.make_response(json.dumps({
-                'success': False, 'error': 'A supporting document is required for this leave type.'
-            }), headers={'Content-Type': 'application/json'})
+        if getattr(leave_type, 'support_document', False) and not has_file:
+            return self._json({'success': False, 'error': 'A supporting document is required for this leave type.'})
 
-        if attachment and attachment.filename:
+        if has_file:
             allowed_exts = ('.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg', '.xlsx', '.txt')
             if not attachment.filename.lower().endswith(allowed_exts):
-                return request.make_response(json.dumps({
-                    'success': False, 'error': 'Invalid file type. Allowed: PDF, DOC, DOCX, PNG, JPG, JPEG, XLSX, TXT.'
-                }), headers={'Content-Type': 'application/json'})
+                return self._json({
+                    'success': False,
+                    'error': 'Invalid file type. Allowed: PDF, DOC, DOCX, PNG, JPG, JPEG, XLSX, TXT.',
+                })
             attachment.seek(0, 2)
             file_size = attachment.tell()
             attachment.seek(0)
             if file_size > 10 * 1024 * 1024:
-                return request.make_response(json.dumps({
-                    'success': False, 'error': 'File is too large. Maximum allowed size is 10MB.'
-                }), headers={'Content-Type': 'application/json'})
+                return self._json({'success': False, 'error': 'File is too large. Maximum allowed size is 10MB.'})
 
         if getattr(leave_type, 'x_is_frozen', False):
             unlocked = request.env['hr.leave.allocation'].sudo().search_count([
@@ -328,9 +378,10 @@ class LeaveManagementAPI(http.Controller):
                 ('state', '=', 'validate'), ('x_frozen_unlocked', '=', True),
             ])
             if not unlocked:
-                return request.make_response(json.dumps({
-                    'success': False, 'error': 'This leave type is currently locked. Please contact HR to request access.'
-                }), headers={'Content-Type': 'application/json'})
+                return self._json({
+                    'success': False,
+                    'error': 'This leave type is currently locked. Please contact HR to request access.',
+                })
 
         try:
             requested_days = self._ess_count_workdays(date_from_obj, date_to_obj)
@@ -339,14 +390,15 @@ class LeaveManagementAPI(http.Controller):
             current_balance = self._ess_leave_balance_for(employee, leave_type)
             allowed_excess = leave_type.max_allowed_negative if leave_type.allows_negative else 0
             if current_balance - requested_days < -allowed_excess:
-                return request.make_response(json.dumps({
+                return self._json({
                     'success': False,
-                    'error': 'You do not have enough leave balance for this request. Please reach out to HR for support.'
-                }), headers={'Content-Type': 'application/json'})
+                    'error': 'You do not have enough leave balance for this request. Please reach out to HR for support.',
+                })
         except Exception:
-            return request.make_response(json.dumps({
-                'success': False, 'error': 'Could not verify your leave balance. Please reach out to HR for support.'
-            }), headers={'Content-Type': 'application/json'})
+            return self._json({
+                'success': False,
+                'error': 'Could not verify your leave balance. Please reach out to HR for support.',
+            })
 
         backup_type = (post.get('backup_type') or '').strip()
         backup_employee_id = post.get('backup_employee_id')
@@ -357,27 +409,19 @@ class LeaveManagementAPI(http.Controller):
         if backup_required:
             if backup_type == 'internal':
                 if not backup_employee_id:
-                    return request.make_response(json.dumps({
-                        'success': False, 'error': 'Please select a backup person for this future-dated leave.'
-                    }), headers={'Content-Type': 'application/json'})
+                    return self._json({'success': False, 'error': 'Please select a backup person for this future-dated leave.'})
             elif backup_type == 'external':
                 if not backup_name or not backup_email:
-                    return request.make_response(json.dumps({
-                        'success': False, 'error': 'Please provide both the name and email of your external backup.'
-                    }), headers={'Content-Type': 'application/json'})
+                    return self._json({'success': False, 'error': 'Please provide both the name and email of your external backup.'})
                 if not re.match(r"^[A-Za-z .'\-]{2,100}$", backup_name):
-                    return request.make_response(json.dumps({
+                    return self._json({
                         'success': False,
-                        'error': 'Backup person name can only contain letters, spaces, hyphens, apostrophes, and periods (2-100 characters).'
-                    }), headers={'Content-Type': 'application/json'})
+                        'error': 'Backup person name can only contain letters, spaces, hyphens, apostrophes, and periods (2-100 characters).',
+                    })
                 if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", backup_email):
-                    return request.make_response(json.dumps({
-                        'success': False, 'error': 'Please enter a valid email address for the external backup.'
-                    }), headers={'Content-Type': 'application/json'})
+                    return self._json({'success': False, 'error': 'Please enter a valid email address for the external backup.'})
             else:
-                return request.make_response(json.dumps({
-                    'success': False, 'error': 'Please nominate a backup person for this future-dated leave.'
-                }), headers={'Content-Type': 'application/json'})
+                return self._json({'success': False, 'error': 'Please nominate a backup person for this future-dated leave.'})
 
         try:
             leave_vals = {
@@ -386,11 +430,14 @@ class LeaveManagementAPI(http.Controller):
                 'request_date_from': date_from_obj,
                 'request_date_to': date_to_obj,
                 'name': reason or '/',
+                'x_ess_applicant_id': employee.id,
             }
             if leave_type.request_unit == 'half_day':
                 leave_vals['request_date_from_period'] = from_period
                 leave_vals['request_date_to_period'] = to_period
-            leave = request.env['hr.leave'].sudo().create(leave_vals)
+
+            leave = self._as_service(request.env['hr.leave']).create(leave_vals)
+            self._audit_note(leave, "Applied via ESS Portal by", employee)
 
             if backup_required and backup_type:
                 backup_vals = {'x_backup_type': backup_type}
@@ -399,15 +446,15 @@ class LeaveManagementAPI(http.Controller):
                 elif backup_type == 'external':
                     backup_vals['x_backup_name'] = backup_name
                     backup_vals['x_backup_email'] = backup_email
-                leave.sudo().write(backup_vals)
+                leave.write(backup_vals)
 
-            if attachment and attachment.filename:
+            if has_file:
                 attachment.seek(0)
-                attachment_content = attachment.read()
-                if len(attachment_content) <= 10 * 1024 * 1024:
-                    request.env['ir.attachment'].sudo().create({
+                content = attachment.read()
+                if len(content) <= 10 * 1024 * 1024:
+                    self._as_service(request.env['ir.attachment']).create({
                         'name': attachment.filename, 'type': 'binary',
-                        'datas': base64.b64encode(attachment_content),
+                        'datas': base64.b64encode(content),
                         'res_model': 'hr.leave', 'res_id': leave.id,
                         'mimetype': attachment.mimetype,
                     })
@@ -415,15 +462,16 @@ class LeaveManagementAPI(http.Controller):
             if not approval_required:
                 try:
                     leave_company = employee.company_id
-                    leave.sudo().with_company(leave_company).with_context(
+                    leave.with_company(leave_company).with_context(
                         allowed_company_ids=[leave_company.id],
                         _ess_approved_sent=True, _ess_negative_hr_sent=True,
                     ).action_approve()
                 except Exception:
                     request.env.cr.rollback()
-                    return request.make_response(json.dumps({
-                        'success': False, 'error': 'Could not process your leave. Please reach out to HR for support.'
-                    }), headers={'Content-Type': 'application/json'})
+                    return self._json({
+                        'success': False,
+                        'error': 'Could not process your leave. Please reach out to HR for support.',
+                    })
 
             try:
                 recipients = self._ess_leave_notify_recipients(employee)
@@ -431,11 +479,11 @@ class LeaveManagementAPI(http.Controller):
                     template = request.env.ref('leave_management_api.email_template_leave_applied_notification', raise_if_not_found=False)
                     if template:
                         base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-                        template.with_context(base_url=base_url).sudo().send_mail(
+                        self._as_service(template).with_context(base_url=base_url).send_mail(
                             leave.id, force_send=True, email_values={'email_to': ','.join(recipients)}
                         )
             except Exception:
-                pass
+                _logger.exception("ESS Leave: applied notification failed for leave %s", leave.id)
 
             try:
                 if (leave.x_backup_type == 'internal' and leave.x_backup_employee_id
@@ -443,48 +491,42 @@ class LeaveManagementAPI(http.Controller):
                     bk_template = request.env.ref('leave_management_api.email_template_leave_backup_notification', raise_if_not_found=False)
                     if bk_template:
                         base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-                        bk_template.with_context(base_url=base_url).sudo().send_mail(
+                        self._as_service(bk_template).with_context(base_url=base_url).send_mail(
                             leave.id, force_send=True,
                             email_values={'email_to': leave.x_backup_employee_id.work_email}
                         )
             except Exception:
-                pass
+                _logger.exception("ESS Leave: backup notification failed for leave %s", leave.id)
 
-            return request.make_response(json.dumps({
-                'success': True, 'leave_id': leave.id,
-                'auto_approved': not approval_required,
-            }), headers={'Content-Type': 'application/json'})
-
+            return self._json({'success': True, 'leave_id': leave.id, 'auto_approved': not approval_required})
 
         except ValidationError as ve:
             request.env.cr.rollback()
             raw_msg = ve.args[0] if ve.args else str(ve)
-            return request.make_response(json.dumps({'success': False, 'error': self._friendly_leave_error(raw_msg)}),
-                                        headers={'Content-Type': 'application/json'})
+            return self._json({'success': False, 'error': self._friendly_leave_error(raw_msg)})
         except Exception:
+            _logger.exception("ESS Leave submit failed for %s", employee.name)
             request.env.cr.rollback()
-            return request.make_response(json.dumps({'success': False, 'error': 'Failed to submit leave. Please try again.'}),
-                                         headers={'Content-Type': 'application/json'})
+            return self._json({'success': False, 'error': 'Failed to submit leave. Please try again.'})
 
-    # ---------- GET /api/ess/leaves/<id> ----------
+    # ------------------------------------------------------------------
+    # GET /api/ess/leaves/<id>
+    # ------------------------------------------------------------------
 
     @http.route('/api/ess/leaves/<int:leave_id>', type='http', auth='public', methods=['GET'], csrf=False)
     def get_leave_detail(self, leave_id, **kwargs):
         if not self._check_auth():
             return self._unauthorized()
 
-        email = kwargs.get('email')
-        employee = self._get_employee(email)
+        employee = self._get_employee(kwargs.get('email'))
         if not employee:
-            return request.make_response(json.dumps({'error': 'Employee not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+            return self._json({'error': 'Employee not found'}, 404)
 
         leave = request.env['hr.leave'].sudo().search([
             ('id', '=', leave_id), ('employee_id', '=', employee.id),
         ], limit=1)
         if not leave:
-            return request.make_response(json.dumps({'error': 'Leave request not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+            return self._json({'error': 'Leave request not found'}, 404)
 
         state_map = {
             'draft': 'Draft', 'confirm': 'Pending Approval', 'validate1': 'Pending Approval',
@@ -499,9 +541,7 @@ class LeaveManagementAPI(http.Controller):
         for att in attachments:
             if not att.access_token:
                 att.generate_access_token()
-            attachments_out.append({
-                'id': att.id, 'name': att.name, 'access_token': att.access_token,
-            })
+            attachments_out.append({'id': att.id, 'name': att.name, 'access_token': att.access_token})
 
         line_manager = None
         if employee.line_manager_id and employee.line_manager_id.user_id:
@@ -521,11 +561,11 @@ class LeaveManagementAPI(http.Controller):
             else:
                 day_period = 'Full Day'
 
-        # --- FIX: read 'name' (reason) explicitly via read() to bypass masking ---
+        # 'name' is masked for non-HR users; read it as superuser
         reason_raw = request.env['hr.leave'].with_user(SUPERUSER_ID).sudo().browse(leave.id).read(['name'])
         reason_value = reason_raw[0]['name'] if reason_raw else None
 
-        return request.make_response(json.dumps({
+        return self._json({
             'id': leave.id,
             'leave_type': leave.holiday_status_id.name,
             'number_of_days': leave.number_of_days,
@@ -541,47 +581,44 @@ class LeaveManagementAPI(http.Controller):
             'line_manager': line_manager,
             'can_cancel': can_cancel,
             'refuse_reason': getattr(leave, 'reason_refusal', None) or getattr(leave, 'refuse_reason', None) or None,
-        }), headers={'Content-Type': 'application/json'})
+        })
 
-    # ---------- POST /api/ess/leaves/<id>/cancel ----------
+    # ------------------------------------------------------------------
+    # POST /api/ess/leaves/<id>/cancel
+    # ------------------------------------------------------------------
 
     @http.route('/api/ess/leaves/<int:leave_id>/cancel', type='http', auth='public', methods=['POST'], csrf=False)
     def cancel_leave(self, leave_id, **post):
         if not self._check_auth():
             return self._unauthorized()
 
-        email = post.get('email')
-        employee = self._get_employee(email)
+        employee = self._get_employee(post.get('email'))
         if not employee:
-            return request.make_response(json.dumps({'success': False, 'error': 'Employee not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+            return self._json({'success': False, 'error': 'Employee not found'}, 404)
 
         leave = request.env['hr.leave'].sudo().search([
             ('id', '=', leave_id), ('employee_id', '=', employee.id),
         ], limit=1)
         if not leave:
-            return request.make_response(json.dumps({'success': False, 'error': 'Leave request not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+            return self._json({'success': False, 'error': 'Leave request not found'}, 404)
 
         if leave.state in ('cancel', 'refuse'):
-            return request.make_response(json.dumps({'success': False, 'error': 'This leave is already cancelled.'}),
-                                         headers={'Content-Type': 'application/json'})
+            return self._json({'success': False, 'error': 'This leave is already cancelled.'})
 
         start_date = leave.request_date_from or (leave.date_from.date() if leave.date_from else None)
         if not start_date or start_date <= fields.Date.today():
-            return request.make_response(json.dumps({
+            return self._json({
                 'success': False,
-                'error': 'This leave can no longer be cancelled because it has already started or is in the past. Please contact HR.'
-            }), headers={'Content-Type': 'application/json'})
+                'error': 'This leave can no longer be cancelled because it has already started or is in the past. Please contact HR.',
+            })
 
         try:
-            leave.sudo().with_context(_ess_selfcancel=True)._action_user_cancel('Cancelled by employee via portal')
+            self._as_service(leave).with_context(_ess_selfcancel=True)._action_user_cancel('Cancelled by employee via portal')
+            self._audit_note(leave, "Cancelled via ESS Portal by", employee)
 
             try:
-                hr_email = request.env.company.leave_hr_department_email
-                emp_email = employee.work_email
                 recipients = []
-                for e in (hr_email, emp_email):
+                for e in (employee.company_id.leave_hr_department_email, employee.work_email):
                     e = (e or '').strip()
                     if e and e not in recipients:
                         recipients.append(e)
@@ -589,61 +626,63 @@ class LeaveManagementAPI(http.Controller):
                     tmpl = request.env.ref('leave_management_api.email_template_leave_cancelled_self', raise_if_not_found=False)
                     if tmpl:
                         base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-                        tmpl.with_context(base_url=base_url).sudo().send_mail(
+                        self._as_service(tmpl).with_context(base_url=base_url).send_mail(
                             leave.id, force_send=True, email_values={'email_to': ','.join(recipients)}
                         )
             except Exception:
-                pass
+                _logger.exception("ESS Cancel: email failed for leave %s", leave.id)
 
-            return request.make_response(json.dumps({'success': True}), headers={'Content-Type': 'application/json'})
-
+            return self._json({'success': True})
 
         except Exception as e:
             request.env.cr.rollback()
-            return request.make_response(
-                json.dumps({'success': False, 'error': self._friendly_cancel_error(str(e))}),
-                                headers={'Content-Type': 'application/json'})
+            return self._json({'success': False, 'error': self._friendly_cancel_error(str(e))})
 
-    # ---------- POST /api/ess/leaves/<id>/remind ----------
+    # ------------------------------------------------------------------
+    # POST /api/ess/leaves/<id>/remind
+    # ------------------------------------------------------------------
 
     @http.route('/api/ess/leaves/<int:leave_id>/remind', type='http', auth='public', methods=['POST'], csrf=False)
     def remind_leave(self, leave_id, **post):
         if not self._check_auth():
             return self._unauthorized()
 
-        email = post.get('email')
-        employee = self._get_employee(email)
+        employee = self._get_employee(post.get('email'))
         if not employee:
-            return request.make_response(json.dumps({'success': False, 'error': 'Employee not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+            return self._json({'success': False, 'error': 'Employee not found'}, 404)
 
         leave = request.env['hr.leave'].sudo().search([
             ('id', '=', leave_id), ('employee_id', '=', employee.id),
         ], limit=1)
         if not leave:
-            return request.make_response(json.dumps({'success': False, 'error': 'Leave request not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+            return self._json({'success': False, 'error': 'Leave request not found'}, 404)
 
         if leave.state not in ('confirm', 'validate1'):
-            return request.make_response(json.dumps({'success': False, 'error': 'Reminder can only be sent for pending leaves'}),
-                                         headers={'Content-Type': 'application/json'})
+            return self._json({'success': False, 'error': 'Reminder can only be sent for pending leaves'})
 
         try:
             template = request.env.ref('leave_management_api.email_template_leave_reminder', raise_if_not_found=False)
             manager_email = employee.line_manager_id.work_email if employee.line_manager_id else False
             if template and manager_email:
-                template.sudo().send_mail(leave.id, force_send=True, email_values={'email_to': manager_email})
-            return request.make_response(json.dumps({'success': True}), headers={'Content-Type': 'application/json'})
+                self._as_service(template).send_mail(
+                    leave.id, force_send=True, email_values={'email_to': manager_email}
+                )
+                self._audit_note(leave, "Reminder sent via ESS Portal by", employee)
+            return self._json({'success': True})
         except Exception:
-            return request.make_response(json.dumps({'success': False, 'error': 'Failed to send reminder. Please try again.'}),
-                                         headers={'Content-Type': 'application/json'})
+            _logger.exception("ESS Remind failed for leave %s", leave.id)
+            return self._json({'success': False, 'error': 'Failed to send reminder. Please try again.'})
 
-    # ---------- manager helpers ----------
+    # ------------------------------------------------------------------
+    # manager approvals
+    # ------------------------------------------------------------------
 
     def _is_line_manager(self, employee):
+        if not employee.user_id:
+            return False
         return request.env['hr.employee'].sudo().search_count([
             ('line_manager_id.user_id', '=', employee.user_id.id),
-        ]) > 0 if employee.user_id else False
+        ]) > 0
 
     def _get_approvable_leave(self, leave_id, manager_employee):
         leave = request.env['hr.leave'].sudo().browse(int(leave_id))
@@ -654,22 +693,38 @@ class LeaveManagementAPI(http.Controller):
             return False
         return leave
 
-    # ---------- GET /api/ess/approvals ----------
+    @http.route('/api/ess/approvals/summary', type='http', auth='public', methods=['GET'], csrf=False)
+    def get_approvals_summary(self, **kwargs):
+        if not self._check_auth():
+            return self._unauthorized()
+
+        employee = self._get_employee(kwargs.get('email'))
+        if not employee:
+            return self._json({'error': 'Employee not found'}, 404)
+
+        if not self._is_line_manager(employee):
+            return self._json({'is_line_manager': False})
+
+        base = [('employee_id.line_manager_id.user_id', '=', employee.user_id.id)]
+        Leave = request.env['hr.leave'].sudo()
+        return self._json({
+            'is_line_manager': True,
+            'pending_count': Leave.search_count(base + [('state', '=', 'confirm')]),
+            'approved_count': Leave.search_count(base + [('state', 'in', ['validate1', 'validate'])]),
+            'rejected_count': Leave.search_count(base + [('state', '=', 'refuse')]),
+        })
 
     @http.route('/api/ess/approvals', type='http', auth='public', methods=['GET'], csrf=False)
     def get_approvals(self, **kwargs):
         if not self._check_auth():
             return self._unauthorized()
 
-        email = kwargs.get('email')
-        employee = self._get_employee(email)
+        employee = self._get_employee(kwargs.get('email'))
         if not employee:
-            return request.make_response(json.dumps({'error': 'Employee not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+            return self._json({'error': 'Employee not found'}, 404)
 
         if not self._is_line_manager(employee):
-            return request.make_response(json.dumps({'error': 'Not a line manager'}),
-                                         headers={'Content-Type': 'application/json'}, status=403)
+            return self._json({'error': 'Not a line manager'}, 403)
 
         filterby = kwargs.get('filterby', 'pending')
         filter_map = {
@@ -682,159 +737,73 @@ class LeaveManagementAPI(http.Controller):
         ] + filter_map.get(filterby, filter_map['pending'])
 
         leaves = request.env['hr.leave'].sudo().search(domain, order='write_date desc')
-
-        leaves_out = [{
-            'id': lv.id,
-            'employee_name': lv.employee_id.name,
-            'leave_type': lv.holiday_status_id.name,
-            'date_from': lv.request_date_from.strftime('%d/%m/%Y') if lv.request_date_from else None,
-            'date_to': lv.request_date_to.strftime('%d/%m/%Y') if lv.request_date_to else None,
-            'number_of_days': lv.number_of_days,
-            'state': lv.state,
-        } for lv in leaves]
-
-        return request.make_response(json.dumps({
+        return self._json({
             'is_line_manager': True,
             'filterby': filterby,
-            'leaves': leaves_out,
-        }), headers={'Content-Type': 'application/json'})
-
-    # ---------- POST /api/ess/approvals/<id>/approve ----------
+            'leaves': [{
+                'id': lv.id,
+                'employee_name': lv.employee_id.name,
+                'leave_type': lv.holiday_status_id.name,
+                'date_from': lv.request_date_from.strftime('%d/%m/%Y') if lv.request_date_from else None,
+                'date_to': lv.request_date_to.strftime('%d/%m/%Y') if lv.request_date_to else None,
+                'number_of_days': lv.number_of_days,
+                'state': lv.state,
+            } for lv in leaves],
+        })
 
     @http.route('/api/ess/approvals/<int:leave_id>/approve', type='http', auth='public', methods=['POST'], csrf=False)
     def approve_leave(self, leave_id, **post):
         if not self._check_auth():
             return self._unauthorized()
 
-        email = post.get('email')
-        manager_employee = self._get_employee(email)
-        if not manager_employee:
-            return request.make_response(json.dumps({'success': False, 'error': 'Employee not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+        manager = self._get_employee(post.get('email'))
+        if not manager:
+            return self._json({'success': False, 'error': 'Employee not found'}, 404)
+        if not self._is_line_manager(manager):
+            return self._json({'success': False, 'error': 'Not authorized'}, 403)
 
-        if not self._is_line_manager(manager_employee):
-            return request.make_response(json.dumps({'success': False, 'error': 'Not authorized'}),
-                                         headers={'Content-Type': 'application/json'}, status=403)
-
-        leave = self._get_approvable_leave(leave_id, manager_employee)
+        leave = self._get_approvable_leave(leave_id, manager)
         if not leave:
-            return request.make_response(json.dumps({
-                'success': False, 'error': 'You are not authorised to act on this request.'
-            }), headers={'Content-Type': 'application/json'})
-
+            return self._json({'success': False, 'error': 'You are not authorised to act on this request.'})
         if leave.state not in ('confirm', 'validate1'):
-            return request.make_response(json.dumps({
-                'success': False, 'error': 'This request is no longer pending.'
-            }), headers={'Content-Type': 'application/json'})
+            return self._json({'success': False, 'error': 'This request is no longer pending.'})
 
         try:
             leave_company = leave.employee_id.company_id
-            leave.with_company(leave_company).with_context(
+            self._as_service(leave).with_company(leave_company).with_context(
                 allowed_company_ids=[leave_company.id]
             ).action_approve()
-            leave.message_post(
-                body="Approved via portal by line manager: %s" % manager_employee.name,
-                subtype_xmlid='mail.mt_note',
-            )
-            return request.make_response(json.dumps({'success': True}), headers={'Content-Type': 'application/json'})
+            self._audit_note(leave, "Approved via ESS Portal by line manager", manager)
+            return self._json({'success': True})
         except Exception:
+            _logger.exception("ESS approve failed for leave %s", leave_id)
             request.env.cr.rollback()
-            return request.make_response(json.dumps({
-                'success': False, 'error': 'Could not approve this request. Please try again or contact HR.'
-            }), headers={'Content-Type': 'application/json'})
-
-    # ---------- POST /api/ess/approvals/<id>/reject ----------
+            return self._json({'success': False, 'error': 'Could not approve this request. Please try again or contact HR.'})
 
     @http.route('/api/ess/approvals/<int:leave_id>/reject', type='http', auth='public', methods=['POST'], csrf=False)
     def reject_leave(self, leave_id, **post):
         if not self._check_auth():
             return self._unauthorized()
 
-        email = post.get('email')
-        manager_employee = self._get_employee(email)
-        if not manager_employee:
-            return request.make_response(json.dumps({'success': False, 'error': 'Employee not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
+        manager = self._get_employee(post.get('email'))
+        if not manager:
+            return self._json({'success': False, 'error': 'Employee not found'}, 404)
+        if not self._is_line_manager(manager):
+            return self._json({'success': False, 'error': 'Not authorized'}, 403)
 
-        if not self._is_line_manager(manager_employee):
-            return request.make_response(json.dumps({'success': False, 'error': 'Not authorized'}),
-                                         headers={'Content-Type': 'application/json'}, status=403)
-
-        leave = self._get_approvable_leave(leave_id, manager_employee)
+        leave = self._get_approvable_leave(leave_id, manager)
         if not leave:
-            return request.make_response(json.dumps({
-                'success': False, 'error': 'You are not authorised to act on this request.'
-            }), headers={'Content-Type': 'application/json'})
-
+            return self._json({'success': False, 'error': 'You are not authorised to act on this request.'})
         if leave.state not in ('confirm', 'validate1'):
-            return request.make_response(json.dumps({
-                'success': False, 'error': 'This request is no longer pending.'
-            }), headers={'Content-Type': 'application/json'})
+            return self._json({'success': False, 'error': 'This request is no longer pending.'})
 
         reason = (post.get('reject_reason') or '').strip()
 
         try:
-            leave.action_refuse()
-            note = "Rejected via portal by line manager: %s" % manager_employee.name
-            if reason:
-                note += "<br/>Reason: %s" % reason
-            leave.message_post(body=note, subtype_xmlid='mail.mt_note')
-            return request.make_response(json.dumps({'success': True}), headers={'Content-Type': 'application/json'})
+            self._as_service(leave).action_refuse()
+            self._audit_note(leave, "Rejected via ESS Portal by line manager", manager, extra=reason or None)
+            return self._json({'success': True})
         except Exception:
+            _logger.exception("ESS reject failed for leave %s", leave_id)
             request.env.cr.rollback()
-            return request.make_response(json.dumps({
-                'success': False, 'error': 'Could not reject this request. Please try again or contact HR.'
-            }), headers={'Content-Type': 'application/json'})
-
-    # ---------- GET /api/ess/approvals/summary ----------
-
-    @http.route('/api/ess/approvals/summary', type='http', auth='public', methods=['GET'], csrf=False)
-    def get_approvals_summary(self, **kwargs):
-        if not self._check_auth():
-            return self._unauthorized()
-
-        email = kwargs.get('email')
-        employee = self._get_employee(email)
-        if not employee:
-            return request.make_response(json.dumps({'error': 'Employee not found'}),
-                                         headers={'Content-Type': 'application/json'}, status=404)
-
-        is_manager = self._is_line_manager(employee)
-        if not is_manager:
-            return request.make_response(json.dumps({'is_line_manager': False}),
-                                         headers={'Content-Type': 'application/json'})
-
-        base = [('employee_id.line_manager_id.user_id', '=', employee.user_id.id)]
-        pending_count = request.env['hr.leave'].sudo().search_count(base + [('state', '=', 'confirm')])
-        approved_count = request.env['hr.leave'].sudo().search_count(base + [('state', 'in', ['validate1', 'validate'])])
-        rejected_count = request.env['hr.leave'].sudo().search_count(base + [('state', '=', 'refuse')])
-
-        return request.make_response(json.dumps({
-            'is_line_manager': True,
-            'pending_count': pending_count,
-            'approved_count': approved_count,
-            'rejected_count': rejected_count,
-        }), headers={'Content-Type': 'application/json'})
-
-
-    def _friendly_leave_error(self, raw):
-        raw_l = (raw or '').lower()
-        if 'no valid allocation' in raw_l:
-            return ("You don't have enough leave balance for this request. "
-                    "Please check your available days or contact HR.")
-        if 'overlap' in raw_l or 'already' in raw_l:
-            return ("This request overlaps with an existing leave. "
-                    "Please choose different dates.")
-        if 'duration' in raw_l:
-            return "The selected dates don't include any valid working days."
-        return raw
-
-    def _friendly_cancel_error(self, raw):
-        raw_l = (raw or '').lower()
-        if 'past' in raw_l or 'in the past' in raw_l:
-            return ("You can't cancel a leave request whose dates are in the past. "
-                    "Please contact HR if something needs to be corrected.")
-        if 'delete' in raw_l or 'unlink' in raw_l:
-            return ("This leave request can't be cancelled directly. "
-                    "Please contact HR for help.")
-        return "Couldn't cancel this leave request. Please try again or contact HR."
+            return self._json({'success': False, 'error': 'Could not reject this request. Please try again or contact HR.'})

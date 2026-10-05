@@ -20,6 +20,9 @@ class HrLeave(models.Model):
     x_backup_name = fields.Char(string="Backup Person Name")
     x_backup_email = fields.Char(string="Backup Person Email")
     x_backup_display = fields.Char(string="Backup Person", compute='_compute_x_backup_display')
+    x_ess_applicant_id = fields.Many2one(
+        'hr.employee', string="Applied via ESS by", readonly=True, copy=False,
+    )
 
     def _compute_x_backup_display(self):
         for leave in self:
@@ -116,12 +119,13 @@ class HrLeave(models.Model):
             creator_user = leave.create_uid
             employee_user = leave.employee_id.user_id
             on_behalf = bool(
-                employee_user and creator_user
+                not leave.x_ess_applicant_id
+                and employee_user and creator_user
                 and not creator_user.share
                 and creator_user.id != employee_user.id
             )
             if on_behalf:
-                hr_dept = leave.env.company.leave_hr_department_email
+                hr_dept = leave.employee_id.company_id.leave_hr_department_email
                 recipients = []
                 for e in (leave.employee_id.work_email, hr_dept):
                     e = (e or '').strip()
@@ -136,7 +140,7 @@ class HrLeave(models.Model):
 
     def _ess_full_recipients(self):
         self.ensure_one()
-        company = self.env.company
+        company = self.employee_id.company_id
         emp = self.employee_id
         candidates = [
             emp.work_email,
