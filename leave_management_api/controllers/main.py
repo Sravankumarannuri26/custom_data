@@ -1,6 +1,7 @@
 import json
 import base64
 import urllib.parse
+import re
 from datetime import timedelta
 from odoo import SUPERUSER_ID
 from odoo import http, fields
@@ -174,11 +175,11 @@ class LeaveManagementAPI(http.Controller):
         requests_out = [{
             'id': lv.id,
             'leave_type': lv.holiday_status_id.name,
-            'date_from': lv.date_from.strftime('%Y-%m-%d') if lv.date_from else None,
-            'date_to': lv.date_to.strftime('%Y-%m-%d') if lv.date_to else None,
+            'date_from': lv.date_from.strftime('%d/%m/%Y') if lv.date_from else None,
+            'date_to': lv.date_to.strftime('%d/%m/%Y') if lv.date_to else None,
             'number_of_days': lv.number_of_days,
             'state': lv.state,
-            'create_date': lv.create_date.strftime('%Y-%m-%d') if lv.create_date else None,
+            'create_date': lv.create_date.strftime('%d/%m/%Y') if lv.create_date else None,
         } for lv in leave_requests]
 
         all_active = Leave.search([
@@ -209,9 +210,15 @@ class LeaveManagementAPI(http.Controller):
                 holiday_map[local_mid.date().strftime('%Y-%m-%d')] = h.name or 'Public Holiday'
 
         line_manager = None
-        if employee.line_manager_id and employee.line_manager_id.user_id:
-            lm = employee.line_manager_id.user_id
-            line_manager = {'name': lm.name, 'email': lm.email}
+        lm_emp = employee.line_manager_id
+        if lm_emp and lm_emp.user_id:
+            lm = lm_emp.user_id
+            line_manager = {
+                'name': lm.name,
+                'email': lm.email or '',
+                'phone': lm.partner_id.phone or '',
+                'job_title': (lm_emp.job_id.name if lm_emp.job_id else '') or 'Manager',
+            }
 
         return request.make_response(json.dumps({
             'employee': employee.name,
@@ -348,15 +355,26 @@ class LeaveManagementAPI(http.Controller):
         backup_required = date_to_obj > fields.Date.today()
 
         if backup_required:
-            if backup_type == 'internal' and not backup_employee_id:
-                return request.make_response(json.dumps({
-                    'success': False, 'error': 'Please select a backup person for this future-dated leave.'
-                }), headers={'Content-Type': 'application/json'})
-            elif backup_type == 'external' and (not backup_name or not backup_email):
-                return request.make_response(json.dumps({
-                    'success': False, 'error': 'Please provide both the name and email of your external backup.'
-                }), headers={'Content-Type': 'application/json'})
-            elif backup_type not in ('internal', 'external'):
+            if backup_type == 'internal':
+                if not backup_employee_id:
+                    return request.make_response(json.dumps({
+                        'success': False, 'error': 'Please select a backup person for this future-dated leave.'
+                    }), headers={'Content-Type': 'application/json'})
+            elif backup_type == 'external':
+                if not backup_name or not backup_email:
+                    return request.make_response(json.dumps({
+                        'success': False, 'error': 'Please provide both the name and email of your external backup.'
+                    }), headers={'Content-Type': 'application/json'})
+                if not re.match(r"^[A-Za-z .'\-]{2,100}$", backup_name):
+                    return request.make_response(json.dumps({
+                        'success': False,
+                        'error': 'Backup person name can only contain letters, spaces, hyphens, apostrophes, and periods (2-100 characters).'
+                    }), headers={'Content-Type': 'application/json'})
+                if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", backup_email):
+                    return request.make_response(json.dumps({
+                        'success': False, 'error': 'Please enter a valid email address for the external backup.'
+                    }), headers={'Content-Type': 'application/json'})
+            else:
                 return request.make_response(json.dumps({
                     'success': False, 'error': 'Please nominate a backup person for this future-dated leave.'
                 }), headers={'Content-Type': 'application/json'})
@@ -437,10 +455,12 @@ class LeaveManagementAPI(http.Controller):
                 'auto_approved': not approval_required,
             }), headers={'Content-Type': 'application/json'})
 
+
         except ValidationError as ve:
             request.env.cr.rollback()
-            return request.make_response(json.dumps({'success': False, 'error': str(ve)}),
-                                         headers={'Content-Type': 'application/json'})
+            raw_msg = ve.args[0] if ve.args else str(ve)
+            return request.make_response(json.dumps({'success': False, 'error': self._friendly_leave_error(raw_msg)}),
+                                        headers={'Content-Type': 'application/json'})
         except Exception:
             request.env.cr.rollback()
             return request.make_response(json.dumps({'success': False, 'error': 'Failed to submit leave. Please try again.'}),
@@ -577,18 +597,12 @@ class LeaveManagementAPI(http.Controller):
 
             return request.make_response(json.dumps({'success': True}), headers={'Content-Type': 'application/json'})
 
+
         except Exception as e:
             request.env.cr.rollback()
-            raw = str(e)
-            raw_l = raw.lower()
-            if 'past' in raw_l:
-                friendly = "You can't cancel a leave request whose dates are in the past. Please contact HR."
-            elif 'delete' in raw_l or 'unlink' in raw_l:
-                friendly = "This leave request can't be cancelled directly. Please contact HR."
-            else:
-                friendly = "Couldn't cancel this leave request. Please try again or contact HR."
-            return request.make_response(json.dumps({'success': False, 'error': friendly}),
-                                         headers={'Content-Type': 'application/json'})
+            return request.make_response(
+                json.dumps({'success': False, 'error': self._friendly_cancel_error(str(e))}),
+                                headers={'Content-Type': 'application/json'})
 
     # ---------- POST /api/ess/leaves/<id>/remind ----------
 
@@ -801,3 +815,26 @@ class LeaveManagementAPI(http.Controller):
             'approved_count': approved_count,
             'rejected_count': rejected_count,
         }), headers={'Content-Type': 'application/json'})
+
+
+    def _friendly_leave_error(self, raw):
+        raw_l = (raw or '').lower()
+        if 'no valid allocation' in raw_l:
+            return ("You don't have enough leave balance for this request. "
+                    "Please check your available days or contact HR.")
+        if 'overlap' in raw_l or 'already' in raw_l:
+            return ("This request overlaps with an existing leave. "
+                    "Please choose different dates.")
+        if 'duration' in raw_l:
+            return "The selected dates don't include any valid working days."
+        return raw
+
+    def _friendly_cancel_error(self, raw):
+        raw_l = (raw or '').lower()
+        if 'past' in raw_l or 'in the past' in raw_l:
+            return ("You can't cancel a leave request whose dates are in the past. "
+                    "Please contact HR if something needs to be corrected.")
+        if 'delete' in raw_l or 'unlink' in raw_l:
+            return ("This leave request can't be cancelled directly. "
+                    "Please contact HR for help.")
+        return "Couldn't cancel this leave request. Please try again or contact HR."
