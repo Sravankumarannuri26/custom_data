@@ -217,7 +217,7 @@ class LeaveManagementAPI(http.Controller):
                 'name': lm.name,
                 'email': lm.email or '',
                 'phone': lm.partner_id.phone or '',
-                'job_title': (lm_emp.job_id.name if lm_emp.job_id else '') or 'Manager',
+                'job_title': lm_emp.job_id.name if lm_emp.job_id else '',
             }
 
         return request.make_response(json.dumps({
