@@ -135,6 +135,29 @@ class LeaveManagementAPI(http.Controller):
             })
         return balances
 
+    @http.route('/api/ess/leave_summary', type='http', auth='public', methods=['GET'], csrf=False)
+    def get_leave_summary(self, **kwargs):
+        if not self._check_auth():
+            return self._unauthorized()
+
+        employee = self._get_employee(kwargs.get('email'))
+        if not employee:
+            return self._json({'error': 'Employee not found'}, 404)
+
+        balances = self._get_leave_balances(employee)
+        Leave = request.env['hr.leave'].sudo()
+        return self._json({
+            'employee': employee.name,
+            'pending_count': Leave.search_count([
+                ('employee_id', '=', employee.id), ('state', 'in', ['confirm', 'validate1'])]),
+            'approved_count': Leave.search_count([
+                ('employee_id', '=', employee.id), ('state', '=', 'validate')]),
+            # same rule as the old dashboard: Annual Leave only
+            'balance_days': round(sum(
+                b['remaining'] for b in balances if 'annual' in b['name'].lower()
+            ), 1),
+        })
+
     def _ess_leave_balance_for(self, employee, leave_type):
         is_accrual = request.env['hr.leave.allocation'].sudo().search_count([
             ('employee_id', '=', employee.id), ('holiday_status_id', '=', leave_type.id),
