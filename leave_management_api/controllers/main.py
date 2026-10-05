@@ -153,7 +153,7 @@ class LeaveManagementAPI(http.Controller):
         filterby = kwargs.get('filterby', 'all')
         sortby = kwargs.get('sortby', 'date')
         page = max(int(kwargs.get('page', 1) or 1), 1)
-        per_page = 5
+        per_page = 2
 
         sort_map = {'date': 'date_from desc', 'state': 'state', 'type': 'holiday_status_id'}
         filter_map = {
