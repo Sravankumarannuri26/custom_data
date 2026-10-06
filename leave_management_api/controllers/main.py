@@ -1,6 +1,7 @@
 import json
 import re
 import base64
+import hmac
 import logging
 from datetime import timedelta
 import pytz
@@ -11,8 +12,6 @@ from odoo.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
 
-API_KEY = "dd7ef9db2080651a656e5a9dbfed5a03ef9616a7"
-
 
 class LeaveManagementAPI(http.Controller):
 
@@ -21,9 +20,11 @@ class LeaveManagementAPI(http.Controller):
     # ------------------------------------------------------------------
 
     def _check_auth(self):
+        api_key = request.env['ir.config_parameter'].sudo().get_param('ess_integration.api_key') or ''
         auth_header = request.httprequest.headers.get('Authorization', '')
-        token = auth_header.replace('Bearer ', '').strip()
-        return token == API_KEY
+        token = auth_header.replace('Bearer ', '', 1).strip()
+        # An empty parameter must never authorize anyone.
+        return bool(api_key) and hmac.compare_digest(token.encode(), api_key.encode())
 
     def _json(self, payload, status=200):
         return request.make_response(
