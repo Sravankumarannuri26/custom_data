@@ -12,6 +12,7 @@ from odoo.http import request
 _logger = logging.getLogger(__name__)
 
 PAID_STATES = ['paid']
+ACCESS_GROUP = 'payslip_api.group_payslip_access'
 REPORT_XMLIDS = [
     'hr_payroll.action_report_payslip',
     'hr_payroll.payslip_report',
@@ -41,16 +42,24 @@ class PayslipAPI(http.Controller):
         # so read them as the superuser, not as the public user.
         return rec.with_user(SUPERUSER_ID)
 
+    def _has_access(self, employee):
+        """Same rule as the old portal: the employee's user must be in the Payslip Access group."""
+        user = employee.user_id
+        return bool(user) and user.sudo().has_group(ACCESS_GROUP)
+
     def _period(self, slip):
         return slip.date_from.strftime('%B %Y') if slip and slip.date_from else 'N/A'
 
-    def _entry(self):
+    def _entry(self, require_access=True):
         """Returns (employee, error_response)."""
         if not self._check_auth():
             return None, self._json({'error': 'Unauthorized'}, 401)
         employee = self._get_employee(request.params.get('email'))
         if not employee:
             return None, self._json({'error': 'Employee not found'}, 404)
+        if require_access and not self._has_access(employee):
+            return None, self._json(
+                {'error': 'Payslips are not enabled for your account.', 'code': 'no_access'}, 403)
         return employee, None
 
     def _own_paid_slip(self, payslip_id, employee):
@@ -64,13 +73,16 @@ class PayslipAPI(http.Controller):
 
     @http.route('/api/ess/payslips/summary', type='http', auth='public', methods=['GET'], csrf=False)
     def payslip_summary(self, **kw):
-        employee, err = self._entry()
+        employee, err = self._entry(require_access=False)
         if err:
             return err
+        if not self._has_access(employee):
+            return self._json({'has_access': False})
         Slip = self._admin(request.env['hr.payslip'])
         domain = [('employee_id', '=', employee.id), ('state', 'in', PAID_STATES)]
         latest = Slip.search(domain, order='date_from desc', limit=1)
         return self._json({
+            'has_access': True,
             'payslips_count': Slip.search_count(domain),
             'latest_period': self._period(latest) if latest else None,
         })
@@ -146,9 +158,11 @@ class PayslipAPI(http.Controller):
         if not pdf:
             return self._json({'error': 'Generated payslip is empty.', 'code': 'empty_pdf'}, 500)
 
-        # Password protection happens here, so an unprotected PDF never leaves Odoo.sh.
-        allow_plain = (request.env['ir.config_parameter'].sudo()
-                       .get_param('ess_integration.payslip_allow_unprotected') or '').lower() in ('1', 'true', 'yes')
+        # Password = employee's birthday (DDMMYYYY), applied here on Odoo.sh.
+        # Old behaviour: if it can't be applied, the plain PDF is still sent.
+        require_protection = (request.env['ir.config_parameter'].sudo()
+                              .get_param('ess_integration.payslip_require_protection') or ''
+                              ).lower() in ('1', 'true', 'yes')
         protected = None
         birthday = slip.employee_id.birthday
         if birthday:
@@ -163,9 +177,11 @@ class PayslipAPI(http.Controller):
                 _logger.exception("ESS payslip: encryption failed for payslip %s", payslip_id)
 
         if protected is None:
-            if not allow_plain:
+            if require_protection:
                 return self._json({'error': 'This payslip cannot be protected right now.',
                                    'code': 'protect_failed'}, 422)
+            _logger.warning("ESS payslip: payslip %s sent WITHOUT a password "
+                            "(no birthday on file, or encryption failed)", payslip_id)
             protected = pdf
 
         filename = "%s - %s.pdf" % (slip.employee_id.name, self._period(slip))

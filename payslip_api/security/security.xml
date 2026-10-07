@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="group_payslip_access" model="res.groups">
+        <field name="name">Portal: Payslip Access</field>
+        <field name="comment">Employees who can see and download payslips in the ESS portal</field>
+    </record>
+</odoo>
