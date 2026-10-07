@@ -15,15 +15,11 @@ _logger = logging.getLogger(__name__)
 
 class LeaveManagementAPI(http.Controller):
 
-    # ------------------------------------------------------------------
-    # generic helpers
-    # ------------------------------------------------------------------
 
     def _check_auth(self):
         api_key = request.env['ir.config_parameter'].sudo().get_param('ess_integration.api_key') or ''
         auth_header = request.httprequest.headers.get('Authorization', '')
         token = auth_header.replace('Bearer ', '', 1).strip()
-        # An empty parameter must never authorize anyone.
         return bool(api_key) and hmac.compare_digest(token.encode(), api_key.encode())
 
     def _json(self, payload, status=200):
@@ -39,9 +35,6 @@ class LeaveManagementAPI(http.Controller):
     def _get_employee(self, email):
         return request.env['hr.employee'].sudo().search([('work_email', '=', email)], limit=1)
 
-    # ------------------------------------------------------------------
-    # service-user helpers (all writes run as the integration user)
-    # ------------------------------------------------------------------
 
     def _service_user(self):
         uid = int(request.env['ir.config_parameter'].sudo().get_param('ess_integration.service_user_id') or 0)
@@ -61,9 +54,6 @@ class LeaveManagementAPI(http.Controller):
             body += Markup("<br/>Reason: %s") % extra
         self._as_service(leave).message_post(body=body, subtype_xmlid='mail.mt_note')
 
-    # ------------------------------------------------------------------
-    # friendly errors
-    # ------------------------------------------------------------------
 
     def _friendly_leave_error(self, raw):
         raw_l = (raw or '').lower()
@@ -87,9 +77,6 @@ class LeaveManagementAPI(http.Controller):
                     "Please contact HR for help.")
         return "Couldn't cancel this leave request. Please try again or contact HR."
 
-    # ------------------------------------------------------------------
-    # balance helpers
-    # ------------------------------------------------------------------
 
     def _ess_net_balance(self, employee, leave_type):
         Alloc = request.env['hr.leave.allocation'].sudo()
@@ -153,7 +140,6 @@ class LeaveManagementAPI(http.Controller):
                 ('employee_id', '=', employee.id), ('state', 'in', ['confirm', 'validate1'])]),
             'approved_count': Leave.search_count([
                 ('employee_id', '=', employee.id), ('state', '=', 'validate')]),
-            # same rule as the old dashboard: Annual Leave only
             'balance_days': round(sum(
                 b['remaining'] for b in balances if 'annual' in b['name'].lower()
             ), 1),
@@ -197,9 +183,7 @@ class LeaveManagementAPI(http.Controller):
                 result.append(e)
         return result
 
-    # ------------------------------------------------------------------
-    # GET /api/ess/leaves
-    # ------------------------------------------------------------------
+
 
     @http.route('/api/ess/leaves', type='http', auth='public', methods=['GET'], csrf=False)
     def get_leaves(self, **kwargs):
@@ -317,9 +301,7 @@ class LeaveManagementAPI(http.Controller):
             'approval_required': employee.company_id.leave_approval_required,
         })
 
-    # ------------------------------------------------------------------
-    # POST /api/ess/leaves/submit
-    # ------------------------------------------------------------------
+
 
     @http.route('/api/ess/leaves/submit', type='http', auth='public', methods=['POST'], csrf=False)
     def submit_leave(self, **post):
@@ -533,9 +515,6 @@ class LeaveManagementAPI(http.Controller):
             request.env.cr.rollback()
             return self._json({'success': False, 'error': 'Failed to submit leave. Please try again.'})
 
-    # ------------------------------------------------------------------
-    # GET /api/ess/leaves/<id>
-    # ------------------------------------------------------------------
 
     @http.route('/api/ess/leaves/<int:leave_id>', type='http', auth='public', methods=['GET'], csrf=False)
     def get_leave_detail(self, leave_id, **kwargs):
@@ -585,7 +564,7 @@ class LeaveManagementAPI(http.Controller):
             else:
                 day_period = 'Full Day'
 
-        # 'name' is masked for non-HR users; read it as superuser
+
         reason_raw = request.env['hr.leave'].with_user(SUPERUSER_ID).sudo().browse(leave.id).read(['name'])
         reason_value = reason_raw[0]['name'] if reason_raw else None
 
@@ -606,10 +585,6 @@ class LeaveManagementAPI(http.Controller):
             'can_cancel': can_cancel,
             'refuse_reason': getattr(leave, 'reason_refusal', None) or getattr(leave, 'refuse_reason', None) or None,
         })
-
-    # ------------------------------------------------------------------
-    # POST /api/ess/leaves/<id>/cancel
-    # ------------------------------------------------------------------
 
     @http.route('/api/ess/leaves/<int:leave_id>/cancel', type='http', auth='public', methods=['POST'], csrf=False)
     def cancel_leave(self, leave_id, **post):
@@ -662,9 +637,7 @@ class LeaveManagementAPI(http.Controller):
             request.env.cr.rollback()
             return self._json({'success': False, 'error': self._friendly_cancel_error(str(e))})
 
-    # ------------------------------------------------------------------
-    # POST /api/ess/leaves/<id>/remind
-    # ------------------------------------------------------------------
+
 
     @http.route('/api/ess/leaves/<int:leave_id>/remind', type='http', auth='public', methods=['POST'], csrf=False)
     def remind_leave(self, leave_id, **post):
@@ -697,9 +670,7 @@ class LeaveManagementAPI(http.Controller):
             _logger.exception("ESS Remind failed for leave %s", leave.id)
             return self._json({'success': False, 'error': 'Failed to send reminder. Please try again.'})
 
-    # ------------------------------------------------------------------
-    # manager approvals
-    # ------------------------------------------------------------------
+
 
     def _is_line_manager(self, employee):
         if not employee.user_id:
